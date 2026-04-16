@@ -87,9 +87,8 @@ export default function AnalizPage() {
 
     const analysisResult = mockAnalyze()
     setResult(analysisResult)
-    setStep('result')
 
-    // Supabase'e kaydet
+    // Önce Supabase'e kaydet, sonra result adımını göster
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
@@ -102,10 +101,13 @@ export default function AnalizPage() {
     } catch {
       // Kayıt hatası sessizce geçilir
     }
+
+    setStep('result')
   }
 
   async function saveAndGoPanel() {
     setSaving(true)
+    router.refresh()
     router.push('/panel')
   }
 
