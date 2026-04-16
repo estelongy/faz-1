@@ -1,0 +1,282 @@
+'use client'
+
+export const dynamic = 'force-dynamic'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+
+interface Clinic {
+  id: string
+  name: string
+  location: string | null
+  bio: string | null
+  specialties: string[] | null
+}
+
+const TIME_SLOTS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30']
+
+function getNext14Days() {
+  const days = []
+  const today = new Date()
+  for (let i = 1; i <= 14; i++) {
+    const d = new Date(today)
+    d.setDate(today.getDate() + i)
+    if (d.getDay() !== 0 && d.getDay() !== 6) days.push(d)
+  }
+  return days
+}
+
+export default function RandevuPage() {
+  const router = useRouter()
+  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [clinics, setClinics] = useState<Clinic[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null)
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null)
+  const [selectedTime, setSelectedTime] = useState<string | null>(null)
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+
+  const days = getNext14Days()
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('clinics')
+      .select('id, name, location, bio, specialties')
+      .eq('approval_status', 'approved')
+      .eq('is_active', true)
+      .then(({ data }) => {
+        setClinics((data ?? []) as Clinic[])
+        setLoading(false)
+      })
+  }, [])
+
+  async function handleConfirm() {
+    if (!selectedClinic || !selectedDay || !selectedTime) return
+    setSaving(true)
+    setError(null)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/giris'); return }
+
+    const [h, m] = selectedTime.split(':').map(Number)
+    const dt = new Date(selectedDay)
+    dt.setHours(h, m, 0, 0)
+
+    const { error: err } = await supabase.from('appointments').insert({
+      user_id: user.id,
+      clinic_id: selectedClinic.id,
+      appointment_date: dt.toISOString(),
+      status: 'pending',
+      notes: notes || null,
+    })
+
+    if (err) { setError('Randevu oluşturulamadı. Lütfen tekrar deneyin.'); setSaving(false); return }
+    setSuccess(true)
+  }
+
+  if (success) return (
+    <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center p-4">
+      <div className="w-full max-w-md text-center">
+        <div className="w-20 h-20 mx-auto rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mb-6">
+          <svg className="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">Randevunuz Alındı!</h2>
+        <p className="text-slate-400 mb-2">
+          <span className="text-white font-medium">{selectedClinic?.name}</span> kliniği için
+        </p>
+        <p className="text-violet-400 font-medium mb-8">
+          {selectedDay?.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })} · {selectedTime}
+        </p>
+        <Link href="/panel" className="inline-flex items-center justify-center w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold rounded-xl">
+          Panele Dön
+        </Link>
+      </div>
+    </main>
+  )
+
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+          <Link href="/panel" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            Panel
+          </Link>
+          <span className="text-white font-bold">Randevu Al</span>
+          <div className="flex gap-2">
+            {[1,2,3].map(n => (
+              <div key={n} className={`w-2 h-2 rounded-full transition-all ${step >= n ? 'bg-violet-500' : 'bg-slate-700'}`} />
+            ))}
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-4xl mx-auto px-4 pt-24 pb-16">
+
+        {/* ADIM 1 — Klinik Seç */}
+        {step === 1 && (
+          <div>
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-white">Klinik Seçin</h1>
+              <p className="text-slate-400 text-sm mt-1">Onaylı kliniklerimizden birini seçin</p>
+            </div>
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[1,2,3,4].map(i => <div key={i} className="h-40 rounded-2xl bg-slate-800 animate-pulse" />)}
+              </div>
+            ) : clinics.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-800 flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                </div>
+                <p className="text-slate-400">Henüz onaylı klinik bulunmuyor.</p>
+                <p className="text-slate-500 text-sm mt-1">Yakında yeni klinikler eklenecek.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {clinics.map(clinic => (
+                  <button key={clinic.id} onClick={() => { setSelectedClinic(clinic); setStep(2) }}
+                    className={`text-left p-5 rounded-2xl border transition-all hover:scale-[1.02] ${
+                      selectedClinic?.id === clinic.id ? 'border-violet-500 bg-violet-500/10' : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                    }`}>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white shrink-0">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                      </div>
+                      <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </div>
+                    <div className="text-white font-bold mb-1">{clinic.name}</div>
+                    {clinic.location && <div className="text-slate-400 text-xs mb-2">📍 {clinic.location}</div>}
+                    {clinic.specialties && clinic.specialties.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {clinic.specialties.slice(0, 3).map(s => (
+                          <span key={s} className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-400">{s}</span>
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ADIM 2 — Tarih & Saat */}
+        {step === 2 && selectedClinic && (
+          <div>
+            <button onClick={() => setStep(1)} className="flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-6 transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+              {selectedClinic.name}
+            </button>
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-white">Tarih & Saat Seçin</h1>
+              <p className="text-slate-400 text-sm mt-1">Uygun bir gün ve saat seçin</p>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-white font-medium mb-3">Gün</h3>
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {days.map(day => (
+                  <button key={day.toISOString()} onClick={() => setSelectedDay(day)}
+                    className={`shrink-0 flex flex-col items-center px-4 py-3 rounded-xl border transition-all ${
+                      selectedDay?.toDateString() === day.toDateString()
+                        ? 'border-violet-500 bg-violet-500/20 text-white'
+                        : 'border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-600'
+                    }`}>
+                    <span className="text-xs uppercase">{day.toLocaleDateString('tr-TR', { weekday: 'short' })}</span>
+                    <span className="text-lg font-bold mt-0.5">{day.getDate()}</span>
+                    <span className="text-xs">{day.toLocaleDateString('tr-TR', { month: 'short' })}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {selectedDay && (
+              <div className="mb-8">
+                <h3 className="text-white font-medium mb-3">Saat</h3>
+                <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                  {TIME_SLOTS.map(t => (
+                    <button key={t} onClick={() => setSelectedTime(t)}
+                      className={`py-2 rounded-lg border text-sm font-medium transition-all ${
+                        selectedTime === t
+                          ? 'border-violet-500 bg-violet-500/20 text-white'
+                          : 'border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-600'
+                      }`}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <button onClick={() => setStep(3)} disabled={!selectedDay || !selectedTime}
+              className="w-full py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all">
+              Devam Et
+            </button>
+          </div>
+        )}
+
+        {/* ADIM 3 — Onay */}
+        {step === 3 && selectedClinic && selectedDay && selectedTime && (
+          <div>
+            <button onClick={() => setStep(2)} className="flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-6 transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+              Geri
+            </button>
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-white">Randevuyu Onayla</h1>
+              <p className="text-slate-400 text-sm mt-1">Bilgileri kontrol edip onaylayın</p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700 mb-6 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white shrink-0">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                </div>
+                <div>
+                  <div className="text-slate-400 text-xs">Klinik</div>
+                  <div className="text-white font-bold">{selectedClinic.name}</div>
+                  {selectedClinic.location && <div className="text-slate-400 text-xs">📍 {selectedClinic.location}</div>}
+                </div>
+              </div>
+              <div className="h-px bg-slate-700" />
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white shrink-0">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                </div>
+                <div>
+                  <div className="text-slate-400 text-xs">Tarih & Saat</div>
+                  <div className="text-white font-bold">
+                    {selectedDay.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                  </div>
+                  <div className="text-violet-400 text-sm font-medium">{selectedTime}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm text-slate-400 mb-2">Notlar (isteğe bağlı)</label>
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} placeholder="Şikayetleriniz veya eklemek istediğiniz bilgiler..."
+                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none" />
+            </div>
+
+            {error && <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">{error}</div>}
+
+            <button onClick={handleConfirm} disabled={saving}
+              className="w-full py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 disabled:opacity-50 text-white font-semibold rounded-xl transition-all text-lg">
+              {saving ? 'Kaydediliyor...' : 'Randevuyu Onayla'}
+            </button>
+          </div>
+        )}
+      </div>
+    </main>
+  )
+}
