@@ -8,6 +8,7 @@ export default async function AdminPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/giris')
+  if ((user.app_metadata as Record<string, string>)?.role !== 'admin') redirect('/panel')
 
   // İstatistikler paralel çek
   const [

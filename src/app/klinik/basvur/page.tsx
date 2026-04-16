@@ -38,10 +38,11 @@ async function submitApplication(formData: FormData) {
   redirect('/panel?basvuru=klinik')
 }
 
-export default async function KlinikBasvurPage() {
+export default async function KlinikBasvurPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/giris')
+  const params = await searchParams
 
   const { data: existing } = await supabase
     .from('clinics')
@@ -103,6 +104,12 @@ export default async function KlinikBasvurPage() {
           <h1 className="text-2xl font-bold text-white">Klinik Olarak Katıl</h1>
           <p className="text-slate-400 text-sm mt-1">Başvurunuz admin onayından sonra aktive edilir</p>
         </div>
+
+        {params?.error && (
+          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+            Başvuru gönderilemedi. Lütfen tüm alanları kontrol edip tekrar deneyin.
+          </div>
+        )}
 
         <form action={submitApplication} className="space-y-6">
           <div>

@@ -45,6 +45,11 @@ export default function RandevuPage() {
 
   useEffect(() => {
     const supabase = createClient()
+    // Auth kontrolü
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { router.replace('/giris?next=/randevu'); return }
+    })
+    // Klinik listesi çek
     supabase
       .from('clinics')
       .select('id, name, location, bio, specialties')
@@ -54,7 +59,7 @@ export default function RandevuPage() {
         setClinics((data ?? []) as Clinic[])
         setLoading(false)
       })
-  }, [])
+  }, [router])
 
   async function handleConfirm() {
     if (!selectedClinic || !selectedDay || !selectedTime) return

@@ -31,6 +31,8 @@ const ROLE_LABEL: Record<UserRole, string> = {
 async function changeRole(formData: FormData) {
   'use server'
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || (user.app_metadata as Record<string, string>)?.role !== 'admin') redirect('/panel')
   const userId = formData.get('userId') as string
   const role = formData.get('role') as UserRole
   await supabase.from('profiles').update({ role }).eq('id', userId)
@@ -40,6 +42,8 @@ async function changeRole(formData: FormData) {
 async function toggleActive(formData: FormData) {
   'use server'
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || (user.app_metadata as Record<string, string>)?.role !== 'admin') redirect('/panel')
   const userId = formData.get('userId') as string
   const current = formData.get('current') === 'true'
   await supabase.from('profiles').update({ is_active: !current }).eq('id', userId)
@@ -50,6 +54,7 @@ export default async function KullanicilarPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/giris')
+  if ((user.app_metadata as Record<string, string>)?.role !== 'admin') redirect('/panel')
 
   const { data: profiles } = await supabase
     .from('profiles')

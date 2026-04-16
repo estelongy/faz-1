@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -57,6 +57,14 @@ export default function AnalizPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Auth kontrolü — giriş yapılmamışsa yönlendir
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) router.replace('/giris?next=/analiz')
+    })
+  }, [router])
+
   const handleFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) {
       setError('Lütfen bir fotoğraf dosyası seçin.')
@@ -107,8 +115,12 @@ export default function AnalizPage() {
 
   async function saveAndGoPanel() {
     setSaving(true)
-    router.refresh()
-    router.push('/panel')
+    try {
+      router.refresh()
+      router.push('/panel')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (

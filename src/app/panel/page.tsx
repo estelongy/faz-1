@@ -20,8 +20,13 @@ const APT_STATUS_COLOR: Record<string, string> = {
 async function cancelAppointment(formData: FormData) {
   'use server'
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/giris')
   const appointmentId = formData.get('appointmentId') as string
-  await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', appointmentId)
+  // user_id kontrolü: sadece kendi randevusunu iptal edebilir
+  await supabase.from('appointments').update({ status: 'cancelled' })
+    .eq('id', appointmentId)
+    .eq('user_id', user.id)
   redirect('/panel')
 }
 
@@ -143,7 +148,7 @@ export default async function PanelPage() {
                         Skor: {a.final_overall ?? a.temp_overall ?? a.web_overall ?? '—'}
                       </div>
                       <div className="text-slate-500 text-xs mt-0.5">
-                        {new Date(a.created_at).toLocaleDateString('tr-TR')}
+                        {a.created_at ? new Date(a.created_at).toLocaleDateString('tr-TR') : '—'}
                       </div>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full ${

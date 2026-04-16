@@ -31,6 +31,8 @@ const STATUS_LABEL: Record<ApprovalStatus, string> = {
 async function updateClinic(formData: FormData) {
   'use server'
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || (user.app_metadata as Record<string, string>)?.role !== 'admin') redirect('/panel')
   const clinicId = formData.get('clinicId') as string
   const status = formData.get('status') as ApprovalStatus
   const isActive = status === 'approved'
@@ -42,6 +44,7 @@ export default async function KliniklerPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/giris')
+  if ((user.app_metadata as Record<string, string>)?.role !== 'admin') redirect('/panel')
 
   const { data: clinics } = await supabase
     .from('clinics')
