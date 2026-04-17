@@ -4,10 +4,11 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 
-type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled'
+type AppointmentStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
 
 interface Appointment {
   id: string
+  user_id: string
   appointment_date: string | null
   status: AppointmentStatus
   notes: string | null
@@ -15,28 +16,46 @@ interface Appointment {
 }
 
 const STATUS_LABEL: Record<AppointmentStatus, string> = {
-  pending: 'Beklemede',
-  confirmed: 'Onaylandı',
-  completed: 'Tamamlandı',
-  cancelled: 'İptal',
+  pending:     'Beklemede',
+  confirmed:   'Onaylandı',
+  in_progress: 'Görüşmede',
+  completed:   'Tamamlandı',
+  cancelled:   'İptal',
 }
 
 const STATUS_COLOR: Record<AppointmentStatus, string> = {
-  pending: 'bg-amber-500/20 text-amber-400',
-  confirmed: 'bg-blue-500/20 text-blue-400',
-  completed: 'bg-emerald-500/20 text-emerald-400',
-  cancelled: 'bg-red-500/20 text-red-400',
+  pending:     'bg-amber-500/20 text-amber-400',
+  confirmed:   'bg-blue-500/20 text-blue-400',
+  in_progress: 'bg-violet-500/20 text-violet-400',
+  completed:   'bg-emerald-500/20 text-emerald-400',
+  cancelled:   'bg-red-500/20 text-red-400',
+}
+
+function scoreColorClass(s: number) {
+  if (s >= 90) return 'text-[#00d4ff]'
+  if (s >= 75) return 'text-emerald-400'
+  if (s >= 50) return 'text-amber-400'
+  return 'text-red-400'
 }
 
 async function updateAppointmentStatus(formData: FormData) {
   'use server'
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  const { data: clinic } = await supabase.from('clinics').select('id').eq('user_id', user.id).single()
+  if (!clinic) return
+
   const appointmentId = formData.get('appointmentId') as string
   const status = formData.get('status') as AppointmentStatus
   await supabase
     .from('appointments')
-    .update({ status, ...(status === 'completed' ? { completed_at: new Date().toISOString() } : {}) })
+    .update({
+      status,
+      ...(status === 'completed' ? { completed_at: new Date().toISOString() } : {}),
+    })
     .eq('id', appointmentId)
+    .eq('clinic_id', clinic.id)
   redirect('/klinik/panel')
 }
 
@@ -53,27 +72,44 @@ export default async function KlinikPanelPage() {
   if (!user) redirect('/giris')
 
   const { data: clinic } = await supabase
-    .from('clinics')
-    .select('*')
-    .eq('user_id', user.id)
-    .single()
+    .from('clinics').select('*').eq('user_id', user.id).single()
 
   const { data: appointments } = clinic
     ? await supabase
         .from('appointments')
-        .select('id, appointment_date, status, notes, profiles(full_name)')
+        .select('id, user_id, appointment_date, status, notes, profiles(full_name)')
         .eq('clinic_id', clinic.id)
         .order('appointment_date', { ascending: true })
         .limit(100)
     : { data: [] }
 
   const appts = (appointments ?? []) as unknown as Appointment[]
-  const pendingCount = appts.filter(a => a.status === 'pending').length
+
+  // ── Her kullanıcının son EGS skorunu çek ────────────────────
+  const userIds = Array.from(new Set(appts.map(a => a.user_id).filter(Boolean)))
+  const { data: latestAnalyses } = userIds.length > 0
+    ? await supabase
+        .from('analyses')
+        .select('user_id, web_overall, temp_overall, final_overall')
+        .in('user_id', userIds)
+        .order('created_at', { ascending: false })
+    : { data: [] }
+
+  const scoreMap = new Map<string, { score: number; isFinal: boolean }>()
+  for (const a of latestAnalyses ?? []) {
+    if (!scoreMap.has(a.user_id)) {
+      const score = a.final_overall ?? a.temp_overall ?? a.web_overall
+      if (score != null) scoreMap.set(a.user_id, { score, isFinal: !!a.final_overall })
+    }
+  }
+
+  const pendingCount   = appts.filter(a => a.status === 'pending').length
   const confirmedCount = appts.filter(a => a.status === 'confirmed').length
+  const inProgCount    = appts.filter(a => a.status === 'in_progress').length
   const completedCount = appts.filter(a => a.status === 'completed').length
 
   const today = new Date().toISOString().split('T')[0]
-  const todayAppointments = appts.filter(a => a.appointment_date?.startsWith(today))
+  const todayAppts = appts.filter(a => a.appointment_date?.startsWith(today))
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
@@ -124,13 +160,14 @@ export default async function KlinikPanelPage() {
           </div>
         )}
 
-        {/* İstatistikler */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* İstatistik kartları */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           {[
-            { label: 'Toplam', value: appts.length, color: 'from-violet-500 to-purple-600' },
-            { label: 'Bekleyen', value: pendingCount, color: 'from-amber-500 to-orange-600' },
-            { label: 'Onaylanan', value: confirmedCount, color: 'from-blue-500 to-cyan-600' },
-            { label: 'Tamamlanan', value: completedCount, color: 'from-emerald-500 to-teal-600' },
+            { label: 'Toplam',     value: appts.length,  color: 'from-violet-500 to-purple-600'   },
+            { label: 'Bekleyen',   value: pendingCount,  color: 'from-amber-500 to-orange-600'    },
+            { label: 'Onaylanan',  value: confirmedCount,color: 'from-blue-500 to-cyan-600'        },
+            { label: 'Görüşmede',  value: inProgCount,   color: 'from-fuchsia-500 to-violet-600'  },
+            { label: 'Tamamlanan', value: completedCount,color: 'from-emerald-500 to-teal-600'    },
           ].map(({ label, value, color }) => (
             <div key={label} className="p-5 rounded-2xl bg-slate-800/50 border border-slate-700">
               <div className="text-3xl font-bold text-white mb-0.5">{value}</div>
@@ -145,16 +182,16 @@ export default async function KlinikPanelPage() {
             <h2 className="text-white font-bold mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               Bugün
-              {todayAppointments.length > 0 && (
+              {todayAppts.length > 0 && (
                 <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">
-                  {todayAppointments.length}
+                  {todayAppts.length}
                 </span>
               )}
             </h2>
-            {todayAppointments.length > 0 ? (
+            {todayAppts.length > 0 ? (
               <div className="space-y-3">
-                {todayAppointments.map(apt => (
-                  <AppointmentCard key={apt.id} apt={apt} action={updateAppointmentStatus} compact />
+                {todayAppts.map(apt => (
+                  <AppointmentCard key={apt.id} apt={apt} scoreInfo={scoreMap.get(apt.user_id)} action={updateAppointmentStatus} compact />
                 ))}
               </div>
             ) : (
@@ -176,7 +213,7 @@ export default async function KlinikPanelPage() {
             {appts.filter(a => a.status === 'pending').length > 0 ? (
               <div className="space-y-3">
                 {appts.filter(a => a.status === 'pending').map(apt => (
-                  <AppointmentCard key={apt.id} apt={apt} action={updateAppointmentStatus} />
+                  <AppointmentCard key={apt.id} apt={apt} scoreInfo={scoreMap.get(apt.user_id)} action={updateAppointmentStatus} />
                 ))}
               </div>
             ) : (
@@ -196,43 +233,60 @@ export default async function KlinikPanelPage() {
                 <thead>
                   <tr className="border-b border-slate-800">
                     <th className="text-left px-4 py-3 text-slate-400 font-medium">Hasta</th>
+                    <th className="text-left px-4 py-3 text-slate-400 font-medium">EGS</th>
                     <th className="text-left px-4 py-3 text-slate-400 font-medium">Tarih & Saat</th>
                     <th className="text-left px-4 py-3 text-slate-400 font-medium">Durum</th>
                     <th className="text-left px-4 py-3 text-slate-400 font-medium">İşlem</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
-                  {appts.map(apt => (
-                    <tr key={apt.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center text-violet-400 text-xs font-bold shrink-0">
-                            {(apt.profiles?.full_name ?? '?')[0].toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="text-white font-medium">{apt.profiles?.full_name ?? 'Hasta'}</div>
-                            {apt.notes && <div className="text-slate-500 text-xs truncate max-w-48">{apt.notes}</div>}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-slate-400 text-xs">
-                        {apt.appointment_date
-                          ? new Date(apt.appointment_date).toLocaleDateString('tr-TR', {
-                              day: 'numeric', month: 'long', year: 'numeric',
-                              hour: '2-digit', minute: '2-digit'
-                            })
-                          : '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLOR[apt.status] ?? STATUS_COLOR.pending}`}>
-                          {STATUS_LABEL[apt.status] ?? apt.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <AppointmentActions apt={apt} action={updateAppointmentStatus} />
-                      </td>
-                    </tr>
-                  ))}
+                  {appts.map(apt => {
+                    const si = scoreMap.get(apt.user_id)
+                    return (
+                      <tr key={apt.id} className="hover:bg-slate-800/40 transition-colors group">
+                        <td className="px-4 py-3">
+                          <Link href={`/klinik/panel/hasta/${apt.user_id}`}
+                            className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center text-violet-400 text-xs font-bold shrink-0">
+                              {(apt.profiles?.full_name ?? '?')[0].toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="text-white font-medium group-hover:text-violet-400 transition-colors">
+                                {apt.profiles?.full_name ?? 'Hasta'}
+                              </div>
+                              {apt.notes && <div className="text-slate-500 text-xs truncate max-w-48">{apt.notes}</div>}
+                            </div>
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3">
+                          {si ? (
+                            <div className="flex items-center gap-1">
+                              <span className={`font-black text-base ${scoreColorClass(si.score)}`}>{si.score}</span>
+                              {si.isFinal && <span className="text-[9px] text-[#00d4ff] font-bold">✦</span>}
+                            </div>
+                          ) : (
+                            <span className="text-slate-700 text-xs">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">
+                          {apt.appointment_date
+                            ? new Date(apt.appointment_date).toLocaleDateString('tr-TR', {
+                                day: 'numeric', month: 'long', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit',
+                              })
+                            : '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLOR[apt.status] ?? STATUS_COLOR.pending}`}>
+                            {STATUS_LABEL[apt.status] ?? apt.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <AppointmentActions apt={apt} action={updateAppointmentStatus} />
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -245,32 +299,45 @@ export default async function KlinikPanelPage() {
   )
 }
 
-function AppointmentCard({ apt, action, compact }: {
+function AppointmentCard({
+  apt, scoreInfo, action, compact,
+}: {
   apt: Appointment
+  scoreInfo?: { score: number; isFinal: boolean }
   action: (f: FormData) => Promise<void>
   compact?: boolean
 }) {
   return (
     <div className="p-3 bg-slate-900/50 rounded-xl">
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div>
-          <div className="text-white text-sm font-medium">{apt.profiles?.full_name ?? 'Hasta'}</div>
-          <div className="text-slate-400 text-xs mt-0.5">
-            {apt.appointment_date
-              ? new Date(apt.appointment_date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
-              : '—'}
-          </div>
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="flex items-center gap-2 min-w-0">
+          <Link href={`/klinik/panel/hasta/${apt.user_id}`}
+            className="text-white text-sm font-medium hover:text-violet-400 transition-colors truncate">
+            {apt.profiles?.full_name ?? 'Hasta'}
+          </Link>
+          {scoreInfo && (
+            <span className={`text-xs font-black shrink-0 ${scoreColorClass(scoreInfo.score)}`}>
+              {scoreInfo.score}{scoreInfo.isFinal ? '✦' : ''}
+            </span>
+          )}
         </div>
         <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${STATUS_COLOR[apt.status]}`}>
           {STATUS_LABEL[apt.status]}
         </span>
+      </div>
+      <div className="text-slate-400 text-xs mb-2">
+        {apt.appointment_date
+          ? new Date(apt.appointment_date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+          : '—'}
       </div>
       {!compact && <AppointmentActions apt={apt} action={action} />}
     </div>
   )
 }
 
-function AppointmentActions({ apt, action }: {
+function AppointmentActions({
+  apt, action,
+}: {
   apt: Appointment
   action: (f: FormData) => Promise<void>
 }) {
@@ -278,22 +345,19 @@ function AppointmentActions({ apt, action }: {
     return <span className="text-slate-600 text-xs">—</span>
   }
   return (
-    <div className="flex gap-1 flex-wrap">
+    <div className="flex gap-1 flex-wrap items-center">
+      {(apt.status === 'confirmed' || apt.status === 'in_progress') && (
+        <Link href={`/klinik/panel/randevu/${apt.id}`}
+          className="px-2 py-1 bg-violet-600 hover:bg-violet-500 text-white text-xs rounded-lg transition-colors font-medium">
+          {apt.status === 'in_progress' ? 'Devam →' : 'Başlat →'}
+        </Link>
+      )}
       {apt.status === 'pending' && (
         <form action={action}>
           <input type="hidden" name="appointmentId" value={apt.id} />
           <input type="hidden" name="status" value="confirmed" />
           <button type="submit" className="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-lg transition-colors">
             Onayla
-          </button>
-        </form>
-      )}
-      {apt.status === 'confirmed' && (
-        <form action={action}>
-          <input type="hidden" name="appointmentId" value={apt.id} />
-          <input type="hidden" name="status" value="completed" />
-          <button type="submit" className="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs rounded-lg transition-colors">
-            Tamamla
           </button>
         </form>
       )}
