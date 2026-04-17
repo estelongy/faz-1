@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import EGSScoreBar, { type EGSPhase } from '@/components/EGSScoreBar'
+import EGSScoreChart, { type ScorePoint } from '@/components/EGSScoreChart'
 
 const APT_STATUS_LABEL: Record<string, string> = {
   pending: 'Beklemede',
@@ -37,12 +38,24 @@ export default async function PanelPage() {
     .eq('id', user.id)
     .single()
 
-  const { data: analyses } = await supabase
+  const { data: allAnalysesRaw } = await supabase
     .from('analyses')
     .select('id, web_overall, temp_overall, final_overall, status, created_at')
     .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(5)
+    .order('created_at', { ascending: true })
+    .limit(30)
+
+  // Son 5'i (azalan) liste için
+  const analyses = [...(allAnalysesRaw ?? [])].reverse().slice(0, 5)
+
+  // Grafik için tüm skor noktaları
+  const chartPoints: ScorePoint[] = (allAnalysesRaw ?? []).flatMap(a => {
+    const pts: ScorePoint[] = []
+    const aiScore = a.web_overall ?? a.temp_overall
+    if (aiScore != null) pts.push({ date: a.created_at, score: aiScore, type: 'ai_analiz' })
+    if (a.final_overall != null) pts.push({ date: a.created_at, score: a.final_overall, type: 'klinik_onayli' })
+    return pts
+  })
 
   const { data: appointments } = await supabase
     .from('appointments')
@@ -51,7 +64,7 @@ export default async function PanelPage() {
     .order('appointment_date', { ascending: false })
     .limit(5)
 
-  const latestAnalysis = analyses?.[0] ?? null
+  const latestAnalysis = analyses[0] ?? null
   const latestScore = latestAnalysis?.final_overall ?? latestAnalysis?.temp_overall ?? latestAnalysis?.web_overall ?? null
 
   // Mevcut EGS aşamasını belirle
@@ -155,6 +168,17 @@ export default async function PanelPage() {
             </a>
           </div>
         </div>
+
+        {/* EGS Skor Geçmişi */}
+        {chartPoints.length > 0 && (
+          <div className="mb-6 bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-white">Skor Geçmişi</h2>
+              <span className="text-xs text-slate-500">{chartPoints.length} veri noktası</span>
+            </div>
+            <EGSScoreChart points={chartPoints} />
+          </div>
+        )}
 
         {/* Son analizler */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
