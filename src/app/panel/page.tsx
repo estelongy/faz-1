@@ -157,6 +157,22 @@ export default async function PanelPage() {
               <p className="text-slate-400 text-xs">Skorunu güncelle</p>
             </a>
 
+            {/* Longevity Anketi — sadece AI skoru var ama anket doldurmamışsa göster */}
+            {latestAnalysis?.web_overall != null && !latestAnalysis?.temp_overall && (
+              <a href="/anket" className="flex-1 group p-5 rounded-2xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 hover:scale-[1.02] transition-all cursor-pointer relative overflow-hidden">
+                <div className="absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400">
+                  +10 EGS
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mb-3 text-white">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                </div>
+                <h3 className="text-white font-bold mb-0.5">Longevity Anketi</h3>
+                <p className="text-slate-400 text-xs">Yaşam tarzı → skor artır</p>
+              </a>
+            )}
+
             <a href="/randevu" className="flex-1 group p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 hover:scale-[1.02] transition-all cursor-pointer">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-3 text-white">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
