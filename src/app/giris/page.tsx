@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
-export default function GirisPage() {
+function GirisInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -195,5 +195,13 @@ export default function GirisPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function GirisPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800" />}>
+      <GirisInner />
+    </Suspense>
   )
 }
