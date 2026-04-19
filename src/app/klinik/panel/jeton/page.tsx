@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import JetonSatinAl from './JetonSatinAl'
 
 export const metadata: Metadata = {
   title: 'Jeton Yönetimi',
@@ -22,7 +23,12 @@ const TYPE_COLOR: Record<string, string> = {
   manual:   'text-violet-400',
 }
 
-export default async function JetonPage() {
+export default async function JetonPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string; cancelled?: string }>
+}) {
+  const params = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/giris')
@@ -41,8 +47,8 @@ export default async function JetonPage() {
     .order('created_at', { ascending: false })
     .limit(100)
 
-  const totalKullanim  = (transactions ?? []).filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0)
-  const totalYukleme   = (transactions ?? []).filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0)
+  const totalKullanim = (transactions ?? []).filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0)
+  const totalYukleme  = (transactions ?? []).filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0)
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
@@ -51,13 +57,26 @@ export default async function JetonPage() {
           <div className="flex items-center gap-3">
             <Link href="/klinik/panel" className="text-slate-400 hover:text-white transition-colors text-sm">← Panel</Link>
             <span className="text-slate-700">|</span>
-            <span className="text-white font-bold text-sm">Jeton Geçmişi</span>
+            <span className="text-white font-bold text-sm">Jeton Yönetimi</span>
           </div>
           <span className="text-slate-500 text-xs hidden sm:block">{clinic.name}</span>
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto px-4 pt-24 pb-16">
+
+        {/* Başarı / İptal banner */}
+        {params.success === '1' && (
+          <div className="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium">
+            ✅ Ödeme başarılı! Jetonlarınız hesabınıza yüklendi.
+          </div>
+        )}
+        {params.cancelled === '1' && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm font-medium">
+            ⚠ Ödeme iptal edildi. İstediğiniz zaman tekrar deneyebilirsiniz.
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-2xl font-black text-white">Jeton Yönetimi</h1>
           <p className="text-slate-400 mt-0.5 text-sm">Her hasta kabulünde 1 jeton düşülür.</p>
@@ -84,9 +103,15 @@ export default async function JetonPage() {
 
         {clinic.jeton_balance === 0 && (
           <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-            ⚠ Jeton bakiyeniz sıfır. Yöneticinizden jeton yüklemesini isteyin.
+            ⚠ Jeton bakiyeniz sıfır. Hasta kabulü yapabilmek için jeton satın alın.
           </div>
         )}
+
+        {/* Jeton Satın Al */}
+        <div className="mb-8">
+          <h2 className="text-white font-bold text-lg mb-4">Jeton Satın Al</h2>
+          <JetonSatinAl />
+        </div>
 
         {/* İşlem geçmişi */}
         <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
