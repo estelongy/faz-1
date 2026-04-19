@@ -3,11 +3,11 @@ import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-03-31.basil',
+  apiVersion: '2026-03-25.dahlia',
 })
 
 // Jeton paketleri
-export const JETON_PACKAGES = [
+const JETON_PACKAGES = [
   { id: 'jeton_10',  label: '10 Jeton',  jetons: 10,  price: 4900,  currency: 'eur', popular: false },
   { id: 'jeton_25',  label: '25 Jeton',  jetons: 25,  price: 9900,  currency: 'eur', popular: true  },
   { id: 'jeton_50',  label: '50 Jeton',  jetons: 50,  price: 17900, currency: 'eur', popular: false },
