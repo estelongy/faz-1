@@ -40,7 +40,7 @@ export default async function SiparisPage({
 
   const { data: order } = await supabase
     .from('orders')
-    .select('*, order_items(*, vendors(company_name, slug), returns(id, status, reason, description, created_at))')
+    .select('*, order_items(*, vendors(company_name), returns(id, status, reason, description, created_at))')
     .eq('order_number', orderNumber)
     .eq('user_id', user.id)
     .single()
