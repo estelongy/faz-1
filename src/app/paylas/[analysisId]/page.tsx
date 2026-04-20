@@ -128,7 +128,7 @@ export default async function SharePage(
       <div className="mt-10 text-center max-w-md">
         <h2 className="text-2xl font-bold text-white mb-3">Senin skorun ne?</h2>
         <p className="text-slate-400 mb-6 text-sm">
-          Ön analizle biyolojik cilt yaşının tahminini <strong>ücretsiz</strong> öğren.
+          <strong>Ücretsiz</strong> ön analizle başla, klinik onayıyla kesin Gençlik Skoruna ulaş.
         </p>
         <Link
           href="/kayit?next=/analiz"

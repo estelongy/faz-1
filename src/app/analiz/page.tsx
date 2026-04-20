@@ -159,8 +159,8 @@ export default function AnalizPage() {
         {step === 'upload' && (
           <div>
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">Ön Analizini Yap</h1>
-              <p className="text-slate-400">Yüzün net görünsün. Hızlı bir tahmin çıkaralım — kesin skor klinik muayeneyle oluşur.</p>
+              <h1 className="text-3xl font-bold text-white mb-2">Gençlik Skorunu Öğren</h1>
+              <p className="text-slate-400">Selfie ile ön analiz başlasın — ön skorun saniyeler içinde hazır. Kesin skor klinik muayenesiyle oluşur.</p>
             </div>
 
             {!previewUrl ? (
@@ -272,9 +272,9 @@ export default function AnalizPage() {
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Ön Analiz — Tahmini
+                Ön Analiz · Tahmini Skor
               </div>
-              <h1 className="text-3xl font-bold text-white mb-2">Ön Analizin Hazır</h1>
+              <h1 className="text-3xl font-bold text-white mb-2">Ön Gençlik Skorun Hazır</h1>
               <p className="text-slate-400">Kesin skor klinik muayenesiyle oluşur — randevu al, <span className="text-emerald-400 font-semibold">Klinik Onaylı EGS</span> sertifikana ulaş</p>
             </div>
 

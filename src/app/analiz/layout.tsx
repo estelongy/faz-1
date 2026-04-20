@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'EGS Analizi',
-  description: 'Selfie yükleyerek biyolojik cilt yaşınızı ve EGS skorunuzu öğrenin.',
+  title: 'Ön Analiz — Gençlik Skoru',
+  description: 'Selfie ile ön Gençlik Skorunu (EGS) öğren. Klinik onayıyla kesinleşir.',
 }
 
 export default function AnalizLayout({ children }: { children: React.ReactNode }) {

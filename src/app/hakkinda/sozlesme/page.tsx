@@ -21,7 +21,7 @@ export default function SozlesmePage() {
             </section>
             <section>
               <h2 className="text-white font-semibold text-base mb-2">2. Hizmetin Kapsamı</h2>
-              <p>Platform; cilt gençlik skoru ön analizi, EGS (Estelongy Gençlik Skoru) hesaplama, estetik klinik randevu yönetimi ve ürün değerlendirme hizmetleri sunar. Sağlanan ön analizler tıbbi teşhis niteliği taşımaz; yalnızca kliniğe yönlendirici bilgi amaçlıdır.</p>
+              <p>Estelongy, kullanıcıların Gençlik Skorunu (EGS — Estelongy Gençlik Skoru) tespit eden bir platformdur. Skor; fotoğraf ön analizi, longevity anketi, tetkik sonuçları ve hekim değerlendirmesi gibi birden çok girdinin birleşimiyle hesaplanır. Platform ayrıca estetik klinik randevu yönetimi ve ürün değerlendirme hizmetleri sunar. Sağlanan ön analizler tıbbi teşhis niteliği taşımaz; yalnızca kliniğe yönlendirici bilgi amaçlıdır.</p>
             </section>
             <section>
               <h2 className="text-white font-semibold text-base mb-2">3. Kullanıcı Yükümlülükleri</h2>

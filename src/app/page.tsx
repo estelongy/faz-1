@@ -143,7 +143,7 @@ export default function Home() {
                   Gençlik Skorunu<br />Öğren
                 </h3>
                 <p className="text-slate-400 text-sm leading-relaxed mb-5">
-                  Tek bir selfie ile biyolojik cilt yaşını ve EGS skorunu saniyeler içinde al.
+                  Selfie ile ön Gençlik Skorunu (EGS) saniyeler içinde al.
                 </p>
                 <div className="flex items-center gap-2 text-violet-300 font-semibold text-sm group-hover:gap-3 transition-all">
                   <span>Analizi başlat</span>
@@ -263,11 +263,11 @@ export default function Home() {
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-sm mb-6">
                 EGS — Estelongy Gençlik Skoru
               </div>
-              <h2 className="text-4xl font-black text-white mb-6">Cildinizin bilimsel puanı</h2>
+              <h2 className="text-4xl font-black text-white mb-6">Gençlik Skorun 0–100 arası</h2>
               <p className="text-slate-400 leading-relaxed mb-6">
-                EGS (Estelongy Gençlik Skoru), C250 formülüne dayalı bir biyolojik cilt yaş göstergesidir.
-                Kırışıklık, pigmentasyon, nem seviyesi, ton üniformluğu ve göz altı alanları
-                değerlendirilerek 0–100 arasında bir skor üretilir; klinik muayeneyle kesinleşir.
+                EGS (Estelongy Gençlik Skoru), C250 formülüne dayalı bir biyolojik gençlik göstergesidir.
+                Cilt görseli, yaşam tarzı anketi, tetkik sonuçları ve hekim değerlendirmesi
+                birleştirilerek 0–100 arasında <strong>tek bir skor</strong> üretilir; klinik onayıyla kesinleşir.
               </p>
               <div className="space-y-3">
                 {[

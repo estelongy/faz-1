@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
-export const alt = 'Estelongy — Klinik Onaylı Cilt Gençlik Skoru'
+export const alt = 'Estelongy — Gençlik Skoru Platformu'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -57,7 +57,7 @@ export default function OGImage() {
           marginBottom: 12,
           textAlign: 'center',
         }}>
-          Gerçek yaşınız ile cilt yaşınız aynı mı?
+          Gençlik Skorunu Öğren
         </div>
 
         <div style={{
@@ -66,7 +66,7 @@ export default function OGImage() {
           textAlign: 'center',
           maxWidth: 600,
         }}>
-          Selfie ile biyolojik cilt yaşınızı öğrenin
+          Ön analiz · Longevity anketi · Klinik onay — tek platformda EGS
         </div>
 
         {/* Score zones */}
