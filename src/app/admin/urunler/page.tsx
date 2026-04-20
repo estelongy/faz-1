@@ -7,6 +7,8 @@ import UrunOnayActions from './UrunOnayActions'
 
 export const metadata: Metadata = { title: 'Ürün Onayları — Admin' }
 
+type VendorInfo = { company_name: string } | null
+
 const CATEGORY_LABELS: Record<string, string> = {
   botox: 'Botoks', filler: 'Dolgu', mezo: 'Mezoterapi', laser: 'Lazer',
   gold_needle: 'Altın İğne', peeling: 'Peeling', serum: 'Serum',
@@ -63,8 +65,8 @@ export default async function AdminUrunlerPage() {
                         </span>
                       )}
                     </div>
-                    {(p.vendors as any)?.company_name && (
-                      <p className="text-slate-500 text-xs mb-1">Satıcı: {(p.vendors as any).company_name}</p>
+                    {(p.vendors as VendorInfo)?.company_name && (
+                      <p className="text-slate-500 text-xs mb-1">Satıcı: {(p.vendors as VendorInfo)?.company_name}</p>
                     )}
                     {p.description && <p className="text-slate-400 text-sm mb-2">{p.description}</p>}
                     {p.price && <p className="text-slate-300 text-sm">₺{Number(p.price).toLocaleString('tr-TR')}</p>}
@@ -95,8 +97,8 @@ export default async function AdminUrunlerPage() {
               <div key={p.id} className="flex items-center justify-between p-4 bg-slate-800/30 border border-slate-700 rounded-2xl gap-4">
                 <div>
                   <span className="text-white text-sm font-medium">{p.name}</span>
-                  {(p.vendors as any)?.company_name && (
-                    <span className="text-slate-500 text-xs ml-2">— {(p.vendors as any).company_name}</span>
+                  {(p.vendors as VendorInfo)?.company_name && (
+                    <span className="text-slate-500 text-xs ml-2">— {(p.vendors as VendorInfo)?.company_name}</span>
                   )}
                 </div>
                 <UrunOnayActions productId={p.id} currentStatus="approved" />

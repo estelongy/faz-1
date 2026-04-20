@@ -216,8 +216,8 @@ export default function KayitPage() {
                   </div>
                 </div>
                 <span className="text-slate-400 text-sm leading-relaxed">
-                  <Link href="#" className="text-violet-400 hover:text-violet-300 underline">Üyelik Sözleşmesi</Link>'ni ve{' '}
-                  <Link href="#" className="text-violet-400 hover:text-violet-300 underline">Hasta Aydınlatma Metni</Link>'ni okudum, kabul ediyorum.
+                  <Link href="#" className="text-violet-400 hover:text-violet-300 underline">Üyelik Sözleşmesi</Link>&apos;ni ve{' '}
+                  <Link href="#" className="text-violet-400 hover:text-violet-300 underline">Hasta Aydınlatma Metni</Link>&apos;ni okudum, kabul ediyorum.
                 </span>
               </label>
             </div>

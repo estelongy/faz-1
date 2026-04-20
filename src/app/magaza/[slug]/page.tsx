@@ -197,7 +197,7 @@ export default async function UrunDetayPage({
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-white font-medium text-sm">
-                        {(review.profiles as any)?.full_name ?? 'Kullanıcı'}
+                        {(review.profiles as { full_name?: string } | null)?.full_name ?? 'Kullanıcı'}
                       </span>
                       {review.is_verified && (
                         <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Doğrulanmış</span>
