@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
@@ -28,6 +28,8 @@ function getNext14Days() {
 
 export default function RandevuPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const preselectedClinicId = searchParams.get('k')
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [clinics, setClinics] = useState<Clinic[]>([])
   const [loading, setLoading] = useState(true)
@@ -99,10 +101,20 @@ export default function RandevuPage() {
       .eq('approval_status', 'approved')
       .eq('is_active', true)
       .then(({ data }) => {
-        setClinics((data ?? []) as Clinic[])
+        const list = (data ?? []) as Clinic[]
+        setClinics(list)
         setLoading(false)
+
+        // Paylaşım linkinden gelinmişse (?k=<clinic_id>) kliniği önseç
+        if (preselectedClinicId) {
+          const preselected = list.find(c => c.id === preselectedClinicId)
+          if (preselected) {
+            setSelectedClinic(preselected)
+            setStep(2)
+          }
+        }
       })
-  }, [router])
+  }, [router, preselectedClinicId])
 
   async function handleConfirm() {
     if (!selectedClinic || !selectedDay || !selectedTime) return

@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { pathForRole } from '@/lib/auth-redirect'
+import KlinikWelcome from '@/components/KlinikWelcome'
 
 export const metadata: Metadata = {
   title: 'Klinik Paneli',
@@ -200,6 +201,17 @@ export default async function KlinikPanelPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
+
+        {/* ── İlk kullanım: hiç randevu yok → Welcome State ── */}
+        {clinic && appts.length === 0 ? (
+          <KlinikWelcome
+            clinicName={clinic.name}
+            clinicId={clinic.id}
+            jetonBalance={clinic.jeton_balance ?? 0}
+          />
+        ) : (
+        <>
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">Klinik Paneli</h1>
           <p className="text-slate-400 mt-1">{clinic?.name ?? 'Kliniğiniz'} — randevu yönetimi</p>
@@ -390,6 +402,10 @@ export default async function KlinikPanelPage() {
             <div className="text-center py-12 text-slate-500">Henüz randevu yok</div>
           )}
         </div>
+
+        </>
+        )}
+
       </div>
     </main>
   )
