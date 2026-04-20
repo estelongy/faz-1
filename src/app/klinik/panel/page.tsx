@@ -78,6 +78,10 @@ export default async function KlinikPanelPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/giris')
 
+  const role = (user.app_metadata as Record<string, string>)?.role
+  if (role === 'admin') redirect('/admin')
+  if (role === 'vendor') redirect('/satici/panel')
+
   const { data: clinic } = await supabase
     .from('clinics')
     .select('id, name, approval_status, is_active, jeton_balance')

@@ -36,6 +36,10 @@ export default async function SaticiPanelPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/giris')
 
+  const role = (user.app_metadata as Record<string, string>)?.role
+  if (role === 'admin') redirect('/admin')
+  if (role === 'clinic') redirect('/klinik/panel')
+
   // Satıcı kaydını bul
   const { data: vendor } = await supabase
     .from('vendors')
