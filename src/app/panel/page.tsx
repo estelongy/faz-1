@@ -13,6 +13,7 @@ import { pathForRole } from '@/lib/auth-redirect'
 import EGSScoreBar, { type EGSPhase } from '@/components/EGSScoreBar'
 import EGSScoreChart, { type ScorePoint } from '@/components/EGSScoreChart'
 import EGSFixedBadge from '@/components/EGSFixedBadge'
+import PaylasModal from '@/components/PaylasModal'
 
 const APT_STATUS_LABEL: Record<string, string> = {
   pending:     'Beklemede',
@@ -178,11 +179,27 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
           {/* EGS Bar — 2 kolon */}
           <div className="lg:col-span-2 p-6 rounded-2xl border border-slate-700 bg-slate-800/50 backdrop-blur-sm">
             {latestScore !== null ? (
-              <EGSScoreBar
-                score={latestScore}
-                phase={currentPhase}
-                animated={false}
-              />
+              <>
+                <EGSScoreBar
+                  score={latestScore}
+                  phase={currentPhase}
+                  animated={false}
+                />
+                {/* Klinik onaylı skor → paylaş butonu */}
+                {latestAnalysis?.final_overall != null && (
+                  <div className="mt-5 pt-5 border-t border-slate-700/50 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-emerald-400 text-xs font-bold mb-0.5">✦ KLİNİK ONAYLI EGS</p>
+                      <p className="text-slate-400 text-xs">Skorunu arkadaşlarınla paylaş</p>
+                    </div>
+                    <PaylasModal
+                      analysisId={latestAnalysis.id}
+                      score={latestAnalysis.final_overall}
+                      firstName={profile?.full_name?.split(' ')[0] ?? 'Kullanıcı'}
+                    />
+                  </div>
+                )}
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mb-4">

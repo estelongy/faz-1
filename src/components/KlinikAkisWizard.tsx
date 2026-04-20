@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
+import PaylasModal from './PaylasModal'
 
 // ── Anket soruları (C250 formülüne göre güncellenecek) ────────────
 const ANKET_SORULAR = [
@@ -372,7 +373,16 @@ export default function KlinikAkisWizard({
           <div className="text-center py-6 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl">
             <p className="text-emerald-400 text-sm font-bold mb-2">✦ KLİNİK ONAYLI EGS YAYINLANDI ✦</p>
             <p className="text-7xl font-black text-emerald-400">{publishedScore}</p>
-            <p className="text-slate-400 text-sm mt-2">Hasta panelinde görünüyor</p>
+            <p className="text-slate-400 text-sm mt-2 mb-4">Hasta panelinde görünüyor</p>
+            {analysis && (
+              <div className="flex justify-center">
+                <PaylasModal
+                  analysisId={analysis.id}
+                  score={publishedScore}
+                  firstName={appointment.profiles?.full_name?.split(' ')[0] ?? 'Hasta'}
+                />
+              </div>
+            )}
           </div>
         ) : (
           <>
