@@ -18,7 +18,7 @@ interface AnalysisResult {
   recommendations: string[]
 }
 
-// Mock AI analiz sonucu üretir — gerçek API entegrasyonu için burası değiştirilecek
+// Ön analiz sonucu üretir (Faz 2 sonunda gerçek görsel analiz ile değişecek)
 function mockAnalyze(): AnalysisResult {
   const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
   const overall = rand(60, 92)
@@ -81,7 +81,7 @@ export default function AnalizPage() {
     const supabase = createClient()
     setStep('processing')
 
-    // Yapay gecikme — AI işlem süresi simülasyonu
+    // Yapay gecikme — işlem süresi simülasyonu
     await new Promise(r => setTimeout(r, 2800))
 
     const analysisResult = mockAnalyze()
@@ -159,8 +159,8 @@ export default function AnalizPage() {
         {step === 'upload' && (
           <div>
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">Cilt Analizinizi Başlatın</h1>
-              <p className="text-slate-400">Yüzünüzün net göründüğü bir selfie yükleyin</p>
+              <h1 className="text-3xl font-bold text-white mb-2">Ön Analizini Yap</h1>
+              <p className="text-slate-400">Yüzün net görünsün. Hızlı bir tahmin çıkaralım — kesin skor klinik muayeneyle oluşur.</p>
             </div>
 
             {!previewUrl ? (
@@ -244,8 +244,8 @@ export default function AnalizPage() {
                 </svg>
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-white mb-3">Cildiniz Analiz Ediliyor</h2>
-            <p className="text-slate-400 mb-8">AI modelimiz fotoğrafınızı işliyor...</p>
+            <h2 className="text-2xl font-bold text-white mb-3">Fotoğrafın İşleniyor</h2>
+            <p className="text-slate-400 mb-8">Ön analiz hesaplanıyor, birkaç saniye...</p>
             <div className="space-y-3 text-left max-w-xs mx-auto">
               {[
                 'Yüz tespiti yapılıyor',
@@ -268,8 +268,14 @@ export default function AnalizPage() {
         {step === 'result' && result && (
           <div>
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">Analiziniz Hazır</h1>
-              <p className="text-slate-400">İlk EGS Gençlik Skorunuz hesaplandı</p>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold mb-4">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Ön Analiz — Tahmini
+              </div>
+              <h1 className="text-3xl font-bold text-white mb-2">Ön Analizin Hazır</h1>
+              <p className="text-slate-400">Kesin skor klinik muayenesiyle oluşur — randevu al, <span className="text-emerald-400 font-semibold">Klinik Onaylı EGS</span> sertifikana ulaş</p>
             </div>
 
             {/* EGS Canlı Skor Barı */}

@@ -75,12 +75,12 @@ const MINOR_TICKS = [10, 20, 30, 40, 60, 70, 80]
 
 // ── Aşamalar ────────────────────────────────────────────────────
 const PHASES = [
-  { key: 'ai_analiz',           label: 'AI Analiz'  },
+  { key: 'ai_analiz',           label: 'Ön Analiz'   },
   { key: 'longevity_anketi',    label: 'Anket'       },
   { key: 'randevu',             label: 'Randevu'     },
   { key: 'klinik_kabul',        label: 'Kabul'       },
   { key: 'klinik_anketi',       label: 'Kl.Anketi'   },
-  { key: 'ileri_ai',            label: 'İleri AI'    },
+  { key: 'ileri_ai',            label: 'İleri Analiz'},
   { key: 'tetkik',              label: 'Tetkik'      },
   { key: 'hekim_degerlendirme', label: 'Hekim'       },
   { key: 'klinik_onayli',       label: 'Onaylı EGS'  },
@@ -162,8 +162,13 @@ export default function EGSScoreBar({
            style={{ color: zone.color, textShadow: `0 0 14px ${zone.color}70` }}>
           ESTELONGY
         </p>
-        <p className="text-[9px] font-semibold tracking-[0.18em] text-slate-500 uppercase mt-0.5">
-          {isLast ? '✦ KLİNİK ONAYLI ✦' : 'Gençlik Skoru'}
+        <p className="text-[9px] font-semibold tracking-[0.18em] uppercase mt-0.5"
+           style={{ color: isLast ? '#34d399' : phase === 'ai_analiz' ? '#fbbf24' : '#94a3b8' }}>
+          {isLast
+            ? '✦ KLİNİK ONAYLI ✦'
+            : phase === 'ai_analiz'
+              ? 'ÖN ANALİZ — TAHMİNİ'
+              : 'Gençlik Skoru'}
         </p>
       </div>
 

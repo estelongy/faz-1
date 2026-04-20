@@ -173,7 +173,7 @@ export default function AnketPage() {
         <div className="mb-8 p-5 rounded-2xl border border-slate-700 bg-slate-800/50">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-slate-400 text-sm">AI Ön Skorunuz</p>
+              <p className="text-slate-400 text-sm">Ön Analiz Skorunuz</p>
               <p className="text-4xl font-black mt-0.5" style={{ color: scoreColor(mevcutSkor) }}>
                 {mevcutSkor}
               </p>

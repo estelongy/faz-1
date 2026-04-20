@@ -312,7 +312,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                         hasAnket ? 'bg-amber-500/20 text-amber-400' :
                         'bg-violet-500/20 text-violet-400'
                       }`}>
-                        {isClinicApproved ? 'Klinik Onaylı' : hasAnket ? 'Anket Yapıldı' : 'AI Analiz'}
+                        {isClinicApproved ? 'Klinik Onaylı' : hasAnket ? 'Anket Yapıldı' : 'Ön Analiz'}
                       </span>
                     </div>
                   )

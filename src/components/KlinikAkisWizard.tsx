@@ -136,7 +136,7 @@ export default function KlinikAkisWizard({
               <p className="text-white mt-0.5">{appointment.notes || 'Not yok'}</p>
             </div>
             <div>
-              <span className="text-slate-500">AI Ön Skoru</span>
+              <span className="text-slate-500">Ön Analiz Skoru</span>
               <p className="font-bold text-xl mt-0.5" style={{ color: scoreColor(mevcutSkor) }}>
                 {mevcutSkor} / 100
               </p>
@@ -147,9 +147,9 @@ export default function KlinikAkisWizard({
         {analysis?.web_overall && (
           <div className="p-4 rounded-xl border text-sm" style={{ borderColor: `${scoreColor(mevcutSkor)}30`, background: `${scoreColor(mevcutSkor)}0d` }}>
             <p className="font-medium" style={{ color: scoreColor(mevcutSkor) }}>
-              AI analizi mevcut — skor: <strong>{mevcutSkor}</strong>
+              Hastanın ön analiz skoru: <strong>{mevcutSkor}</strong>
             </p>
-            <p className="text-slate-500 mt-0.5">Klinik akışı tamamlandığında bu skor klinik onaylı EGS&apos;ye dönüşecek.</p>
+            <p className="text-slate-500 mt-0.5">Tahmini bir başlangıç değeri. Muayeneyle ve sizin değerlendirmenizle Klinik Onaylı EGS&apos;ye dönüşür.</p>
           </div>
         )}
 
@@ -307,9 +307,9 @@ export default function KlinikAkisWizard({
     return (
       <div className="space-y-5">
         <div className="p-5 bg-slate-800/60 rounded-2xl border border-slate-700">
-          <p className="text-slate-400 text-sm mb-1">AI ön skoru</p>
+          <p className="text-slate-400 text-sm mb-1">Ön analiz skoru</p>
           <p className="text-3xl font-black" style={{ color: scoreColor(mevcutSkor) }}>{mevcutSkor}</p>
-          <p className="text-slate-500 text-xs mt-1">Anket katkısıyla tahmini: {aralikSkor}</p>
+          <p className="text-slate-500 text-xs mt-1">Anket katkısıyla tahmini: {aralikSkor} — nihai karar sizde</p>
         </div>
 
         <div className="p-5 bg-slate-800/60 rounded-2xl border border-slate-700">
@@ -390,13 +390,13 @@ export default function KlinikAkisWizard({
               <p className="text-slate-400 text-sm mb-2">Yayınlanacak EGS Skoru</p>
               <p className="text-7xl font-black" style={{ color: scoreColor(finalSkor) }}>{finalSkor}</p>
               <p className="text-slate-500 text-xs mt-2">
-                AI: {mevcutSkor} · Anket: +{anketKatkisi} · Hekim: {hekimScore}
+                Ön: {mevcutSkor} · Anket: +{anketKatkisi} · Hekim: {hekimScore}
               </p>
             </div>
 
             <div className="space-y-3 p-4 bg-slate-800/40 rounded-xl border border-slate-700 text-sm">
               <div className="flex justify-between"><span className="text-slate-400">Hasta</span><span className="text-white">{appointment.profiles?.full_name}</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">AI Ön Skoru</span><span style={{ color: scoreColor(mevcutSkor) }}>{mevcutSkor}</span></div>
+              <div className="flex justify-between"><span className="text-slate-400">Ön Analiz Skoru</span><span style={{ color: scoreColor(mevcutSkor) }}>{mevcutSkor}</span></div>
               <div className="flex justify-between"><span className="text-slate-400">Anket Katkısı</span><span className="text-emerald-400">+{anketKatkisi}</span></div>
               <div className="flex justify-between"><span className="text-slate-400">Hekim Değerlendirmesi</span><span style={{ color: scoreColor(hekimScore) }}>{hekimScore}</span></div>
               <div className="flex justify-between border-t border-slate-700 pt-2"><span className="text-white font-bold">Final EGS</span><span className="text-xl font-black" style={{ color: scoreColor(finalSkor) }}>{finalSkor}</span></div>

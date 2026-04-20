@@ -252,7 +252,7 @@ export default async function HastaDetayPage({
                 <thead>
                   <tr className="border-b border-slate-800">
                     <th className="text-left px-4 py-3 text-slate-400 font-medium">Tarih</th>
-                    <th className="text-left px-4 py-3 text-slate-400 font-medium">AI Skoru</th>
+                    <th className="text-left px-4 py-3 text-slate-400 font-medium">Ön Skor</th>
                     <th className="text-left px-4 py-3 text-slate-400 font-medium">Klinik Onaylı</th>
                     <th className="text-left px-4 py-3 text-slate-400 font-medium">Durum</th>
                   </tr>

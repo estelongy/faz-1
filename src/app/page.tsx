@@ -12,7 +12,7 @@ const STEPS = [
     num: '01',
     color: 'from-violet-500 to-purple-600',
     title: 'Selfie Yükle',
-    desc: 'Tek bir fotoğraf yeterli. AI modelimiz yüzünüzdeki 12 yaşlanma göstergesini tarar.',
+    desc: 'Tek bir fotoğraf yeterli. Yüzünüzdeki yaşlanma göstergelerinden ön analiz skorunuz üretilir.',
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -61,7 +61,7 @@ const STEPS = [
 
 const CLINIC_FEATURES = [
   { icon: '🎯', title: 'Sadece Gelen Müşteri', desc: 'Randevu başına değil, klinik kabul anında jeton düşer. No-show = sıfır maliyet.' },
-  { icon: '📊', title: 'Hasta EGS Takibi', desc: 'Her hastanın skor geçmişi, AI analiz detayları ve klinik notları tek ekranda.' },
+  { icon: '📊', title: 'Hasta EGS Takibi', desc: 'Her hastanın skor geçmişi, ön analiz detayları ve klinik notları tek ekranda.' },
   { icon: '🔬', title: 'Hekim Onay Sistemi', desc: 'Anket + tetkik + hekim değerlendirmesiyle bilimsel olarak doğrulanmış final skor.' },
   { icon: '⚡', title: 'Kolay Başlangıç', desc: 'Platform ücretsiz. Jeton paketi satın al, ilk hastanı kabul et. Dakikalar içinde hazır.' },
 ]
@@ -103,9 +103,9 @@ export default function Home() {
       {/* ── Hero ────────────────────────────────────────────────── */}
       <section className="pt-32 pb-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-sm mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-            Yapay Zeka Destekli Cilt Yaşlanma Analizi
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-8">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Klinik Onaylı Cilt Gençlik Skoru
           </div>
 
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] mb-6">
@@ -117,8 +117,8 @@ export default function Home() {
           </h1>
 
           <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Tek bir selfie ile biyolojik cilt yaşınızı öğrenin.
-            AI analizini klinik onayıyla doğrulayın, arkadaşlarınızla paylaşın.
+            Selfie ile ön analizini al, longevity anketi ve klinik muayenesiyle{' '}
+            <span className="text-emerald-400 font-semibold">Klinik Onaylı EGS</span>&apos;ye dönüştür.
           </p>
 
           <p className="text-slate-500 text-sm uppercase tracking-widest mb-8">Nereden başlamak istersin?</p>
@@ -229,7 +229,7 @@ export default function Home() {
             </div>
             <h2 className="text-4xl font-black text-white">Nasıl çalışır?</h2>
             <p className="text-slate-400 mt-3 max-w-xl mx-auto">
-              Ücretsiz AI analizinden klinik onaylı sertifikaya 4 adımda ulaşın.
+              Ücretsiz ön analizden klinik onaylı sertifikaya 4 adımda ulaşın.
             </p>
           </div>
 
@@ -267,11 +267,11 @@ export default function Home() {
               <p className="text-slate-400 leading-relaxed mb-6">
                 EGS (Estelongy Gençlik Skoru), C250 formülüne dayalı bir biyolojik cilt yaş göstergesidir.
                 Kırışıklık, pigmentasyon, nem seviyesi, ton üniformluğu ve göz altı alanları
-                AI tarafından analiz edilerek 0–100 arasında bir skor üretilir.
+                değerlendirilerek 0–100 arasında bir skor üretilir; klinik muayeneyle kesinleşir.
               </p>
               <div className="space-y-3">
                 {[
-                  { label: 'AI Ön Analiz', desc: 'Selfie ile anında, ücretsiz', badge: 'Herkese açık' },
+                  { label: 'Ön Analiz', desc: 'Selfie ile anında, ücretsiz', badge: 'Herkese açık' },
                   { label: 'Longevity Anketi', desc: 'Yaşam tarzı katkısı +10 puan', badge: 'Ücretsiz' },
                   { label: 'Klinik Onaylı EGS', desc: 'Hekim doğrulamalı sertifika', badge: 'Paylaşılabilir' },
                 ].map(item => (
@@ -357,11 +357,11 @@ export default function Home() {
             {[
               {
                 q: 'EGS analizi gerçekten ücretsiz mi?',
-                a: 'Evet. Selfie analizi, longevity anketi ve AI skorlama tamamen ücretsizdir. Klinik onaylı EGS sertifikası almak için bir kliniğe randevu almanız yeterli.',
+                a: 'Evet. Ön analiz, longevity anketi ve skor tahmini tamamen ücretsizdir. Klinik onaylı EGS sertifikası almak için bir kliniğe randevu almanız yeterli.',
               },
               {
-                q: 'Klinik Onaylı EGS ile AI Analizi arasındaki fark nedir?',
-                a: 'AI Analizi selfienizle anlık hesaplanan tahmini bir skordur. Klinik Onaylı EGS ise uzman hekim tarafından anket, tetkik ve yüz yüze değerlendirmeyle doğrulanmış, paylaşılabilir sertifikalı skordur.',
+                q: 'Klinik Onaylı EGS ile Ön Analiz arasındaki fark nedir?',
+                a: 'Ön Analiz selfienizle anlık hesaplanan tahmini bir değerdir; yol göstermek içindir, tıbbi karar aracı değildir. Klinik Onaylı EGS ise uzman hekim tarafından anket, tetkik ve yüz yüze değerlendirmeyle doğrulanmış, paylaşılabilir sertifikalı skordur.',
               },
               {
                 q: 'Fotoğrafım güvende mi?',

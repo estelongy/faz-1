@@ -108,9 +108,9 @@ export default async function SaticiBasvurPage({
 
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
-            { icon: '🛍️', title: 'Geniş Kitle', desc: 'Binlerce aktif kullanıcıya ulaşın' },
-            { icon: '🤖', title: 'AI Öneri', desc: 'Ürünleriniz AI tarafından önerilir' },
-            { icon: '📊', title: 'Analitik', desc: 'Satış verilerinizi takip edin' },
+            { icon: '🛍️', title: 'Hedefli Kitle', desc: 'Cilt sağlığına yatırım yapan hastalara ulaşın' },
+            { icon: '✓',  title: 'Hekim Puanlı', desc: 'Ürünleriniz uzman değerlendirmesiyle öne çıkar' },
+            { icon: '📊', title: 'Analitik', desc: 'Satış ve etkileşim verilerinizi takip edin' },
           ].map(({ icon, title, desc }) => (
             <div key={title} className="p-4 rounded-xl bg-slate-800/50 border border-slate-700 text-center">
               <div className="text-2xl mb-2">{icon}</div>

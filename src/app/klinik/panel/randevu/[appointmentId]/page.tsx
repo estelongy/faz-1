@@ -199,7 +199,7 @@ export default async function RandevuAkisPage({
 
         {!analysis && (
           <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 text-sm">
-            ⚠ Bu hastanın henüz AI analizi yok. Hasta önce analiz yapmalı.
+            ⚠ Bu hastanın henüz ön analizi yok. Hasta önce analiz yapmalı.
           </div>
         )}
 
