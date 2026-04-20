@@ -38,7 +38,10 @@ export async function POST(req: NextRequest) {
     const productIds = body.items.map(i => i.productId)
     const { data: products } = await supabase
       .from('products')
-      .select('id, name, slug, price, stock, is_active, approval_status, images, vendor_id, vendors(company_name, commission_rate)')
+      .select(`
+        id, name, slug, price, stock, is_active, approval_status, images, vendor_id,
+        vendors(company_name, commission_rate, stripe_account_id, stripe_charges_enabled)
+      `)
       .in('id', productIds)
     if (!products || products.length !== productIds.length) {
       return NextResponse.json({ error: 'Bazı ürünler artık mevcut değil' }, { status: 400 })
@@ -57,6 +60,8 @@ export async function POST(req: NextRequest) {
       vendor_payout: number
     }> = []
     let subtotal = 0
+    // Destination charge için tek vendor gerekli — farklıysa platform hesabı toplar
+    const vendorStripeAccounts = new Set<string>()
     for (const item of body.items) {
       const p = products.find(x => x.id === item.productId)
       if (!p) return NextResponse.json({ error: `Ürün bulunamadı: ${item.productId}` }, { status: 400 })
@@ -69,10 +74,18 @@ export async function POST(req: NextRequest) {
       const unit = Number(p.price ?? 0)
       if (unit <= 0) return NextResponse.json({ error: `Geçersiz fiyat: ${p.name}` }, { status: 400 })
       const lineTotal = unit * item.quantity
-      const vendorInfo = (p.vendors as { company_name?: string; commission_rate?: number } | null)
+      const vendorInfo = (p.vendors as {
+        company_name?: string
+        commission_rate?: number
+        stripe_account_id?: string | null
+        stripe_charges_enabled?: boolean | null
+      } | null)
       const commissionRate = Number(vendorInfo?.commission_rate ?? 0.15)
       const commissionAmount = Math.round(lineTotal * commissionRate * 100) / 100
       const vendorPayout = Math.round((lineTotal - commissionAmount) * 100) / 100
+      if (vendorInfo?.stripe_account_id && vendorInfo?.stripe_charges_enabled) {
+        vendorStripeAccounts.add(vendorInfo.stripe_account_id)
+      }
 
       lines.push({
         product_id: p.id,
@@ -133,7 +146,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Sipariş kalemleri kaydedilemedi' }, { status: 500 })
     }
 
-    // Stripe Payment Intent (sabit TRY, kuruş cinsinden)
+    // Tek satıcı + Connect hesabı aktif → destination charge
+    // Çoklu satıcı veya Connect aktif değil → platform hesabı toplar, payout sonra manuel/cron
+    const useDestinationCharge = vendorStripeAccounts.size === 1
+    let destinationAccount: string | undefined
+    let applicationFee: number | undefined
+    if (useDestinationCharge) {
+      destinationAccount = Array.from(vendorStripeAccounts)[0]
+      // Platform komisyonu (kuruş) — tüm satırların commission toplamı
+      const totalCommission = lines.reduce((s, l) => s + l.commission_amount, 0)
+      applicationFee = Math.round(totalCommission * 100)
+    }
+
     const intent = await stripe.paymentIntents.create({
       amount: Math.round(total * 100),
       currency: 'try',
@@ -144,6 +168,10 @@ export async function POST(req: NextRequest) {
         user_id: user.id,
         kind: 'marketplace_order',
       },
+      ...(destinationAccount && applicationFee !== undefined ? {
+        application_fee_amount: applicationFee,
+        transfer_data: { destination: destinationAccount },
+      } : {}),
     })
 
     await supabase

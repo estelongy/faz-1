@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import SiralamaSelect from './SiralamaSelect'
 import CartButton from '@/components/CartButton'
+import AramaBar from './AramaBar'
 
 export const metadata: Metadata = { title: 'Mağaza — Estelongy' }
 
@@ -30,7 +31,7 @@ function ScoreBadge({ score }: { score: number | null }) {
 export default async function MagazaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ kategori?: string; siralama?: string }>
+  searchParams: Promise<{ kategori?: string; siralama?: string; q?: string }>
 }) {
   const params = await searchParams
   const supabase = await createClient()
@@ -42,6 +43,10 @@ export default async function MagazaPage({
     .eq('approval_status', 'approved')
 
   if (params.kategori) query = query.eq('category', params.kategori)
+  if (params.q && params.q.trim()) {
+    const term = params.q.trim().replace(/[%_]/g, '') // sql wildcard sanitize
+    query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%`)
+  }
 
   if (params.siralama === 'puan') query = query.order('final_score', { ascending: false })
   else if (params.siralama === 'fiyat_asc') query = query.order('price', { ascending: true })
@@ -68,10 +73,22 @@ export default async function MagazaPage({
       </header>
 
       <div className="max-w-6xl mx-auto px-4 pt-24 pb-16">
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-3xl font-black text-white">Estelongy Mağazası</h1>
           <p className="text-slate-400 mt-1 text-sm">Bilimsel ve uzman onaylı estetik ürün & işlemler</p>
         </div>
+
+        {/* Arama */}
+        <div className="mb-5">
+          <AramaBar />
+        </div>
+
+        {params.q && (
+          <div className="mb-4 text-sm">
+            <span className="text-slate-500">Aranan:</span>{' '}
+            <span className="text-white font-medium">&ldquo;{params.q}&rdquo;</span>
+          </div>
+        )}
 
         {/* Filtreler */}
         <div className="flex flex-wrap gap-3 mb-8">

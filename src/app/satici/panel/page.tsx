@@ -43,7 +43,7 @@ export default async function SaticiPanelPage() {
   // Satıcı kaydını bul
   const { data: vendor } = await supabase
     .from('vendors')
-    .select('id, company_name, approval_status')
+    .select('id, company_name, approval_status, stripe_account_id, stripe_charges_enabled')
     .eq('user_id', user.id)
     .single()
 
@@ -134,6 +134,41 @@ export default async function SaticiPanelPage() {
             <p className="text-violet-400 text-xs font-bold mt-1 uppercase tracking-wider">Siparişlerim</p>
           </Link>
         </div>
+
+        {/* Alt navigasyon linkleri */}
+        <div className="grid grid-cols-2 gap-3 mb-8">
+          <Link href="/satici/panel/kazanc"
+            className="p-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-emerald-500/50 rounded-2xl transition-all flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-xl">💰</div>
+            <div>
+              <p className="text-white font-bold text-sm">Kazançlarım</p>
+              <p className="text-slate-500 text-xs mt-0.5">Satış + komisyon özeti</p>
+            </div>
+          </Link>
+          <Link href="/satici/panel/odeme-hesabi"
+            className="p-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-blue-500/50 rounded-2xl transition-all flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-xl">💳</div>
+            <div>
+              <p className="text-white font-bold text-sm">Ödeme Hesabı</p>
+              <p className="text-slate-500 text-xs mt-0.5">Stripe · banka bilgileri</p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Ödeme hesabı uyarı banner — henüz stripe_account_id yoksa */}
+        {!vendor.stripe_account_id && (
+          <Link href="/satici/panel/odeme-hesabi"
+            className="flex items-center gap-3 mb-8 p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-2xl hover:border-amber-500/50 transition-all">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-xl shrink-0">💳</div>
+            <div className="flex-1">
+              <p className="text-amber-300 font-bold text-sm">Ödeme hesabı kur</p>
+              <p className="text-slate-400 text-xs mt-0.5">Müşteri ödemelerini alabilmek için Stripe üzerinden hesap oluştur</p>
+            </div>
+            <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        )}
 
         {/* Ürün Ekle Formu */}
         <div className="mb-10">
