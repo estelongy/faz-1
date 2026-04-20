@@ -178,7 +178,7 @@ export default function OdemeHesabiPanel({ initial }: { initial: Initial }) {
             <li>Banka hesabı (TR IBAN)</li>
             <li>Kimlik doğrulaması (pasaport veya ehliyet fotoğrafı)</li>
           </ul>
-          <p>Verilerin Stripe'ta tutulur; Estelongy bu bilgileri görmez.</p>
+          <p>Verilerin Stripe&apos;ta tutulur; Estelongy bu bilgileri görmez.</p>
         </div>
       </details>
     </div>

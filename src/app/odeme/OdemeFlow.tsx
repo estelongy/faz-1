@@ -29,7 +29,7 @@ export default function OdemeFlow({ initialAddresses }: { initialAddresses: Addr
   const router = useRouter()
   const { items, subtotal, clear, hydrated } = useCart()
 
-  const [addresses, setAddresses] = useState<Address[]>(initialAddresses)
+  const [addresses] = useState<Address[]>(initialAddresses)
   const [selectedAddrId, setSelectedAddrId] = useState<string | null>(
     initialAddresses.find(a => a.is_default)?.id ?? initialAddresses[0]?.id ?? null
   )
