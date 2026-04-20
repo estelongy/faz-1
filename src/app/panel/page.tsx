@@ -52,6 +52,12 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/giris')
 
+  // Rol bazlı yönlendirme
+  const role = (user.app_metadata as Record<string, string>)?.role
+  if (role === 'admin') redirect('/admin')
+  if (role === 'vendor') redirect('/satici/panel')
+  if (role === 'clinic') redirect('/klinik/panel')
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')

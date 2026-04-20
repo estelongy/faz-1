@@ -41,6 +41,14 @@ async function updateVendor(formData: FormData) {
   const status = formData.get('status') as ApprovalStatus
   const isActive = status === 'approved'
   await supabase.from('vendors').update({ approval_status: status, is_active: isActive }).eq('id', vendorId)
+
+  // Onaylandıysa kullanıcıya vendor rolü ata, reddedildiyse user'a döndür
+  const { data: vendor } = await supabase.from('vendors').select('user_id').eq('id', vendorId).single()
+  if (vendor?.user_id) {
+    const newRole = status === 'approved' ? 'vendor' : 'user'
+    await supabase.rpc('set_user_role', { target_user_id: vendor.user_id, new_role: newRole })
+  }
+
   redirect('/admin/saticilar')
 }
 
