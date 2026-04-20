@@ -186,7 +186,9 @@ export async function POST(req: NextRequest) {
       total,
     })
   } catch (err) {
-    console.error('Checkout hatası:', err)
-    return NextResponse.json({ error: 'Ödeme başlatılamadı' }, { status: 500 })
+    const msg = err instanceof Error ? err.message : String(err)
+    const code = (err as { code?: string })?.code
+    console.error('Checkout hatası:', msg, code)
+    return NextResponse.json({ error: `Ödeme başlatılamadı: ${msg}`, code }, { status: 500 })
   }
 }
