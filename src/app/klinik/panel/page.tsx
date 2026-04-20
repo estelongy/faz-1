@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { pathForRole } from '@/lib/auth-redirect'
 import KlinikWelcome from '@/components/KlinikWelcome'
+import { enqueueNotification } from '@/lib/notifications'
 
 export const metadata: Metadata = {
   title: 'Klinik Paneli',
@@ -67,6 +68,59 @@ async function updateAppointmentStatus(formData: FormData) {
     })
     .eq('id', appointmentId)
     .eq('clinic_id', clinic.id)
+
+  // Onaylandıysa bildirim kuyruğuna ekle
+  if (status === 'confirmed') {
+    try {
+      const { data: appt } = await supabase
+        .from('appointments')
+        .select('user_id, appointment_date, clinics(name), profiles(full_name)')
+        .eq('id', appointmentId)
+        .single()
+      if (appt) {
+        const clinicName = (appt.clinics as { name?: string } | null)?.name ?? 'Klinik'
+        const patientName = (appt.profiles as { full_name?: string | null } | null)?.full_name ?? 'Hasta'
+        const dateStr = appt.appointment_date
+          ? new Date(appt.appointment_date).toLocaleString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+          : ''
+
+        // Onay bildirimi (anında)
+        await enqueueNotification({
+          userId: appt.user_id,
+          type: 'appointment_confirmed',
+          payload: { patient_name: patientName, clinic_name: clinicName, date: dateStr },
+        })
+
+        // 24 saat öncesi hatırlatma
+        if (appt.appointment_date) {
+          const reminderTime = new Date(appt.appointment_date)
+          reminderTime.setHours(reminderTime.getHours() - 24)
+          if (reminderTime > new Date()) {
+            await enqueueNotification({
+              userId: appt.user_id,
+              type: 'appointment_reminder_24h',
+              payload: { patient_name: patientName, clinic_name: clinicName, date: dateStr },
+              scheduledAt: reminderTime,
+            })
+          }
+          // 1 saat öncesi hatırlatma
+          const reminder1h = new Date(appt.appointment_date)
+          reminder1h.setHours(reminder1h.getHours() - 1)
+          if (reminder1h > new Date()) {
+            await enqueueNotification({
+              userId: appt.user_id,
+              type: 'appointment_reminder_1h',
+              payload: { patient_name: patientName, clinic_name: clinicName, date: dateStr },
+              scheduledAt: reminder1h,
+            })
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Notification queue error:', e)
+    }
+  }
+
   redirect('/klinik/panel')
 }
 

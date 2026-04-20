@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import KlinikAkisWizard from '@/components/KlinikAkisWizard'
 import { longevityToPoints, tetkikToPoints, sumComponents, finalApprovedScore } from '@/lib/egs'
+import { enqueueNotification } from '@/lib/notifications'
 
 // ── Server Actions ─────────────────────────────────────────────────
 
@@ -230,6 +231,29 @@ async function finalOnay(apptId: string, analysisId: string, aralikSkor: number,
       total_score: finalScore,
       overall_score: Math.round(finalScore),
     }).eq('id', s.id)
+  }
+
+  // Skor güncelleme bildirimi kuyruğa ekle
+  try {
+    const { data: appt } = await supabase
+      .from('appointments')
+      .select('user_id, profiles(full_name)')
+      .eq('id', apptId)
+      .single()
+    if (appt) {
+      const patientName = (appt.profiles as { full_name?: string | null } | null)?.full_name ?? 'Hasta'
+      await enqueueNotification({
+        userId: appt.user_id,
+        type: 'score_update',
+        payload: {
+          patient_name: patientName,
+          score: Math.round(finalScore),
+          score_type: 'klinik_onayli',
+        },
+      })
+    }
+  } catch (e) {
+    console.error('Score notification error:', e)
   }
 
   redirect('/klinik/panel')
