@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { saveLongevityAnket } from './anket-actions'
 
 // TODO: Soru metinleri ve skor katkısı C250 formülüne göre güncellenecek
 const SORULAR = [
@@ -112,18 +113,12 @@ export default function AnketPage() {
     if (!analysis) return
     setSaving(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/giris'); return }
-
-      await supabase
-        .from('analyses')
-        .update({
-          temp_longevity_score: anketToplam,
-          temp_overall: yeniSkor,
-        })
-        .eq('id', analysis.id)
-        .eq('user_id', user.id)
-
+      const res = await saveLongevityAnket({
+        analysisId: analysis.id,
+        answers,
+        anketToplam,
+      })
+      if (!res.ok) { alert(res.error ?? 'Hata'); setSaving(false); return }
       router.push('/panel')
     } finally {
       setSaving(false)

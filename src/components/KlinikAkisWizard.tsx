@@ -64,9 +64,9 @@ interface Props {
   analysis: AnalysisData | null
   jetonBalance: number
   onKabul:            (apptId: string) => Promise<{ ok: boolean; error?: string }>
-  onSaveAnket:        (analysisId: string, answers: Record<string, number>, total: number) => Promise<void>
-  onSaveTetkik:       (analysisId: string, data: Record<string, number>) => Promise<void>
-  onSaveHekim:        (analysisId: string, score: number, notes: string) => Promise<void>
+  onSaveAnket:        (apptId: string, analysisId: string, answers: Record<string, number>, total: number) => Promise<void>
+  onSaveTetkik:       (apptId: string, analysisId: string, data: Record<string, number>) => Promise<void>
+  onSaveHekim:        (apptId: string, analysisId: string, score: number, notes: string) => Promise<void>
   onFinalOnay:        (apptId: string, analysisId: string, mevcutSkor: number, hekimSkor: number, clinicNotes: string) => Promise<void>
 }
 
@@ -244,7 +244,7 @@ export default function KlinikAkisWizard({
             disabled={isPending || !analysis}
             onClick={() => startTransition(async () => {
               if (!analysis) return
-              await onSaveAnket(analysis.id, anket, anketTotal)
+              await onSaveAnket(appointment.id, analysis.id, anket, anketTotal)
               setStep(3)
             })}
             className="flex-1 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50">
@@ -290,7 +290,7 @@ export default function KlinikAkisWizard({
                   .map(([k, v]) => [k, Number(v)])
               )
               if (Object.keys(numericTetkik).length > 0) {
-                await onSaveTetkik(analysis.id, numericTetkik)
+                await onSaveTetkik(appointment.id, analysis.id, numericTetkik)
               }
               setStep(4)
             })}
@@ -353,7 +353,7 @@ export default function KlinikAkisWizard({
             disabled={isPending || !analysis}
             onClick={() => startTransition(async () => {
               if (!analysis) return
-              await onSaveHekim(analysis.id, hekimScore, hekimNotes)
+              await onSaveHekim(appointment.id, analysis.id, hekimScore, hekimNotes)
               setStep(5)
             })}
             className="flex-1 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50">

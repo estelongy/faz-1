@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import KlinikAkisWizard from '@/components/KlinikAkisWizard'
+import { longevityToPoints, tetkikToPoints, sumComponents, finalApprovedScore } from '@/lib/egs'
 
 // ── Server Actions ─────────────────────────────────────────────────
 
@@ -39,31 +40,118 @@ async function kabulEt(apptId: string): Promise<{ ok: boolean; error?: string }>
   return { ok: true }
 }
 
-async function saveAnket(analysisId: string, answers: Record<string, number>, total: number) {
+async function upsertKlinikScore(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  patch: {
+    user_id: string
+    analysis_id: string
+    appointment_id: string
+    clinic_id: string
+    c250_base?: number
+    hasta_anket_puani?: number
+    klinik_anket_puani?: number
+    tetkik_puani?: number
+    hekim_degerlendirme?: number
+    hekim_onay_puani?: number
+    total_score?: number
+  }
+) {
+  const { data: existing } = await supabase
+    .from('scores')
+    .select('id')
+    .eq('appointment_id', patch.appointment_id)
+    .eq('score_type', 'klinik_onayli')
+    .maybeSingle()
+
+  if (existing) {
+    await supabase.from('scores').update({
+      ...patch,
+      overall_score: patch.total_score != null ? Math.round(patch.total_score) : undefined,
+    }).eq('id', existing.id)
+  } else {
+    await supabase.from('scores').insert({
+      ...patch,
+      score_type: 'klinik_onayli',
+      overall_score: patch.total_score != null ? Math.round(patch.total_score) : null,
+    })
+  }
+}
+
+async function saveAnket(apptId: string, analysisId: string, answers: Record<string, number>, total: number) {
   'use server'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
+  const userId = await getUserIdFromAnalysis(supabase, analysisId)
   await supabase.from('analyses').update({
     device_type: 'klinik_anketi',
     device_raw_data: answers,
     device_scores: answers,
     device_overall: total,
-  }).eq('id', analysisId).eq('user_id', await getUserIdFromAnalysis(supabase, analysisId))
+  }).eq('id', analysisId).eq('user_id', userId)
+
+  const { data: clinic } = await supabase.from('clinics').select('id').eq('user_id', user.id).single()
+  const { data: a } = await supabase.from('analyses').select('web_overall, temp_overall').eq('id', analysisId).single()
+  if (!clinic) return
+
+  const klinikPuan = longevityToPoints(answers)
+  // Hasta anketi puanını al (çift sayım önleme)
+  const { data: onAnaliz } = await supabase
+    .from('scores').select('hasta_anket_puani')
+    .eq('user_id', userId).eq('analysis_id', analysisId).eq('score_type', 'on_analiz').maybeSingle()
+  const hastaPuan = Number(onAnaliz?.hasta_anket_puani ?? 0)
+  const deltaKlinik = klinikPuan - hastaPuan
+
+  const c250 = Number(a?.web_overall ?? a?.temp_overall ?? 50)
+  const total_score = sumComponents({
+    c250_base: c250,
+    hasta_anket_puani: hastaPuan,
+    klinik_anket_puani: deltaKlinik,
+  })
+
+  await upsertKlinikScore(supabase, {
+    user_id: userId,
+    analysis_id: analysisId,
+    appointment_id: apptId,
+    clinic_id: clinic.id,
+    c250_base: c250,
+    hasta_anket_puani: hastaPuan,
+    klinik_anket_puani: deltaKlinik,
+    total_score,
+  })
 }
 
-async function saveTetkik(analysisId: string, data: Record<string, number>) {
+async function saveTetkik(apptId: string, analysisId: string, data: Record<string, number>) {
   'use server'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
-  // Mevcut doctor_approved_scores ile birleştir
   const { data: existing } = await supabase.from('analyses').select('doctor_approved_scores').eq('id', analysisId).single()
   const merged = { ...(existing?.doctor_approved_scores ?? {}), tetkik: data }
   await supabase.from('analyses').update({ doctor_approved_scores: merged }).eq('id', analysisId)
+
+  const { data: s } = await supabase
+    .from('scores')
+    .select('id, c250_base, hasta_anket_puani, klinik_anket_puani')
+    .eq('appointment_id', apptId).eq('score_type', 'klinik_onayli').maybeSingle()
+
+  if (s) {
+    const tetkikPuan = tetkikToPoints(data)
+    const total = sumComponents({
+      c250_base: Number(s.c250_base ?? 0),
+      hasta_anket_puani: Number(s.hasta_anket_puani ?? 0),
+      klinik_anket_puani: Number(s.klinik_anket_puani ?? 0),
+      tetkik_puani: tetkikPuan,
+    })
+    await supabase.from('scores').update({
+      tetkik_puani: tetkikPuan,
+      total_score: total,
+      overall_score: Math.round(total),
+    }).eq('id', s.id)
+  }
 }
 
-async function saveHekim(analysisId: string, score: number, notes: string) {
+async function saveHekim(apptId: string, analysisId: string, score: number, notes: string) {
   'use server'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -75,6 +163,25 @@ async function saveHekim(analysisId: string, score: number, notes: string) {
     doctor_notes: notes,
     doctor_approved_scores: merged,
   }).eq('id', analysisId)
+
+  const { data: s } = await supabase
+    .from('scores')
+    .select('id, c250_base, hasta_anket_puani, klinik_anket_puani, tetkik_puani')
+    .eq('appointment_id', apptId).eq('score_type', 'klinik_onayli').maybeSingle()
+  if (s) {
+    const total = sumComponents({
+      c250_base: Number(s.c250_base ?? 0),
+      hasta_anket_puani: Number(s.hasta_anket_puani ?? 0),
+      klinik_anket_puani: Number(s.klinik_anket_puani ?? 0),
+      tetkik_puani: Number(s.tetkik_puani ?? 0),
+      hekim_degerlendirme: score,
+    })
+    await supabase.from('scores').update({
+      hekim_degerlendirme: score,
+      total_score: total,
+      overall_score: Math.round(total),
+    }).eq('id', s.id)
+  }
 }
 
 async function finalOnay(apptId: string, analysisId: string, aralikSkor: number, hekimSkor: number, clinicNotes: string) {
@@ -85,12 +192,25 @@ async function finalOnay(apptId: string, analysisId: string, aralikSkor: number,
   const { data: clinic } = await supabase.from('clinics').select('id').eq('user_id', user.id).single()
   if (!clinic) return
 
-  // TODO: C250 final formülü onaylanacak → (aralik × 0.85) + (hekim × 0.15)
-  const finalScore = Math.min(100, Math.round((aralikSkor * 0.85) + (hekimSkor * 0.15)))
+  // Final formül: (mevcut × 0.85) + (hekim × 0.15)
+  const { data: s } = await supabase
+    .from('scores')
+    .select('id, c250_base, hasta_anket_puani, klinik_anket_puani, tetkik_puani, hekim_degerlendirme')
+    .eq('appointment_id', apptId).eq('score_type', 'klinik_onayli').maybeSingle()
+
+  const finalScore = s
+    ? finalApprovedScore({
+        c250_base: Number(s.c250_base ?? 0),
+        hasta_anket_puani: Number(s.hasta_anket_puani ?? 0),
+        klinik_anket_puani: Number(s.klinik_anket_puani ?? 0),
+        tetkik_puani: Number(s.tetkik_puani ?? 0),
+        hekim_degerlendirme: Number(s.hekim_degerlendirme ?? 0),
+      }, hekimSkor)
+    : Math.min(100, Math.round((aralikSkor * 0.85) + (hekimSkor * 0.15)))
 
   await Promise.all([
     supabase.from('analyses').update({
-      final_overall: finalScore,
+      final_overall: Math.round(finalScore),
       clinic_id: clinic.id,
       status: 'completed',
       completed_at: new Date().toISOString(),
@@ -100,8 +220,17 @@ async function finalOnay(apptId: string, analysisId: string, aralikSkor: number,
       status: 'completed',
       completed_at: new Date().toISOString(),
       clinic_notes: clinicNotes || null,
+      final_score_id: s?.id ?? null,
     }).eq('id', apptId).eq('clinic_id', clinic.id),
   ])
+
+  if (s) {
+    await supabase.from('scores').update({
+      hekim_onay_puani: hekimSkor,
+      total_score: finalScore,
+      overall_score: Math.round(finalScore),
+    }).eq('id', s.id)
+  }
 
   redirect('/klinik/panel')
 }
