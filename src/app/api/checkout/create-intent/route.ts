@@ -110,6 +110,15 @@ export async function POST(req: NextRequest) {
     const shippingFee = 0 // Şimdilik; satıcı anlaşması sonrası hesaplanacak
     const total = subtotal + shippingFee
 
+    // Stripe platform EUR bazlı (Vestoriq OÜ / Estonya). Min işlem ≈ €0.50 → ~25 TL.
+    // Platform güvenli marj için 30 TL alt limit.
+    const MIN_TOTAL_TRY = 30
+    if (total < MIN_TOTAL_TRY) {
+      return NextResponse.json({
+        error: `Sipariş tutarı en az ${MIN_TOTAL_TRY} ₺ olmalı. Sepetine daha fazla ürün ekle.`,
+      }, { status: 400 })
+    }
+
     // Sipariş numarası üret (SECURITY DEFINER olmayan fonksiyon — herkes çağırabilir)
     const { data: orderNumRes } = await supabase.rpc('generate_order_number')
     const orderNumber = orderNumRes as string
