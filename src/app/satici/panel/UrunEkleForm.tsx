@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { urunEkleAction } from './urun-ekle-action'
 
 const CATEGORIES = [
   { value: 'botox',       label: 'Botoks' },
@@ -17,16 +17,7 @@ const CATEGORIES = [
   { value: 'other',       label: 'Diğer' },
 ]
 
-function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
-    .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
-
-export default function UrunEkleForm({ vendorId }: { vendorId: string }) {
+export default function UrunEkleForm() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
 
@@ -47,31 +38,21 @@ export default function UrunEkleForm({ vendorId }: { vendorId: string }) {
     setError(null)
     setLoading(true)
 
-    const supabase = createClient()
-
-    // Slug oluştur (çakışma önleme için rastgele suffix)
-    const baseSlug = slugify(name)
-    const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`
-
     const ingsArr = ingredients
       ? ingredients.split(',').map(s => s.trim()).filter(Boolean)
       : []
 
-    const { error: insertErr } = await supabase.from('products').insert({
-      vendor_id:      vendorId,
-      name:           name.trim(),
-      slug,
+    const res = await urunEkleAction({
+      name: name.trim(),
       category,
-      treatment_type: treatmentType,
-      description:    description.trim() || null,
-      price:          price ? Number(price) : null,
-      ingredients:    ingsArr.length > 0 ? ingsArr : null,
-      is_active:      false,
-      approval_status: 'pending',
+      treatmentType,
+      description: description.trim(),
+      price: price ? Number(price) : null,
+      ingredients: ingsArr,
     })
 
-    if (insertErr) {
-      setError(insertErr.message)
+    if (!res.ok) {
+      setError(res.error ?? 'Ürün eklenemedi.')
       setLoading(false)
       return
     }

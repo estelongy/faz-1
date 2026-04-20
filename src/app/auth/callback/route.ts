@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { pathForRole } from '@/lib/auth-redirect'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -21,10 +22,11 @@ export async function GET(request: Request) {
       // Rol bazlı yönlendirme
       const { data: { user } } = await supabase.auth.getUser()
       const role = (user?.app_metadata as Record<string, string>)?.role
-      if (role === 'admin') return NextResponse.redirect(`${origin}/admin`)
-      if (role === 'clinic') return NextResponse.redirect(`${origin}/klinik/panel`)
-      if (role === 'vendor') return NextResponse.redirect(`${origin}/satici/panel`)
-      // Rol yoksa (yeni kayıt, pending vb.) → next param veya /panel
+      // Spesifik rol varsa direkt o panele
+      if (role && role !== 'user') {
+        return NextResponse.redirect(`${origin}${pathForRole(role)}`)
+      }
+      // User rolünde → next param (başvuru akışı için) veya /panel
       return NextResponse.redirect(`${origin}${safePath}`)
     }
   }

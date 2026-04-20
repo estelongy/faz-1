@@ -40,7 +40,8 @@ async function changeRole(formData: FormData) {
   if (!user || (user.app_metadata as Record<string, string>)?.role !== 'admin') redirect('/panel')
   const userId = formData.get('userId') as string
   const role = formData.get('role') as UserRole
-  await supabase.from('profiles').update({ role }).eq('id', userId)
+  // app_metadata.role tek kaynak — set_user_role RPC profiles.role'u da senkronlar
+  await supabase.rpc('set_user_role', { target_user_id: userId, new_role: role })
   redirect('/admin/kullanicilar')
 }
 

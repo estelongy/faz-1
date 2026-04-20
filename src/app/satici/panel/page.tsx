@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { pathForRole } from '@/lib/auth-redirect'
 import UrunEkleForm from './UrunEkleForm'
 
 export const metadata: Metadata = { title: 'Satıcı Paneli — Estelongy' }
@@ -24,10 +25,20 @@ function StatusBadge({ status }: { status: string }) {
   return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.cls}`}>{s.label}</span>
 }
 
+async function handleSignOut() {
+  'use server'
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  redirect('/giris')
+}
+
 export default async function SaticiPanelPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/giris')
+
+  const role = (user.app_metadata as Record<string, string>)?.role
+  if (role === 'admin' || role === 'clinic') redirect(pathForRole(role))
 
   // Satıcı kaydını bul
   const { data: vendor } = await supabase
@@ -88,9 +99,10 @@ export default async function SaticiPanelPage() {
             <span className="text-slate-700">|</span>
             <span className="text-slate-400 text-sm">Satıcı Paneli</span>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/magaza" className="text-slate-400 hover:text-white text-sm transition-colors">Mağaza</Link>
-            <Link href="/panel" className="text-slate-400 hover:text-white text-sm transition-colors">Hesabım</Link>
+          <div className="flex items-center gap-4">
+            <form action={handleSignOut}>
+              <button type="submit" className="text-slate-400 hover:text-red-400 text-sm transition-colors">Çıkış Yap</button>
+            </form>
           </div>
         </div>
       </header>
@@ -121,7 +133,7 @@ export default async function SaticiPanelPage() {
         {/* Ürün Ekle Formu */}
         <div className="mb-10">
           <h2 className="text-white font-bold text-lg mb-4">Yeni Ürün / İşlem Ekle</h2>
-          <UrunEkleForm vendorId={vendor.id} />
+          <UrunEkleForm />
         </div>
 
         {/* Ürün Listesi */}

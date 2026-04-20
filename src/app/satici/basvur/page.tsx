@@ -29,7 +29,8 @@ async function submitApplication(formData: FormData) {
 
   if (error) redirect('/satici/basvur?error=1')
 
-  await supabase.from('profiles').update({ role: 'vendor' }).eq('id', user.id)
+  // Not: Rol (app_metadata.role) admin onay anında set_user_role RPC ile atanır.
+  // Pending aşamasında rol "user" olarak kalır, panel erişimi approval_status'e bakar.
 
   redirect('/panel?basvuru=satici')
 }

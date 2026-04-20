@@ -2,10 +2,27 @@ export const dynamic = 'force-dynamic'
 
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import UrunOnayActions from './UrunOnayActions'
 
 export const metadata: Metadata = { title: 'Ürün Onayları — Admin' }
+
+async function urunOnayAction(productId: string, status: 'approved' | 'rejected') {
+  'use server'
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/giris')
+  const role = (user.app_metadata as Record<string, string>)?.role
+  if (role !== 'admin') redirect('/panel')
+
+  await supabase
+    .from('products')
+    .update({ approval_status: status, is_active: status === 'approved' })
+    .eq('id', productId)
+
+  revalidatePath('/admin/urunler')
+}
 
 type VendorInfo = { company_name: string }[] | null
 
@@ -20,9 +37,8 @@ export default async function AdminUrunlerPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/giris')
 
-  const { data: profile } = await supabase
-    .from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') redirect('/panel')
+  const role = (user.app_metadata as Record<string, string>)?.role
+  if (role !== 'admin') redirect('/panel')
 
   const { data: products } = await supabase
     .from('products')
@@ -78,7 +94,7 @@ export default async function AdminUrunlerPage() {
                       </div>
                     )}
                   </div>
-                  <UrunOnayActions productId={p.id} />
+                  <UrunOnayActions productId={p.id} action={urunOnayAction} />
                 </div>
               </div>
             ))}
@@ -101,7 +117,7 @@ export default async function AdminUrunlerPage() {
                     <span className="text-slate-500 text-xs ml-2">— {(p.vendors as VendorInfo)?.[0]?.company_name}</span>
                   )}
                 </div>
-                <UrunOnayActions productId={p.id} currentStatus="approved" />
+                <UrunOnayActions productId={p.id} currentStatus="approved" action={urunOnayAction} />
               </div>
             ))}
           </div>

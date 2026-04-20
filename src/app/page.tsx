@@ -73,7 +73,7 @@ export default function Home() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -82,7 +82,7 @@ export default function Home() {
               <span className="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
                 Estelongy
               </span>
-            </div>
+            </Link>
             <div className="flex items-center gap-3">
               <Link href="/klinik/basvur"
                 className="hidden sm:block text-slate-400 hover:text-white text-sm transition-colors">
@@ -121,28 +121,101 @@ export default function Home() {
             AI analizini klinik onayıyla doğrulayın, arkadaşlarınızla paylaşın.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Link href="/kayit"
-              className="px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-xl shadow-violet-500/30 text-lg">
-              Skorumu Öğren — Ücretsiz
+          <p className="text-slate-500 text-sm uppercase tracking-widest mb-8">Nereden başlamak istersin?</p>
+
+          {/* ── ÜÇ KAPI ─────────────────────────────────────── */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
+
+            {/* Kapı 1 — Ücretsiz Analiz */}
+            <Link href="/kayit?next=/analiz" className="group relative overflow-hidden rounded-3xl border border-violet-500/30 bg-gradient-to-br from-violet-600/20 via-purple-600/10 to-pink-500/5 p-8 text-left transition-all hover:border-violet-400 hover:scale-[1.02] hover:shadow-2xl hover:shadow-violet-500/20">
+              <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-violet-500/10 blur-3xl group-hover:bg-violet-500/20 transition-all" />
+              <div className="relative">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-white mb-5 shadow-lg shadow-violet-500/30">
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold uppercase tracking-widest mb-3">
+                  Ücretsiz
+                </div>
+                <h3 className="text-2xl font-black text-white mb-2 leading-tight">
+                  Gençlik Skorunu<br />Öğren
+                </h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-5">
+                  Tek bir selfie ile biyolojik cilt yaşını ve EGS skorunu saniyeler içinde al.
+                </p>
+                <div className="flex items-center gap-2 text-violet-300 font-semibold text-sm group-hover:gap-3 transition-all">
+                  <span>Analizi başlat</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
             </Link>
-            <Link href="#nasil-calisir"
-              className="px-8 py-4 bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-white font-semibold rounded-xl transition-all text-lg">
-              Nasıl Çalışır?
+
+            {/* Kapı 2 — Randevu Al */}
+            <Link href="/randevu" className="group relative overflow-hidden rounded-3xl border border-blue-500/30 bg-gradient-to-br from-blue-600/20 via-cyan-600/10 to-teal-500/5 p-8 text-left transition-all hover:border-blue-400 hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/20">
+              <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-blue-500/10 blur-3xl group-hover:bg-blue-500/20 transition-all" />
+              <div className="relative">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white mb-5 shadow-lg shadow-blue-500/30">
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="inline-block px-2.5 py-0.5 rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300 text-[10px] font-bold uppercase tracking-widest mb-3">
+                  Klinik Onaylı
+                </div>
+                <h3 className="text-2xl font-black text-white mb-2 leading-tight">
+                  Klinikten<br />Randevu Al
+                </h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-5">
+                  Onaylı estetik kliniklerinden yüz yüze muayene için uygun tarih seç.
+                </p>
+                <div className="flex items-center gap-2 text-blue-300 font-semibold text-sm group-hover:gap-3 transition-all">
+                  <span>Randevu oluştur</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+
+            {/* Kapı 3 — Ürün Al */}
+            <Link href="/magaza" className="group relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-600/20 via-orange-600/10 to-rose-500/5 p-8 text-left transition-all hover:border-amber-400 hover:scale-[1.02] hover:shadow-2xl hover:shadow-amber-500/20 md:col-span-1 col-span-1">
+              <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-amber-500/10 blur-3xl group-hover:bg-amber-500/20 transition-all" />
+              <div className="relative">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white mb-5 shadow-lg shadow-amber-500/30">
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                </div>
+                <div className="inline-block px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-bold uppercase tracking-widest mb-3">
+                  Hekim Puanlı
+                </div>
+                <h3 className="text-2xl font-black text-white mb-2 leading-tight">
+                  Güvenilir<br />Ürün Al
+                </h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-5">
+                  Estelongy puanlı cilt bakım ürünleri ve klinik işlemleri. Hepsi doğrulanmış.
+                </p>
+                <div className="flex items-center gap-2 text-amber-300 font-semibold text-sm group-hover:gap-3 transition-all">
+                  <span>Mağazaya git</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
             </Link>
           </div>
 
-          <div className="inline-flex flex-wrap gap-3 justify-center">
-            {SCORE_ZONES.map(z => (
-              <div key={z.label}
-                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl ${z.bg} border ${z.border}`}>
-                <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: z.color }} />
-                <div className="text-left">
-                  <div className={`text-xs font-bold ${z.text}`}>{z.label} · {z.range}</div>
-                  <div className="text-slate-500 text-[11px]">{z.desc}</div>
-                </div>
-              </div>
-            ))}
+          <div className="mt-10 text-center">
+            <Link href="#nasil-calisir" className="text-slate-500 hover:text-slate-300 text-sm transition-colors inline-flex items-center gap-2">
+              Nasıl çalışır?
+              <svg className="w-3.5 h-3.5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </Link>
           </div>
         </div>
       </section>

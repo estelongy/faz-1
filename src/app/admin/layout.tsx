@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { pathForRole } from '@/lib/auth-redirect'
 import AdminNavLink from '@/components/AdminNavLink'
 
 export const dynamic = 'force-dynamic'
@@ -54,7 +55,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!user) redirect('/giris')
 
   const role = (user.app_metadata as Record<string, string>)?.role
-  if (role !== 'admin') redirect('/panel')
+  if (role !== 'admin') redirect(pathForRole(role))
 
   return (
     <div className="min-h-screen bg-slate-950 flex">
@@ -62,7 +63,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       {/* ── Mobile top bar (< lg) ──────────────────────────────── */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800">
         {/* Logo row */}
-        <div className="flex items-center gap-2 h-12 px-4">
+        <Link href="/" className="flex items-center gap-2 h-12 px-4 hover:bg-slate-800/50 transition-colors">
           <div className="w-6 h-6 bg-gradient-to-br from-red-500 to-orange-600 rounded-md flex items-center justify-center shrink-0">
             <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -70,7 +71,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </div>
           <span className="text-white text-sm font-bold flex-1">Admin Panel</span>
           <span className="text-slate-600 text-xs">Estelongy</span>
-        </div>
+        </Link>
         {/* Nav row */}
         <nav className="flex gap-1 px-3 pb-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {NAV.map(({ href, label, icon, exact }) => (
@@ -97,19 +98,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
       {/* ── Desktop sidebar (≥ lg) ─────────────────────────────── */}
       <aside className="hidden lg:flex w-56 shrink-0 bg-slate-900 border-r border-slate-800 flex-col fixed top-0 left-0 h-full z-40">
-        <div className="p-4 border-b border-slate-800">
+        <Link href="/" className="p-4 border-b border-slate-800 block hover:bg-slate-800/50 transition-colors">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 bg-gradient-to-br from-red-500 to-orange-600 rounded-lg flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
+            </svg>
             </div>
             <div>
               <div className="text-white text-sm font-bold">Admin Panel</div>
               <div className="text-slate-500 text-xs">Estelongy</div>
             </div>
           </div>
-        </div>
+        </Link>
 
         <nav className="flex-1 p-3 space-y-1">
           {NAV.map(({ href, label, icon, exact }) => (

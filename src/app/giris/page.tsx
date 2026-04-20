@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { pathForRole } from '@/lib/auth-redirect'
 
 function GirisInner() {
   const router = useRouter()
@@ -39,10 +40,7 @@ function GirisInner() {
       return
     }
     const role = (data.user?.app_metadata as Record<string, string>)?.role
-    if (role === 'admin') router.push('/admin')
-    else if (role === 'clinic') router.push('/klinik/panel')
-    else if (role === 'vendor') router.push('/satici/panel')
-    else router.push('/panel')
+    router.push(pathForRole(role))
     router.refresh()
   }
 

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { pathForRole } from '@/lib/auth-redirect'
 
 type AccountType = 'klinik' | 'satici' | null
 
@@ -32,29 +33,22 @@ export default function KurumsalGirisPage() {
         return
       }
       const role = (loginData.user?.app_metadata as Record<string, string>)?.role
-      if (role === 'admin') { router.push('/admin'); router.refresh(); return }
-      if (role === 'vendor') { router.push('/satici/panel'); router.refresh(); return }
-      if (role === 'clinic') { router.push('/klinik/panel'); router.refresh(); return }
 
-      // role henüz set edilmemiş olabilir → clinics tablosunu kontrol et
-      if (accountType === 'klinik' && loginData.user) {
-        const { data: clinic } = await supabase
-          .from('clinics')
-          .select('approval_status')
-          .eq('user_id', loginData.user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-        if (clinic?.approval_status === 'approved') {
-          router.push('/klinik/panel')
-          router.refresh()
-          return
-        }
-        router.push('/klinik/basvur')
+      // Rol atanmışsa direkt ilgili panele git
+      if (role === 'admin' || role === 'clinic' || role === 'vendor') {
+        router.push(pathForRole(role))
         router.refresh()
         return
       }
-      router.push(accountType === 'satici' ? '/satici/basvur' : '/panel')
+
+      // Rol yok (user) → seçilen hesap tipine göre başvuru akışı
+      if (accountType === 'klinik') {
+        router.push('/klinik/basvur')
+      } else if (accountType === 'satici') {
+        router.push('/satici/basvur')
+      } else {
+        router.push('/panel')
+      }
       router.refresh()
     } else {
       if (password.length < 6) { setError('Şifre en az 6 karakter olmalıdır.'); setLoading(false); return }
