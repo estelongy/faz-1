@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Footer from '@/components/Footer'
 
 const SCORE_ZONES = [
   { label: 'Kritik',  range: '0 – 49',  color: '#ef4444', bg: 'bg-red-500/10',    border: 'border-red-500/20',    text: 'text-red-400',    desc: 'Yaşından yaşlı görünüyor' },
@@ -412,26 +413,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────── */}
-      <footer className="border-t border-slate-800 py-10 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
-            </div>
-            <span className="text-slate-400 text-sm font-semibold">Estelongy</span>
-          </div>
-          <div className="flex items-center gap-6 text-slate-600 text-sm">
-            <Link href="/klinik/basvur" className="hover:text-slate-400 transition-colors">Klinikler</Link>
-            <Link href="/giris" className="hover:text-slate-400 transition-colors">Giriş</Link>
-            <Link href="/kayit" className="hover:text-slate-400 transition-colors">Kayıt</Link>
-          </div>
-          <p className="text-slate-700 text-xs">© 2026 Estelongy. Tüm hakları saklıdır.</p>
-        </div>
-      </footer>
+      <Footer />
     </main>
   )
 }
