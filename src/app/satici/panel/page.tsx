@@ -115,7 +115,7 @@ export default async function SaticiPanelPage() {
         </div>
 
         {/* Özet kartlar */}
-        <div className="grid grid-cols-3 gap-4 mb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
           <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 text-center">
             <p className="text-3xl font-black text-white">{totalProducts}</p>
             <p className="text-slate-400 text-xs mt-1">Toplam Ürün</p>
@@ -128,6 +128,11 @@ export default async function SaticiPanelPage() {
             <p className="text-3xl font-black text-amber-400">{pendingCount}</p>
             <p className="text-slate-400 text-xs mt-1">İncelemede</p>
           </div>
+          <Link href="/satici/panel/siparisler"
+            className="bg-gradient-to-br from-violet-600/20 to-purple-600/20 hover:from-violet-600/30 hover:to-purple-600/30 border border-violet-500/30 rounded-2xl p-5 text-center transition-all group">
+            <p className="text-3xl font-black text-violet-300 group-hover:text-white transition-colors">📦</p>
+            <p className="text-violet-400 text-xs font-bold mt-1 uppercase tracking-wider">Siparişlerim</p>
+          </Link>
         </div>
 
         {/* Ürün Ekle Formu */}

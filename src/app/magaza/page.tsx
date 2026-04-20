@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import SiralamaSelect from './SiralamaSelect'
+import CartButton from '@/components/CartButton'
 
 export const metadata: Metadata = { title: 'Mağaza — Estelongy' }
 
@@ -57,10 +58,11 @@ export default async function MagazaPage({
       <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="text-white font-black text-lg tracking-tight">ESTELONGY</Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/analiz" className="text-slate-400 hover:text-white transition-colors">Analiz</Link>
-            <Link href="/randevu" className="text-slate-400 hover:text-white transition-colors">Randevu</Link>
-            <Link href="/panel" className="text-slate-400 hover:text-white transition-colors">Panelim</Link>
+          <nav className="flex items-center gap-2 text-sm">
+            <Link href="/analiz" className="hidden sm:inline text-slate-400 hover:text-white transition-colors px-3 py-2">Analiz</Link>
+            <Link href="/randevu" className="hidden sm:inline text-slate-400 hover:text-white transition-colors px-3 py-2">Randevu</Link>
+            <Link href="/panel" className="hidden sm:inline text-slate-400 hover:text-white transition-colors px-3 py-2">Panelim</Link>
+            <CartButton />
           </nav>
         </div>
       </header>

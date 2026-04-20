@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ReviewForm from './ReviewForm'
+import AddToCartButton from '@/components/AddToCartButton'
+import CartButton from '@/components/CartButton'
 
 export const metadata: Metadata = { title: 'Ürün Detayı — Estelongy' }
 
@@ -66,10 +68,13 @@ export default async function UrunDetayPage({
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
       <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center gap-3">
-          <Link href="/magaza" className="text-slate-400 hover:text-white transition-colors text-sm">← Mağaza</Link>
-          <span className="text-slate-700">|</span>
-          <span className="text-white text-sm font-medium truncate">{product.name}</span>
+        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link href="/magaza" className="text-slate-400 hover:text-white transition-colors text-sm shrink-0">← Mağaza</Link>
+            <span className="text-slate-700">|</span>
+            <span className="text-white text-sm font-medium truncate">{product.name}</span>
+          </div>
+          <CartButton />
         </div>
       </header>
 
@@ -128,7 +133,13 @@ export default async function UrunDetayPage({
             <h1 className="text-3xl font-black text-white mt-2 mb-3">{product.name}</h1>
 
             {product.vendors?.company_name && (
-              <p className="text-slate-500 text-sm mb-4">Satıcı: <span className="text-slate-300">{product.vendors.company_name}</span></p>
+              <p className="text-slate-500 text-sm mb-4">
+                Satıcı:{' '}
+                <Link href={`/magaza/satici/${product.vendor_id}`}
+                  className="text-violet-400 hover:text-violet-300 transition-colors">
+                  {product.vendors.company_name}
+                </Link>
+              </p>
             )}
 
             {product.description && (
@@ -155,10 +166,34 @@ export default async function UrunDetayPage({
               </div>
             )}
 
-            <Link href="/randevu"
-              className="w-full flex items-center justify-center py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all text-sm">
-              Bu İşlem İçin Randevu Al →
-            </Link>
+            {product.treatment_type === 'treatment' ? (
+              <Link href="/randevu"
+                className="w-full flex items-center justify-center py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all text-sm">
+                Bu İşlem İçin Randevu Al →
+              </Link>
+            ) : (
+              <>
+                <AddToCartButton
+                  fullWidth
+                  product={{
+                    productId: product.id,
+                    name: product.name,
+                    slug: product.slug ?? null,
+                    price: Number(product.price ?? 0),
+                    image: product.images?.[0] ?? null,
+                    vendorId: product.vendor_id ?? null,
+                    vendorName: (product.vendors as { company_name?: string } | null)?.company_name ?? null,
+                  }}
+                  disabled={!product.price || (product.stock != null && product.stock < 1)}
+                />
+                {product.stock != null && product.stock < 1 && (
+                  <p className="text-red-400 text-xs text-center mt-3">Stokta yok</p>
+                )}
+                {product.stock != null && product.stock > 0 && product.stock < 10 && (
+                  <p className="text-amber-400 text-xs text-center mt-3">Son {product.stock} adet</p>
+                )}
+              </>
+            )}
           </div>
         </div>
 
