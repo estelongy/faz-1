@@ -24,6 +24,96 @@ async function sendEmail(to: string, subject: string, html: string) {
   })
 }
 
+// ── Müşteri sipariş onay emaili ──────────────────────────────────────
+async function sendOrderConfirmationEmail(
+  admin: ReturnType<typeof createServiceClient>,
+  orderId: string,
+) {
+  const { data: order } = await admin
+    .from('orders')
+    .select('id, order_number, user_id, total, subtotal, shipping_fee, coupon_discount, coupon_code, address_snapshot')
+    .eq('id', orderId)
+    .single()
+  if (!order) return
+
+  const { data: userData } = await admin.auth.admin.getUserById(order.user_id)
+  const email = userData?.user?.email
+  if (!email) return
+
+  const { data: items } = await admin
+    .from('order_items')
+    .select('quantity, unit_price, product_snapshot')
+    .eq('order_id', orderId)
+
+  const itemRows = (items ?? []).map(i => {
+    const snap = (i.product_snapshot as { name?: string; vendor_name?: string }) ?? {}
+    const line = Number(i.unit_price) * i.quantity
+    return `<tr>
+      <td style="padding:8px 4px;border-bottom:1px solid #e5e7eb">${snap.name ?? 'Ürün'}</td>
+      <td style="padding:8px 4px;border-bottom:1px solid #e5e7eb;text-align:center">${i.quantity}</td>
+      <td style="padding:8px 4px;border-bottom:1px solid #e5e7eb;text-align:right">₺${line.toLocaleString('tr-TR')}</td>
+    </tr>`
+  }).join('')
+
+  const addr = order.address_snapshot as { full_name?: string; phone?: string; address_line?: string; district?: string; city?: string } | null
+
+  const subject = `[Estelongy] Sipariş Alındı: ${order.order_number}`
+  const html = `
+    <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#fff;color:#111">
+      <div style="padding:24px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border-radius:8px 8px 0 0">
+        <h1 style="margin:0;font-size:22px">Siparişiniz Alındı 🎉</h1>
+        <p style="margin:4px 0 0;opacity:0.9">Sipariş No: <strong>${order.order_number}</strong></p>
+      </div>
+      <div style="padding:24px">
+        <p>Merhaba,</p>
+        <p>Siparişiniz başarıyla alındı. Satıcılarımız hazırlığa başladı; kargo bilgileri yakında e-posta ile iletilecek.</p>
+
+        <h3 style="margin-top:24px;margin-bottom:8px;color:#7c3aed">Sipariş Özeti</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <thead>
+            <tr style="background:#f3f4f6">
+              <th style="padding:8px 4px;text-align:left">Ürün</th>
+              <th style="padding:8px 4px;text-align:center">Adet</th>
+              <th style="padding:8px 4px;text-align:right">Tutar</th>
+            </tr>
+          </thead>
+          <tbody>${itemRows}</tbody>
+        </table>
+
+        <table style="width:100%;margin-top:16px;font-size:14px">
+          <tr><td style="padding:4px 0;color:#666">Ara Toplam</td><td style="text-align:right">₺${Number(order.subtotal).toLocaleString('tr-TR')}</td></tr>
+          <tr><td style="padding:4px 0;color:#666">Kargo</td><td style="text-align:right">${Number(order.shipping_fee) === 0 ? 'Ücretsiz' : `₺${Number(order.shipping_fee)}`}</td></tr>
+          ${Number(order.coupon_discount ?? 0) > 0 ? `<tr><td style="padding:4px 0;color:#10b981">İndirim (${order.coupon_code})</td><td style="text-align:right;color:#10b981">−₺${Number(order.coupon_discount).toLocaleString('tr-TR')}</td></tr>` : ''}
+          <tr style="border-top:2px solid #111;font-weight:bold;font-size:16px"><td style="padding:8px 0">Toplam</td><td style="text-align:right">₺${Number(order.total).toLocaleString('tr-TR')}</td></tr>
+        </table>
+
+        ${addr ? `
+          <h3 style="margin-top:24px;margin-bottom:8px;color:#7c3aed">Teslimat Adresi</h3>
+          <p style="margin:4px 0;font-size:14px">
+            <strong>${addr.full_name ?? ''}</strong><br/>
+            ${addr.phone ?? ''}<br/>
+            ${addr.address_line ?? ''}<br/>
+            ${addr.district ?? ''} / ${addr.city ?? ''}
+          </p>
+        ` : ''}
+
+        <div style="margin-top:24px;text-align:center">
+          <a href="https://estelongy-clean.vercel.app/siparis/${order.order_number}"
+             style="display:inline-block;padding:12px 32px;background:#7c3aed;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold">
+            Siparişi Görüntüle
+          </a>
+        </div>
+
+        <p style="margin-top:32px;font-size:12px;color:#999;text-align:center">
+          Estelongy · 14 gün cayma hakkı · Stripe ile güvenli ödeme
+        </p>
+      </div>
+    </div>
+  `
+
+  await sendEmail(email, subject, html)
+}
+
 // ── Düşük stok bildirimi ──────────────────────────────────────────────
 const LOW_STOCK_THRESHOLD = 5
 
@@ -261,6 +351,13 @@ export async function POST(req: NextRequest) {
         } catch (e) {
           console.error('Referral tracking error:', e)
         }
+      }
+
+      // Müşteri onay e-postası (Resend yapılandırılmışsa gönderir)
+      try {
+        await sendOrderConfirmationEmail(admin, orderId)
+      } catch (e) {
+        console.error('Order confirmation email error:', e)
       }
 
       console.log(`Sipariş ödendi: ${orderId} (${pi.metadata.order_number})`)
