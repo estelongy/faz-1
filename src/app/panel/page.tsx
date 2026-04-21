@@ -10,7 +10,8 @@ export const metadata: Metadata = {
 }
 import { createClient } from '@/lib/supabase/server'
 import { pathForRole } from '@/lib/auth-redirect'
-import EGSScoreBar, { type EGSPhase } from '@/components/EGSScoreBar'
+import EGSScoreBar from '@/components/EGSScoreBar'
+import { getSkorDurumu, getEGSPhase, getSkorDurumuLabel, getSkorDurumuColor } from '@/lib/skor-durum'
 import EGSScoreChart, { type ScorePoint } from '@/components/EGSScoreChart'
 import EGSFixedBadge from '@/components/EGSFixedBadge'
 import PaylasModal from '@/components/PaylasModal'
@@ -108,14 +109,26 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
   const latestAnalysis = analyses[0] ?? null
   const latestScore = latestAnalysis?.final_overall ?? latestAnalysis?.temp_overall ?? latestAnalysis?.web_overall ?? null
 
-  // Mevcut EGS aşamasını belirle
-  function getCurrentPhase(): EGSPhase {
-    if (!latestAnalysis) return 'ai_analiz'
-    if (latestAnalysis.final_overall) return 'klinik_onayli'
-    if (latestAnalysis.temp_overall) return 'longevity_anketi'
-    return 'ai_analiz'
-  }
-  const currentPhase = getCurrentPhase()
+  // En son skor satırını çek (durumu hesaplamak için)
+  const { data: latestScoreRow } = latestAnalysis
+    ? await supabase
+        .from('scores')
+        .select('c250_base, hasta_anket_puani, klinik_anket_puani, tetkik_puani, hekim_degerlendirme, hekim_onay_puani')
+        .eq('analysis_id', latestAnalysis.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    : { data: null }
+
+  // Aktif randevu (en son pending/confirmed/in_progress)
+  const activeAppt = appointments?.find(a =>
+    a.status === 'pending' || a.status === 'confirmed' || a.status === 'in_progress'
+  ) ?? null
+
+  const skorDurumu = getSkorDurumu(latestAnalysis, latestScoreRow, activeAppt)
+  const skorDurumLabel = getSkorDurumuLabel(skorDurumu)
+  const skorDurumColors = getSkorDurumuColor(skorDurumu)
+  const currentPhase = getEGSPhase(latestAnalysis, latestScoreRow, activeAppt)
 
   async function handleSignOut() {
     'use server'
@@ -188,6 +201,25 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
           <div className="lg:col-span-2 p-6 rounded-2xl border border-slate-700 bg-slate-800/50 backdrop-blur-sm">
             {latestScore !== null ? (
               <>
+                {/* Skor Durumu Etiketi */}
+                <div className="flex justify-center mb-3">
+                  <div
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border"
+                    style={{
+                      color: skorDurumColors.fg,
+                      background: skorDurumColors.bg,
+                      borderColor: skorDurumColors.border,
+                    }}
+                  >
+                    {skorDurumu === 'klinik_onayli' && <span>✦</span>}
+                    {skorDurumu === 'guncelleniyor' && (
+                      <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: skorDurumColors.fg }} />
+                    )}
+                    {skorDurumu === 'tahmini' && <span>ℹ</span>}
+                    <span>{skorDurumLabel.toUpperCase()}</span>
+                  </div>
+                </div>
+
                 <EGSScoreBar
                   score={latestScore}
                   phase={currentPhase}
