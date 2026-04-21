@@ -37,7 +37,7 @@ Bu dosya her oturumda otomatik okunur.
 /panel/referral          → Referral kodu + komisyon takibi
 /analiz                  → EGS analiz (GPT-4 Vision + C250)
 /anket                   → Longevity anketi
-/randevu                 → Klinik seç + randevu al
+/randevu                 → Klinik seç + müsaitlik tabanlı saat + randevu al
 /magaza                  → Ürün listesi
 /magaza/[slug]           → Ürün detay + yorumlar
 /sepet                   → Sepet
@@ -308,6 +308,8 @@ POST /api/analiz  (rate limit: IP başına 5/saat)
 - İade: 14 günlük pencere (`order_items.delivered_at`)
 - Satıcı `stripe_account_id` yoksa veya `stripe_charges_enabled=false` → transfer yapılmaz
 - Stok uyarısı: stok ≤ 5 → satıcıya Resend email
+- **Sipariş onay e-postası**: müşteriye tam detay (ürünler, adres, toplam) — `sendOrderConfirmationEmail` webhook'ta
+- Stok decrement atomik: `decrement_product_stock` RPC `FOR UPDATE` lock ile race-safe
 - Yorumlar: satın alıp teslim/iade edene `is_verified: true`
 
 ---
@@ -362,6 +364,17 @@ POST /api/analiz  (rate limit: IP başına 5/saat)
 - [ ] Push/SMS provider (Firebase FCM / Netgsm)
 - [ ] API Platformu (3. parti entegrasyon)
 - [ ] Çoklu dil (EN)
+
+---
+
+## Randevu Akışı
+
+- `/randevu` → klinik seç → gün + saat → not → onay
+- **Müsaitlik entegre**: `clinic_availability` tablosundan haftalık slot hesabı
+  - Klinik pasif günler gizleniyor
+  - `start_time`/`end_time`/`slot_duration_minutes` → otomatik slot üretimi
+- **Dolu slot kontrolü**: `pending/confirmed/in_progress` randevular üzeri çizili gösterilir
+- Müsaitlik tanımlanmamış klinikler için kullanıcıya uyarı
 
 ---
 
