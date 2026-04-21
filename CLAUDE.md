@@ -514,6 +514,24 @@ Her biri için **bilimsel temelde EGP** hesaplanacak:
 
 **Saklama yeri (karar verilecek):** JSON katalog mı, Supabase `treatments`/`applications`/`devices` tabloları mı?
 
+### Kısmi Başlangıç (Faz 3'e bırakılan ama erken yapılabilir)
+
+Tam ekosistem kurulumu Faz 3 — ama **ürünler için EGP**'yi şimdi de başlatabiliriz:
+
+**Asgari MVP (hazır ol, erken olabilir):**
+1. EGP hesap formülü: `doctor × 0.4 + user × 0.35 + manufacturer × 0.15 + scientific × 0.10`
+2. Review geldiğinde otomatik güncelleme (review-actions.ts'e ekle)
+3. Mağaza ürün kartında EGP rozeti
+4. Default sıralama: EGP yüksekten düşüğe
+5. Ürün detay: büyük EGP + "Nasıl hesaplandı?" şeffaflık
+
+**Altyapı zaten hazır:**
+- `products.manufacturer_score`, `doctor_score`, `user_score`, `scientific_score` kolonları mevcut
+- `reviews` tablosu otomatik `user_score` güncelliyor
+- Sadece EGP formülü + UI rozetleri eklenecek
+
+**Karar bekliyor:** konsept olgunlaşsın (dinamik ağırlıklar, uzun vadeli skor delta vb.) sonra kod. Erken başlarsa ölü kod.
+
 ### EGP Hesaplama Formülü (Dinamik)
 
 EGP iki katmanlı: **teorik** (Estelog paneli verir) + **saha verisi** (kullanıcı + sonuç) → ağırlıklı ortalama.
