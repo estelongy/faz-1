@@ -73,7 +73,7 @@ export default function RandevuQRModal({ appointmentId, clinicName, appointmentD
             {/* Talimat */}
             <div className="bg-violet-50 rounded-xl p-3 mb-4 text-center">
               <p className="text-violet-900 text-xs">
-                Kliniğe vardığında bu QR'ı resepsiyona göster.<br/>
+                Kliniğe vardığında bu QR&apos;ı resepsiyona göster.<br/>
                 Klinik telefonuyla okutup seni sisteme kaydedecek.
               </p>
             </div>

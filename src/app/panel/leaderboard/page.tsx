@@ -94,7 +94,7 @@ export default async function LeaderboardPage() {
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-black text-white mb-2">Klinik Onaylı EGS Sıralaması</h1>
           <p className="text-slate-400 text-sm">
-            Hekim onaylı skorların top 20'si · Anonim olarak gösterilir
+            Hekim onaylı skorların top 20&apos;si · Anonim olarak gösterilir
           </p>
           {totalPlayers > 0 && (
             <p className="text-slate-500 text-xs mt-2">
@@ -125,7 +125,7 @@ export default async function LeaderboardPage() {
             </div>
             {myRank > 20 && (
               <p className="text-slate-500 text-xs mt-3">
-                Top 20'ye girmek için <strong className="text-white">
+                Top 20&apos;ye girmek için <strong className="text-white">
                   {(top20[19]?.score - myScore).toFixed(1)} puan
                 </strong> daha kazan
               </p>
@@ -209,7 +209,7 @@ export default async function LeaderboardPage() {
             </li>
             <li className="flex gap-2">
               <span className="text-violet-400">4.</span>
-              <span>Tetkik + hekim onayı ile Klinik Onaylı EGS'ye ulaş</span>
+              <span>Tetkik + hekim onayı ile Klinik Onaylı EGS&apos;ye ulaş</span>
             </li>
           </ul>
           <Link href="/randevu"
