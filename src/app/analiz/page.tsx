@@ -3,42 +3,25 @@
 import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import EGSScoreBar from '@/components/EGSScoreBar'
+import type { AnalizResult } from '@/app/api/analiz/route'
 
 type Step = 'upload' | 'processing' | 'result'
 
-interface AnalysisResult {
-  overall: number
-  moisture: number
-  wrinkles: number
-  spots: number
-  pores: number
-  skinAge: number
-  recommendations: string[]
-}
+type ProcessingStage =
+  | 'Fotoğraf yükleniyor'
+  | 'Yüz tespiti yapılıyor'
+  | 'Cilt dokusu analiz ediliyor'
+  | 'C250 formülü hesaplanıyor'
+  | 'Bakım önerileri hazırlanıyor'
 
-// Ön analiz sonucu üretir (Faz 2 sonunda gerçek görsel analiz ile değişecek)
-function mockAnalyze(): AnalysisResult {
-  const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
-  const overall = rand(60, 92)
-  const spots = rand(5, 40)
-  return {
-    overall,
-    moisture: rand(55, 90),
-    wrinkles: rand(10, 45),
-    spots,
-    pores: rand(20, 60),
-    skinAge: rand(22, 38),
-    recommendations: [
-      'Günlük SPF 50+ güneş kremi kullanın',
-      'Hyalüronik asit serumu nemlendirme için idealdir',
-      overall < 75 ? 'Retinol içerikli ürünleri gece rutinine ekleyin' : 'Mevcut bakım rutininizi sürdürün',
-      'Günde en az 2 litre su için',
-      spots > 25 ? 'Leke karşıtı C vitamini serumu deneyin' : 'Antioksidan içerikli tonerde tutarlı kalın',
-    ].filter(Boolean) as string[],
-  }
-}
+const STAGES: ProcessingStage[] = [
+  'Fotoğraf yükleniyor',
+  'Yüz tespiti yapılıyor',
+  'Cilt dokusu analiz ediliyor',
+  'C250 formülü hesaplanıyor',
+  'Bakım önerileri hazırlanıyor',
+]
 
 const scoreColor = (score: number) =>
   score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-amber-400' : 'text-red-400'
@@ -46,15 +29,27 @@ const scoreColor = (score: number) =>
 const scoreBarColor = (score: number) =>
   score >= 80 ? 'bg-emerald-500' : score >= 60 ? 'bg-amber-500' : 'bg-red-500'
 
+function toBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function AnalizPage() {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileRef = useRef<File | null>(null)
 
-  const [step, setStep] = useState<Step>('upload')
+  const [step, setStep]           = useState<Step>('upload')
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [result, setResult] = useState<AnalysisResult | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [result, setResult]       = useState<AnalizResult | null>(null)
+  const [saving, setSaving]       = useState(false)
+  const [error, setError]         = useState<string | null>(null)
+  const [stageIdx, setStageIdx]   = useState(0)
+  const [usedFallback, setUsedFallback] = useState(false)
 
   const handleFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -66,6 +61,7 @@ export default function AnalizPage() {
       return
     }
     setError(null)
+    fileRef.current = file
     const url = URL.createObjectURL(file)
     setPreviewUrl(url)
   }, [])
@@ -77,35 +73,53 @@ export default function AnalizPage() {
   }, [handleFile])
 
   async function startAnalysis() {
-    if (!previewUrl) return
-    const supabase = createClient()
+    const file = fileRef.current
+    if (!file || !previewUrl) return
+    setError(null)
     setStep('processing')
+    setStageIdx(0)
 
-    // Yapay gecikme — işlem süresi simülasyonu
-    await new Promise(r => setTimeout(r, 2800))
+    // Aşama animasyonu
+    let idx = 0
+    const stageInterval = setInterval(() => {
+      idx++
+      if (idx < STAGES.length) setStageIdx(idx)
+      else clearInterval(stageInterval)
+    }, 900)
 
-    const analysisResult = mockAnalyze()
-
-    // DB'ye ÖNCE kaydet
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        await supabase.from('analyses').insert({
-          user_id: user.id,
-          web_overall: analysisResult.overall,
-          status: 'completed',
-        })
-      }
-    } catch {
-      // Kayıt hatası sessizce geçilir
-    }
+      // Base64 dönüşümü
+      const dataUrl = await toBase64(file)
+      const base64  = dataUrl.replace(/^data:[^;]+;base64,/, '')
+      const mimeType = file.type || 'image/jpeg'
 
-    // SONRA göster
-    setResult(analysisResult)
-    setStep('result')
+      // Gerçek AI analiz API çağrısı
+      const res = await fetch('/api/analiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64, mimeType }),
+      })
+
+      clearInterval(stageInterval)
+      setStageIdx(STAGES.length - 1)
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error ?? `HTTP ${res.status}`)
+      }
+
+      const data = await res.json() as { ok: boolean; result: AnalizResult; usedFallback: boolean }
+      setUsedFallback(data.usedFallback ?? false)
+      setResult(data.result)
+      setStep('result')
+    } catch (err) {
+      clearInterval(stageInterval)
+      setError(err instanceof Error ? err.message : 'Analiz sırasında bir hata oluştu. Lütfen tekrar deneyin.')
+      setStep('upload')
+    }
   }
 
-  async function saveAndGoPanel() {
+  function saveAndGoPanel() {
     setSaving(true)
     router.push('/panel')
   }
@@ -144,7 +158,7 @@ export default function AnalizPage() {
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
                 step === s
                   ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white'
-                  : (['processing', 'result'].indexOf(step) > ['processing', 'result'].indexOf(s)) || (step === 'result')
+                  : step === 'result'
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                     : 'bg-slate-800 text-slate-500 border border-slate-700'
               }`}>
@@ -160,7 +174,7 @@ export default function AnalizPage() {
           <div>
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-white mb-2">Gençlik Skorunu Öğren</h1>
-              <p className="text-slate-400">Selfie yükle, ön analizin saniyeler içinde hazır. Kesin skor klinik muayenesiyle oluşur.</p>
+              <p className="text-slate-400">Selfie yükle, GPT-4 Vision ile ön analizin saniyeler içinde hazır.</p>
             </div>
 
             {!previewUrl ? (
@@ -194,7 +208,7 @@ export default function AnalizPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={previewUrl} alt="Selfie önizleme" className="w-full object-cover max-h-80" />
                 <button
-                  onClick={() => { setPreviewUrl(null); URL.revokeObjectURL(previewUrl) }}
+                  onClick={() => { setPreviewUrl(null); fileRef.current = null; URL.revokeObjectURL(previewUrl) }}
                   className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-900/80 backdrop-blur-sm flex items-center justify-center text-white hover:bg-red-500/80 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,7 +231,16 @@ export default function AnalizPage() {
                 </svg>
                 <div>
                   <p className="text-white text-sm font-medium">Gizlilik güvencesi</p>
-                  <p className="text-slate-500 text-xs mt-0.5">Fotoğrafınız yalnızca analiz için kullanılır ve şifreli olarak saklanır.</p>
+                  <p className="text-slate-500 text-xs mt-0.5">Fotoğrafınız yalnızca analiz için kullanılır, sunucularda saklanmaz.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-violet-500/5 border border-violet-500/20">
+                <svg className="w-5 h-5 text-violet-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <div>
+                  <p className="text-white text-sm font-medium">GPT-4 Vision + C250 Formülü</p>
+                  <p className="text-slate-500 text-xs mt-0.5">Bileşen skorları: nem, kırışıklık, pigmentasyon, ton ve göz altı analizi.</p>
                 </div>
               </div>
             </div>
@@ -245,19 +268,27 @@ export default function AnalizPage() {
               </div>
             </div>
             <h2 className="text-2xl font-bold text-white mb-3">Fotoğrafın İşleniyor</h2>
-            <p className="text-slate-400 mb-8">Ön analiz hesaplanıyor, birkaç saniye...</p>
+            <p className="text-slate-400 mb-8">GPT-4 Vision analiz ediyor, C250 formülü hesaplanıyor...</p>
             <div className="space-y-3 text-left max-w-xs mx-auto">
-              {[
-                'Yüz tespiti yapılıyor',
-                'Cilt dokusu analiz ediliyor',
-                'Nem ve leke haritası çıkarılıyor',
-                'Bakım önerileri hazırlanıyor',
-              ].map((label, i) => (
-                <div key={label} className="flex items-center gap-3" style={{ animationDelay: `${i * 0.4}s` }}>
-                  <div className="w-5 h-5 rounded-full border-2 border-violet-500/50 flex items-center justify-center shrink-0">
-                    <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+              {STAGES.map((label, i) => (
+                <div key={label} className="flex items-center gap-3">
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                    i < stageIdx
+                      ? 'border-emerald-500 bg-emerald-500/20'
+                      : i === stageIdx
+                        ? 'border-violet-500/50'
+                        : 'border-slate-700'
+                  }`}>
+                    {i < stageIdx
+                      ? <svg className="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                      : i === stageIdx
+                        ? <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+                        : null
+                    }
                   </div>
-                  <span className="text-slate-400 text-sm">{label}</span>
+                  <span className={`text-sm transition-colors ${i <= stageIdx ? 'text-slate-300' : 'text-slate-600'}`}>
+                    {label}
+                  </span>
                 </div>
               ))}
             </div>
@@ -272,10 +303,13 @@ export default function AnalizPage() {
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Ön Analiz · Tahmini Skor
+                {usedFallback ? 'Ön Analiz · Tahmini Skor (AI servisi geçici kapalı)' : 'GPT-4 Vision · C250 Ön Analiz'}
               </div>
               <h1 className="text-3xl font-bold text-white mb-2">Ön Analizin Hazır</h1>
-              <p className="text-slate-400">Kesin skor klinik muayenesiyle oluşur — randevu al, <span className="text-emerald-400 font-semibold">Klinik Onaylı EGS</span> sertifikana ulaş</p>
+              <p className="text-slate-400">
+                Kesin skor klinik muayenesiyle oluşur — randevu al,{' '}
+                <span className="text-emerald-400 font-semibold">Klinik Onaylı EGS</span> sertifikana ulaş
+              </p>
             </div>
 
             {/* EGS Canlı Skor Barı */}
@@ -285,30 +319,67 @@ export default function AnalizPage() {
                 phase="ai_analiz"
                 animated={true}
               />
+              {/* Güven skoru */}
+              <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                <span>AI Güven Skoru</span>
+                <span className={result.confidence >= 0.7 ? 'text-emerald-400' : result.confidence >= 0.5 ? 'text-amber-400' : 'text-red-400'}>
+                  %{Math.round(result.confidence * 100)}
+                </span>
+              </div>
+              <div className="h-1 rounded-full bg-slate-700 mt-1">
+                <div
+                  className={`h-full rounded-full transition-all ${result.confidence >= 0.7 ? 'bg-emerald-500' : result.confidence >= 0.5 ? 'bg-amber-500' : 'bg-red-500'}`}
+                  style={{ width: `${result.confidence * 100}%` }}
+                />
+              </div>
             </div>
 
-            {/* Metrikler */}
+            {/* C250 Detayları */}
+            {result.c250Details && (
+              <div className="p-4 rounded-xl bg-violet-500/5 border border-violet-500/20 mb-6">
+                <p className="text-violet-400 text-xs font-semibold mb-2 uppercase tracking-wider">C250 Formülü</p>
+                <div className="grid grid-cols-3 gap-3 text-xs mb-3">
+                  <div>
+                    <p className="text-slate-500">Ham Skor</p>
+                    <p className="text-white font-bold">{result.c250Details.rawScore.toFixed(1)}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Yaş Faktörü</p>
+                    <p className="text-white font-bold">×{result.c250Details.ageFactor.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">C250 Sonucu</p>
+                    <p className="text-violet-400 font-bold">{result.c250Details.c250Result.toFixed(1)}</p>
+                  </div>
+                </div>
+                <p className="text-slate-400 text-xs italic">{result.c250Details.explanation}</p>
+              </div>
+            )}
+
+            {/* Bileşen Metrikleri */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               {[
-                { label: 'Nem Seviyesi', value: result.moisture, unit: '%' },
-                { label: 'Cilt Yaşı', value: result.skinAge, unit: ' yaş' },
-                { label: 'Kırışıklık', value: result.wrinkles, unit: '/100', invert: true },
-                { label: 'Gözenek', value: result.pores, unit: '/100', invert: true },
-              ].map(({ label, value, unit, invert }) => {
+                { label: 'Nem Seviyesi',  value: result.moisture, unit: '%',    invert: false },
+                { label: 'Cilt Yaşı',     value: result.skinAge,  unit: ' yaş', invert: false, noBar: true },
+                { label: 'Kırışıklık',    value: result.wrinkles, unit: '/100', invert: true  },
+                { label: 'Pigmentasyon',  value: result.spots,    unit: '/100', invert: true  },
+              ].map(({ label, value, unit, invert, noBar }) => {
                 const displayScore = invert ? 100 - value : value
                 return (
                   <div key={label} className="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
                     <p className="text-slate-500 text-xs mb-2">{label}</p>
                     <div className="flex items-baseline gap-1 mb-2">
-                      <span className={`text-2xl font-bold ${scoreColor(displayScore)}`}>{value}</span>
+                      <span className={`text-2xl font-bold ${noBar ? 'text-white' : scoreColor(displayScore)}`}>{value}</span>
                       <span className="text-slate-500 text-xs">{unit}</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-slate-700 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${scoreBarColor(displayScore)}`}
-                        style={{ width: `${invert ? 100 - value : value}%` }}
-                      />
-                    </div>
+                    {!noBar && (
+                      <div className="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${scoreBarColor(displayScore)}`}
+                          style={{ width: `${displayScore}%` }}
+                        />
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -336,7 +407,6 @@ export default function AnalizPage() {
 
             {/* Aksiyon butonları */}
             <div className="space-y-3">
-              {/* Longevity Anketi CTA — skor artırmak için */}
               <Link
                 href="/anket"
                 className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-semibold rounded-xl transition-all"
