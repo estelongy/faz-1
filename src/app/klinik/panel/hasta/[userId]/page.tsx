@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import EGSScoreBar, { type EGSPhase } from '@/components/EGSScoreBar'
 import EGSScoreChart, { type ScorePoint } from '@/components/EGSScoreChart'
+import KlinikNotlar, { type ClinicNote } from './KlinikNotlar'
 
 export const metadata: Metadata = {
   title: 'Hasta Detayı',
@@ -91,6 +92,30 @@ export default async function HastaDetayPage({
     ['pending', 'confirmed', 'in_progress'].includes(a.status)
   )
 
+  // Klinik notları
+  const { data: notesRaw } = await supabase
+    .from('clinic_patient_notes')
+    .select('id, note, pinned, created_at, updated_at, author_id')
+    .eq('clinic_id', clinic.id)
+    .eq('user_id', params.userId)
+    .order('created_at', { ascending: false })
+
+  // Yazar adlarını çek
+  const authorIds = Array.from(new Set((notesRaw ?? []).map(n => n.author_id).filter(Boolean))) as string[]
+  const { data: authors } = authorIds.length > 0
+    ? await supabase.from('profiles').select('id, full_name').in('id', authorIds)
+    : { data: [] as Array<{ id: string; full_name: string | null }> }
+  const authorByid = new Map((authors ?? []).map(a => [a.id, a.full_name]))
+
+  const notes: ClinicNote[] = (notesRaw ?? []).map(n => ({
+    id: n.id,
+    note: n.note,
+    pinned: n.pinned ?? false,
+    created_at: n.created_at,
+    updated_at: n.updated_at,
+    author_name: n.author_id ? authorByid.get(n.author_id) ?? null : null,
+  }))
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
       {/* Header */}
@@ -174,6 +199,9 @@ export default async function HastaDetayPage({
             )}
           </div>
         </div>
+
+        {/* ── Klinik Notları ── */}
+        <KlinikNotlar userId={params.userId} notes={notes} />
 
         {/* ── Randevular tablosu ── */}
         <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">

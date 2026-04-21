@@ -13,17 +13,49 @@ interface Clinic {
   specialties: string[] | null
 }
 
-const TIME_SLOTS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30']
+interface Availability {
+  day_of_week: number        // 0=Pazar, 1=Pzt, ..., 6=Cumartesi
+  start_time: string         // '09:00:00'
+  end_time: string           // '18:00:00'
+  slot_duration_minutes: number
+  is_active: boolean
+}
 
+/** Hafta sonu ayrımı yapmadan önümüzdeki 14 günü döndürür. */
 function getNext14Days() {
-  const days = []
+  const days: Date[] = []
   const today = new Date()
   for (let i = 1; i <= 14; i++) {
     const d = new Date(today)
     d.setDate(today.getDate() + i)
-    if (d.getDay() !== 0 && d.getDay() !== 6) days.push(d)
+    days.push(d)
   }
   return days
+}
+
+/** 'HH:MM:SS' veya 'HH:MM' → dakika */
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(':').map(Number)
+  return h * 60 + m
+}
+
+function minutesToTime(min: number): string {
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+/** Bir gün için müsaitliğe göre saat slotları üret. */
+function generateSlots(avail: Availability | undefined): string[] {
+  if (!avail || !avail.is_active) return []
+  const start = timeToMinutes(avail.start_time)
+  const end = timeToMinutes(avail.end_time)
+  const step = avail.slot_duration_minutes || 30
+  const slots: string[] = []
+  for (let t = start; t + step <= end; t += step) {
+    slots.push(minutesToTime(t))
+  }
+  return slots
 }
 
 export default function RandevuPage() {
@@ -46,7 +78,38 @@ export default function RandevuPage() {
   const [filterLocation, setFilterLocation] = useState<string>('')
   const [filterSpecialty, setFilterSpecialty] = useState<string>('')
 
-  const days = getNext14Days()
+  // Müsaitlik + dolu saatler
+  const [availability, setAvailability] = useState<Availability[]>([])
+  const [busySlots, setBusySlots] = useState<Set<string>>(new Set()) // "YYYY-MM-DD HH:MM"
+  const [loadingAvail, setLoadingAvail] = useState(false)
+
+  const allDays = getNext14Days()
+
+  // Müsait günleri (klinik o gün açık olan) filtrele
+  const days = useMemo(() => {
+    if (availability.length === 0) return allDays
+    const activeDays = new Set(availability.filter(a => a.is_active).map(a => a.day_of_week))
+    return allDays.filter(d => activeDays.has(d.getDay()))
+  }, [allDays, availability])
+
+  // Seçilen gün için slot'ları üret
+  const daySlots = useMemo(() => {
+    if (!selectedDay) return []
+    const dow = selectedDay.getDay()
+    const avail = availability.find(a => a.day_of_week === dow)
+    return generateSlots(avail)
+  }, [selectedDay, availability])
+
+  // Seçilen gün için dolu olan saatler
+  const busyForDay = useMemo(() => {
+    if (!selectedDay) return new Set<string>()
+    const dateKey = selectedDay.toISOString().split('T')[0]
+    const out = new Set<string>()
+    busySlots.forEach(s => {
+      if (s.startsWith(dateKey)) out.add(s.split(' ')[1])
+    })
+    return out
+  }, [selectedDay, busySlots])
 
   // Lokasyon ve uzmanlık listelerini mevcut kliniklerden çıkar
   const { locations, specialtiesList } = useMemo(() => {
@@ -115,6 +178,46 @@ export default function RandevuPage() {
         }
       })
   }, [router, preselectedClinicId])
+
+  // Klinik seçildiğinde müsaitlik + dolu randevuları çek
+  useEffect(() => {
+    if (!selectedClinic) {
+      setAvailability([])
+      setBusySlots(new Set())
+      setSelectedDay(null)
+      setSelectedTime(null)
+      return
+    }
+    const supabase = createClient()
+    setLoadingAvail(true)
+
+    // İki sorguyu paralel çek
+    Promise.all([
+      supabase
+        .from('clinic_availability')
+        .select('day_of_week, start_time, end_time, slot_duration_minutes, is_active')
+        .eq('clinic_id', selectedClinic.id),
+      supabase
+        .from('appointments')
+        .select('appointment_date')
+        .eq('clinic_id', selectedClinic.id)
+        .in('status', ['pending', 'confirmed', 'in_progress'])
+        .gte('appointment_date', new Date().toISOString())
+        .lte('appointment_date', new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()),
+    ]).then(([availRes, apptRes]) => {
+      setAvailability((availRes.data ?? []) as Availability[])
+
+      const busy = new Set<string>()
+      for (const a of apptRes.data ?? []) {
+        const dt = new Date(a.appointment_date)
+        const dateKey = dt.toISOString().split('T')[0]
+        const timeKey = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
+        busy.add(`${dateKey} ${timeKey}`)
+      }
+      setBusySlots(busy)
+      setLoadingAvail(false)
+    })
+  }, [selectedClinic])
 
   async function handleConfirm() {
     if (!selectedClinic || !selectedDay || !selectedTime) return
@@ -296,40 +399,72 @@ export default function RandevuPage() {
               <p className="text-slate-400 text-sm mt-1">Uygun bir gün ve saat seçin</p>
             </div>
 
-            <div className="mb-6">
-              <h3 className="text-white font-medium mb-3">Gün</h3>
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {days.map(day => (
-                  <button key={day.toISOString()} onClick={() => setSelectedDay(day)}
-                    className={`shrink-0 flex flex-col items-center px-4 py-3 rounded-xl border transition-all ${
-                      selectedDay?.toDateString() === day.toDateString()
-                        ? 'border-violet-500 bg-violet-500/20 text-white'
-                        : 'border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-600'
-                    }`}>
-                    <span className="text-xs uppercase">{day.toLocaleDateString('tr-TR', { weekday: 'short' })}</span>
-                    <span className="text-lg font-bold mt-0.5">{day.getDate()}</span>
-                    <span className="text-xs">{day.toLocaleDateString('tr-TR', { month: 'short' })}</span>
-                  </button>
-                ))}
+            {loadingAvail ? (
+              <div className="py-8 text-center text-slate-500 text-sm">Müsaitlik yükleniyor...</div>
+            ) : days.length === 0 ? (
+              <div className="p-5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm mb-6">
+                ⚠ Bu klinik önümüzdeki 14 gün için müsaitlik saatlerini henüz tanımlamamış. Lütfen başka bir klinik seçin.
               </div>
-            </div>
-
-            {selectedDay && (
-              <div className="mb-8">
-                <h3 className="text-white font-medium mb-3">Saat</h3>
-                <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-                  {TIME_SLOTS.map(t => (
-                    <button key={t} onClick={() => setSelectedTime(t)}
-                      className={`py-2 rounded-lg border text-sm font-medium transition-all ${
-                        selectedTime === t
-                          ? 'border-violet-500 bg-violet-500/20 text-white'
-                          : 'border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-600'
-                      }`}>
-                      {t}
-                    </button>
-                  ))}
+            ) : (
+              <>
+                <div className="mb-6">
+                  <h3 className="text-white font-medium mb-3">Gün</h3>
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {days.map(day => (
+                      <button key={day.toISOString()} onClick={() => { setSelectedDay(day); setSelectedTime(null) }}
+                        className={`shrink-0 flex flex-col items-center px-4 py-3 rounded-xl border transition-all ${
+                          selectedDay?.toDateString() === day.toDateString()
+                            ? 'border-violet-500 bg-violet-500/20 text-white'
+                            : 'border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-600'
+                        }`}>
+                        <span className="text-xs uppercase">{day.toLocaleDateString('tr-TR', { weekday: 'short' })}</span>
+                        <span className="text-lg font-bold mt-0.5">{day.getDate()}</span>
+                        <span className="text-xs">{day.toLocaleDateString('tr-TR', { month: 'short' })}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+
+                {selectedDay && (
+                  <div className="mb-8">
+                    <h3 className="text-white font-medium mb-3">
+                      Saat
+                      <span className="ml-2 text-xs text-slate-500 font-normal">
+                        · {daySlots.filter(t => !busyForDay.has(t)).length} müsait slot
+                      </span>
+                    </h3>
+                    {daySlots.length === 0 ? (
+                      <p className="text-slate-500 text-sm py-4">Bu gün için saat tanımlanmamış.</p>
+                    ) : (
+                      <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                        {daySlots.map(t => {
+                          const isBusy = busyForDay.has(t)
+                          return (
+                            <button
+                              key={t}
+                              onClick={() => !isBusy && setSelectedTime(t)}
+                              disabled={isBusy}
+                              className={`py-2 rounded-lg border text-sm font-medium transition-all ${
+                                isBusy
+                                  ? 'border-slate-800 bg-slate-900 text-slate-700 cursor-not-allowed line-through'
+                                  : selectedTime === t
+                                    ? 'border-violet-500 bg-violet-500/20 text-white'
+                                    : 'border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-600'
+                              }`}>
+                              {t}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                    {daySlots.some(t => busyForDay.has(t)) && (
+                      <p className="text-slate-500 text-xs mt-2">
+                        <span className="line-through">Üzeri çizili</span> saatler dolu
+                      </p>
+                    )}
+                  </div>
+                )}
+              </>
             )}
 
             <button onClick={() => setStep(3)} disabled={!selectedDay || !selectedTime}

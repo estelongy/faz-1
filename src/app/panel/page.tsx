@@ -16,6 +16,7 @@ import EGSScoreChart, { type ScorePoint } from '@/components/EGSScoreChart'
 import EGSFixedBadge from '@/components/EGSFixedBadge'
 import PaylasModal from '@/components/PaylasModal'
 import UserBadges from '@/components/UserBadges'
+import RandevuQRModal from '@/components/RandevuQRModal'
 import { checkAndAwardBadges, updateStreak } from './badge-actions'
 
 const APT_STATUS_LABEL: Record<string, string> = {
@@ -322,6 +323,12 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
               <h3 className="text-white font-bold mb-0.5">Davet & Kazan</h3>
               <p className="text-slate-400 text-xs">Referans kodum</p>
             </Link>
+
+            <Link href="/panel/leaderboard" className="flex-1 group p-5 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20 hover:scale-[1.02] transition-all cursor-pointer">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center mb-3 text-white text-xl">🏆</div>
+              <h3 className="text-white font-bold mb-0.5">Sıralama</h3>
+              <p className="text-slate-400 text-xs">Klinik onaylı skorlar</p>
+            </Link>
           </div>
         </div>
 
@@ -411,14 +418,21 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                         {APT_STATUS_LABEL[apt.status] ?? apt.status}
                       </span>
                       {(apt.status === 'pending' || apt.status === 'confirmed') && (
-                        <form action={cancelAppointment}>
-                          <input type="hidden" name="appointmentId" value={apt.id} />
-                          <button type="submit" className="text-slate-500 hover:text-red-400 transition-colors" title="İptal et">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </form>
+                        <>
+                          <RandevuQRModal
+                            appointmentId={apt.id}
+                            clinicName={apt.clinics?.name ?? 'Klinik'}
+                            appointmentDate={apt.appointment_date}
+                          />
+                          <form action={cancelAppointment}>
+                            <input type="hidden" name="appointmentId" value={apt.id} />
+                            <button type="submit" className="text-slate-500 hover:text-red-400 transition-colors" title="İptal et">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </form>
+                        </>
                       )}
                     </div>
                   </div>

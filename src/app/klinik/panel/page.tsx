@@ -248,6 +248,7 @@ export default async function KlinikPanelPage() {
                 </Link>
               )}
               <Link href="/klinik/panel/takvim" className="text-sm text-slate-400 hover:text-white transition-colors">📅 Takvim</Link>
+              <Link href="/klinik/panel/rapor" className="text-sm text-slate-400 hover:text-white transition-colors">📊 Rapor</Link>
               <Link href="/panel" className="text-sm text-slate-400 hover:text-white transition-colors">Kullanıcı Paneli</Link>
               <form action={handleSignOut}>
                 <button type="submit" className="text-sm text-slate-400 hover:text-white transition-colors">Çıkış</button>
