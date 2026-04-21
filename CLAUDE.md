@@ -119,6 +119,80 @@ SENTRY_PROJECT                  ← Sentry (opsiyonel)
 
 ---
 
+## Klinik Akış & Skor Hesaplama (Netleştirildi)
+
+### Tam Akış
+
+```
+1. Ön Analiz (zorunlu)        → c250_base (fotoğraf → GPT-4 → C250)
+2. Hasta Anketi (opsiyonel)   → hasta_anket_puani (5 soru, randevudan sonra, evden)
+3. Klinik Anketi (opsiyonel)  → klinik_anket_puani (aynı 5 soru replace + 5 yeni soru)
+4. Tetkik Girişi (opsiyonel)  → tetkik_puani (5-10 sabit parametre, referans aralığıyla)
+5. İleri Analiz (opsiyonel)   → c250_base replace (fotoğraf veya cihaz → GPT-4 → C250)
+6. Hekim Onayı (zorunlu)      → final = (toplam × 0.85) + (hekim_puani × 0.15)
+                              → KLİNİK ONAYLI EGS ✅
+```
+
+### Skor Hesaplama Kuralları
+
+- **Atlanan her basamak skora sıfır etki** — akış devam eder
+- **Hekim atlanamaz** — tüm puanları görür, onaylamadan "Klinik Onaylı EGS" oluşmaz
+- **İleri analiz** ön analizin c250_base'ini **replace eder** (üstüne eklenmez)
+- **Klinik anketi** hasta anketinin aynı 5 sorusunu **replace eder** (çift sayım önleme) + 5 yeni soru ekler
+- **AI analizleri bağımsız** — anket/tetkik puanlarına dokunmaz, sadece c250_base'i etkiler
+
+### Skor Durumları
+
+| Durum | Açıklama |
+|-------|----------|
+| `tahmini` | Sadece ön analiz var (GPT-4 + C250) |
+| `güncelleniyor` | Hasta anketi doldu veya klinik süreci devam ediyor |
+| `klinik_onaylı` | Hekim onayladı, final skor sabitlendi |
+
+### Örnek Hesaplama
+
+```
+c250_ön_analiz     = 75   → ileri analiz gelince 82 ile replace edilir
+hasta_anket        = +1
+klinik_anket       = -1 (replace) + 5 (toplam) = +4
+tetkik             = 0
+c250_ileri_analiz  = 82   (75'in yerini aldı)
+─────────────────────────
+ara toplam         = 82 + 1 - 1 + 5 + 0 = 87
+
+× 0.85             = 73.95
+hekim (78) × 0.15  = 11.7
+─────────────────────────
+KLİNİK ONAYLI EGS  = 85.65
+```
+
+### Anket Yapısı
+
+| | Kim | Nerede | Sorular |
+|--|--|--|--|
+| Hasta Anketi | Hasta | Telefondan, randevu sonrası | 5 soru (A,B,C,D,E) |
+| Klinik Anketi | Klinik personeli | Yüz yüze | Aynı 5 (A-E replace) + 5 yeni |
+
+### Tetkik
+
+- 5-10 **sabit** parametre (kan, hormon vs.)
+- Klinik değerleri girer, sistem referans aralığına göre puanı hesaplar
+
+### İleri Analiz
+
+- Ön analizle aynı C250 formülü çalışır
+- Girdi: fotoğraf **veya** cihaz verisi (henüz karar verilmedi)
+- Ücretli/premium versiyon
+- Sonuç ön analizin c250_base'ini replace eder
+
+### Önemli Not
+
+Görünüm yaşı subjektif bir ölçüm — bu sistemin handikabı.
+Ama skorun bilimsel dayanağı var (sonraki session'da konuşulacak).
+Tetkik verileri + hekim onayı skoru savunulabilir kılıyor.
+
+---
+
 ## AI — GPT-4 Vision + C250
 
 ### Akış
