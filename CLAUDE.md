@@ -395,11 +395,24 @@ POST /api/analiz  (rate limit: IP başına 5/saat)
 > Estelongy, kişinin **sağlıklı bir şekilde daha genç görünmesini** sağlayan bir **sanat**tır.
 > Nihai amaç: estetik ihtiyacının minimize edilmesi, her işlemin **etkin, sürdürülebilir ve verimli** olması.
 
+**Skor Felsefesi** (motto):
+> **"Skor, estetiğin sayısal halidir."**
+> Fotoğraf + yaşam tarzı + biyomarker + hekim gözü → **objektif, savunulabilir, tekrarlanabilir** rakam.
+> Estetik sektörünün açığını kapatır: **ortak ölçü standardı yoktu, artık var.**
+
 **Pozisyon:**
 - "Genç görünmek" değil → **"Gençleşmek (görünümü)"**
 - Rakipler: tek seferlik müdahale, maskeleme (filler, botox)
 - Estelongy: protokol (foto + anket + tetkik + hekim + ürün) → ölçülebilir ilerleme
 - Paradoks: platform estetik işlem satıyor AMA amacı **"doğru işlem, doğru zaman"**
+- **Yeni dil, yeni kuram** — sadece ürün değil, bir disiplin
+
+### Hekim Kimliği: Estelog
+
+- Klasik estetik hekimi → **Estelog** (yeni meslek tanımı)
+- Estelog = Skor bazlı çalışan, estetiği sağlıkla birleştiren, protokol odaklı hekim
+- Klasik hekimden farkı: tek seferlik müdahale yerine **skor takibi ile uzun vadeli yol haritası**
+- Pazarlama açısı: "Senin hekimin değil, senin Estelog'un"
 
 ### Skor Bölgeleri (YENİ — ESKİ BAREM KULLANMA)
 
