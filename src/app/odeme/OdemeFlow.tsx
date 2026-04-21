@@ -40,7 +40,52 @@ export default function OdemeFlow({ initialAddresses }: { initialAddresses: Addr
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  // Kupon state
+  const [couponInput, setCouponInput] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null)
+  const [couponLoading, setCouponLoading] = useState(false)
+  const [couponError, setCouponError] = useState<string | null>(null)
+
   const empty = hydrated && items.length === 0
+
+  // Kargo: ₺200 ve üstü ücretsiz, altı ₺29
+  const FREE_SHIPPING_THRESHOLD = 200
+  const SHIPPING_FEE = 29
+  const shippingFee = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : (subtotal > 0 ? SHIPPING_FEE : 0)
+  const remainingForFreeShip = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal)
+
+  const couponDiscount = appliedCoupon?.discount ?? 0
+  const total = Math.max(0, subtotal + shippingFee - couponDiscount)
+
+  async function applyCoupon() {
+    const code = couponInput.trim().toUpperCase()
+    if (!code) return
+    setCouponLoading(true)
+    setCouponError(null)
+    try {
+      const res = await fetch('/api/checkout/validate-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, subtotal }),
+      })
+      const data = await res.json()
+      if (!data.valid) {
+        setCouponError(data.error ?? 'Geçersiz kupon')
+        return
+      }
+      setAppliedCoupon({ code: data.code, discount: data.discount })
+      setCouponInput('')
+    } catch {
+      setCouponError('Doğrulama hatası')
+    } finally {
+      setCouponLoading(false)
+    }
+  }
+
+  function removeCoupon() {
+    setAppliedCoupon(null)
+    setCouponError(null)
+  }
 
   async function proceedToPayment() {
     if (!selectedAddrId) {
@@ -57,6 +102,7 @@ export default function OdemeFlow({ initialAddresses }: { initialAddresses: Addr
       body: JSON.stringify({
         items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
         addressId: selectedAddrId,
+        couponCode: appliedCoupon?.code,
       }),
     })
     const data = await res.json()
@@ -207,19 +253,81 @@ export default function OdemeFlow({ initialAddresses }: { initialAddresses: Addr
 
       {/* Sağ — Özet */}
       <div className="lg:col-span-1">
-        <div className="sticky top-24 bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-          <h2 className="text-white font-bold mb-4">Özet</h2>
-          <div className="space-y-2 mb-4 text-sm max-h-64 overflow-y-auto">
+        <div className="sticky top-24 bg-slate-800/50 border border-slate-700 rounded-2xl p-6 space-y-4">
+          <h2 className="text-white font-bold">Özet</h2>
+
+          {/* Ürün listesi */}
+          <div className="space-y-2 text-sm max-h-48 overflow-y-auto">
             {items.map(item => (
-              <div key={item.productId} className="flex gap-2">
+              <div key={item.productId} className="flex gap-2 items-center">
+                <div className="w-10 h-10 rounded bg-slate-900 border border-slate-700 shrink-0 overflow-hidden">
+                  {item.image ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  ) : null}
+                </div>
                 <span className="text-slate-500 text-xs shrink-0">{item.quantity}×</span>
-                <span className="flex-1 text-slate-300 text-xs line-clamp-1">{item.name}</span>
+                <span className="flex-1 text-slate-300 text-xs line-clamp-2">{item.name}</span>
                 <span className="text-white text-xs font-medium shrink-0">
                   ₺{(item.price * item.quantity).toLocaleString('tr-TR')}
                 </span>
               </div>
             ))}
           </div>
+
+          {/* Kupon kodu */}
+          <div className="pt-4 border-t border-slate-700">
+            {appliedCoupon ? (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between">
+                <div>
+                  <p className="text-emerald-400 text-xs font-bold">✓ {appliedCoupon.code}</p>
+                  <p className="text-emerald-400/70 text-[10px] mt-0.5">−₺{appliedCoupon.discount.toLocaleString('tr-TR')} indirim</p>
+                </div>
+                <button onClick={removeCoupon}
+                  className="text-slate-500 hover:text-red-400 text-xs transition-colors">
+                  Kaldır
+                </button>
+              </div>
+            ) : (
+              <div>
+                <label className="text-slate-400 text-xs mb-1.5 block">Kupon kodu</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponError(null) }}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon() } }}
+                    placeholder="ÖRNEK10"
+                    className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm font-mono uppercase tracking-wider focus:outline-none focus:border-violet-500" />
+                  <button onClick={applyCoupon}
+                    disabled={!couponInput.trim() || couponLoading}
+                    className="px-3 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-white text-xs font-bold rounded-lg transition-colors">
+                    {couponLoading ? '...' : 'Uygula'}
+                  </button>
+                </div>
+                {couponError && (
+                  <p className="text-red-400 text-[11px] mt-1.5">✕ {couponError}</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Ücretsiz kargo barı */}
+          {remainingForFreeShip > 0 && subtotal > 0 && (
+            <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+              <p className="text-amber-400 text-[11px]">
+                <strong>₺{remainingForFreeShip.toLocaleString('tr-TR')}</strong> daha ekle, kargo ücretsiz!
+              </p>
+              <div className="mt-1.5 h-1 bg-amber-500/20 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-amber-400 transition-all"
+                  style={{ width: `${Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Tutarlar */}
           <div className="space-y-2 pt-4 border-t border-slate-700 text-sm">
             <div className="flex justify-between text-slate-400">
               <span>Ara Toplam</span>
@@ -227,12 +335,28 @@ export default function OdemeFlow({ initialAddresses }: { initialAddresses: Addr
             </div>
             <div className="flex justify-between text-slate-400">
               <span>Kargo</span>
-              <span className="text-slate-500 text-xs">Satıcıdan ücretsiz</span>
+              <span className={shippingFee === 0 ? 'text-emerald-400 font-medium' : 'text-white'}>
+                {shippingFee === 0 ? 'Ücretsiz ✓' : `₺${shippingFee}`}
+              </span>
             </div>
+            {couponDiscount > 0 && (
+              <div className="flex justify-between text-emerald-400">
+                <span>İndirim ({appliedCoupon?.code})</span>
+                <span>−₺{couponDiscount.toLocaleString('tr-TR')}</span>
+              </div>
+            )}
             <div className="flex justify-between items-baseline pt-2 border-t border-slate-700 mt-2">
               <span className="text-slate-300 font-medium">Toplam</span>
-              <span className="text-white font-black text-xl">₺{subtotal.toLocaleString('tr-TR')}</span>
+              <span className="text-white font-black text-xl">₺{total.toLocaleString('tr-TR')}</span>
             </div>
+          </div>
+
+          {/* Güvenli ödeme rozeti */}
+          <div className="flex items-start gap-2 text-slate-500 text-[11px] pt-2 border-t border-slate-700">
+            <svg className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <span>Stripe ile güvenli ödeme · 14 gün cayma hakkı</span>
           </div>
         </div>
       </div>

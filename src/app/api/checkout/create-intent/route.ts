@@ -114,7 +114,10 @@ export async function POST(req: NextRequest) {
       subtotal += lineTotal
     }
 
-    const shippingFee = 0 // Şimdilik; satıcı anlaşması sonrası hesaplanacak
+    // Kargo: ₺200 ve üstü ücretsiz, altı ₺29 (UI ile tutarlı)
+    const FREE_SHIPPING_THRESHOLD = 200
+    const SHIPPING_FEE = 29
+    const shippingFee = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE
 
     // ── Kupon doğrulama ──────────────────────────────────────
     let couponDiscount = 0
