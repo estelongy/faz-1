@@ -119,7 +119,18 @@ SENTRY_PROJECT                  ← Sentry (opsiyonel)
 
 ---
 
-## Klinik Akış & Skor Hesaplama (Netleştirildi)
+## Klinik Akış & Skor Hesaplama (Implemente edildi)
+
+### UI Konumu
+- **Giriş:** `/klinik/panel/randevu/[appointmentId]` → `KlinikAkisWizard` bileşeni
+- **6 adım:** Kabul → Klinik Anketi → Tetkik → İleri Analiz → Hekim → Onay
+
+### Kod Referansları
+- `src/components/KlinikAkisWizard.tsx` — 6 adımlı wizard
+- `src/lib/anket-sorular.ts` — HASTA_ANKET_SORULARI (5) + KLINIK_EK_SORULARI (5) + puan fonksiyonları
+- `src/lib/tetkik-params.ts` — TETKIK_PARAMS (8 sabit parametre) + scoreTetkikValues
+- `src/lib/egs.ts` — sumComponents + finalApprovedScore
+- `src/app/klinik/panel/randevu/[appointmentId]/page.tsx` — server actions (kabulEt, saveAnket, saveTetkik, saveIleriAnaliz, saveHekim, finalOnay)
 
 ### Tam Akış
 
