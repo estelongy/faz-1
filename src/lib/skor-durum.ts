@@ -38,9 +38,9 @@ export function getSkorDurumu(
 ): SkorDurum {
   if (!analysis) return 'tahmini'
 
-  // Hekim onayı verildi → final_overall dolu veya score_row hekim_onay_puani dolu
+  // Hekim onayı verildi → final_overall dolu veya score_row hekim_onay_puani > 0
   if (analysis.final_overall != null) return 'klinik_onayli'
-  if (scoreRow?.hekim_onay_puani != null) return 'klinik_onayli'
+  if ((scoreRow?.hekim_onay_puani ?? 0) > 0) return 'klinik_onayli'
 
   // Randevu süreci başladı mı?
   const inProcess =
@@ -91,7 +91,7 @@ export function getScorePhase(
 ): ScorePhase {
   if (!analysis) return 'ai_analiz'
   if (analysis.final_overall != null) return 'klinik_onayli'
-  if (scoreRow?.hekim_onay_puani != null) return 'klinik_onayli'
+  if ((scoreRow?.hekim_onay_puani ?? 0) > 0) return 'klinik_onayli'
 
   // Geriden ileriye kontrol
   if ((scoreRow?.hekim_degerlendirme ?? 0) !== 0) return 'hekim_degerlendirme'
