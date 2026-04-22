@@ -1,5 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Estelongy Gençlik Skoru Nasıl Hesaplanır? C250 Formülü ve Metodoloji | Estelongy',
@@ -46,7 +50,12 @@ const SCORE_ZONES = [
   { range: '90 – 100',label: 'Harika',    color: '#00d4ff', bg: 'bg-sky-500/10',     border: 'border-sky-500/20',    text: 'text-sky-400' },
 ]
 
-export default function GenclikSkoruNasilHesaplanirPage() {
+export default async function GenclikSkoruNasilHesaplanirPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/giris')
+  if ((user.app_metadata as Record<string, string>)?.role !== 'admin') redirect('/panel')
+
   return (
     <>
       <script
