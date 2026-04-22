@@ -44,7 +44,7 @@ function polar(cx: number, cy: number, r: number, deg: number) {
 const ZONE_DEFS = [
   { pct: 0.55, color: '#ef4444', name: 'Çok Düşük', range: '0–55'   },
   { pct: 0.10, color: '#a855f7', name: 'Düşük',     range: '56–65'  },
-  { pct: 0.14, color: '#f97316', name: 'Normal',    range: '66–79'  },
+  { pct: 0.14, color: '#eab308', name: 'Normal',    range: '66–79'  },
   { pct: 0.10, color: '#22c55e', name: 'İyi',       range: '80–89'  },
   { pct: 0.11, color: '#3b82f6', name: 'Çok İyi',   range: '90–100' },
 ]
@@ -161,7 +161,7 @@ export default function ScoreBar({
       {/* ── Başlık ── */}
       <div className="text-center mb-1">
         <p className="text-[11px] font-black tracking-[0.3em] uppercase"
-           style={{ color: zone.color, textShadow: `0 0 14px ${zone.color}70` }}>
+           style={{ color: zone.color }}>
           ESTELONGY
         </p>
         <p className="text-[9px] font-semibold tracking-[0.18em] uppercase mt-0.5"
@@ -175,8 +175,7 @@ export default function ScoreBar({
       </div>
 
       {/* ── SVG Gauge ── */}
-      <div className="relative flex justify-center"
-           style={{ filter: `drop-shadow(0 2px 16px ${zone.color}35)` }}>
+      <div className="relative flex justify-center">
         <svg viewBox="0 0 300 250" className="w-full max-w-xs">
           <defs>
             <linearGradient id="ng" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -221,16 +220,15 @@ export default function ScoreBar({
             strokeLinecap="round"
             transform={`rotate(${ROT},${CX},${CY})`} />
 
-          {/* 5. Aktif skor glow */}
+          {/* 5. Aktif skor highlight (glow kaldırıldı) */}
           {disp > 0 && (
             <circle cx={CX} cy={CY} r={R} fill="none"
-              stroke={zone.color} strokeWidth={SW - 10}
+              stroke={zone.color} strokeWidth={2}
               strokeDasharray={`${glowLen} ${CIRC - glowLen}`}
               strokeDashoffset={CIRC}
               strokeLinecap="butt"
               transform={`rotate(${ROT},${CX},${CY})`}
-              opacity={0.4}
-              style={{ filter: 'blur(4px)' }} />
+              opacity={0.55} />
           )}
 
           {/* 6. Major tick çizgileri */}
@@ -272,22 +270,17 @@ export default function ScoreBar({
 
           {/* 10. Merkez hub */}
           <circle cx={CX} cy={CY} r={16} fill="#0f172a" stroke="#334155" strokeWidth={2} />
-          <circle cx={CX} cy={CY} r={9}  fill={zone.color} opacity={0.9}
-            style={{ filter: `drop-shadow(0 0 6px ${zone.color})` }} />
-          <circle cx={CX} cy={CY} r={4}  fill="#fff" opacity={0.55} />
+          <circle cx={CX} cy={CY} r={9}  fill={zone.color} opacity={0.85} />
+          <circle cx={CX} cy={CY} r={4}  fill="#fff" opacity={0.5} />
 
-          {/* 11. Skor sayısı — ibre altındaki gap alanında */}
-          <text x={CX} y={CY + 38} textAnchor="middle"
-            fill={zone.color} fontSize="52" fontWeight="900" fontFamily="system-ui"
-            style={{ filter: `drop-shadow(0 0 10px ${zone.color}80)` }}>
-            {disp}
+          {/* 11. Skor sayısı — ibre altındaki gap alanında, yan yana */}
+          <text x={CX} y={CY + 65} textAnchor="middle"
+            dominantBaseline="alphabetic" fontFamily="system-ui">
+            <tspan fill={zone.color} fontSize="46" fontWeight="900">{disp}</tspan>
+            <tspan fill="#64748b" fontSize="15" fontWeight="500">/100</tspan>
           </text>
-          <text x={CX} y={CY + 57} textAnchor="middle"
-            fill="#475569" fontSize="10" fontWeight="500">
-            / 100
-          </text>
-          <text x={CX} y={CY + 74} textAnchor="middle"
-            fill={zone.color} fontSize="11" fontWeight="700" letterSpacing="1" opacity={0.9}>
+          <text x={CX} y={CY + 82} textAnchor="middle" dominantBaseline="alphabetic"
+            fill={zone.color} fontSize="11" fontWeight="700" letterSpacing="1" opacity={0.85}>
             {zone.name}
           </text>
         </svg>
