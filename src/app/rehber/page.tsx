@@ -44,16 +44,6 @@ const ARTICLES = [
     tags: ['Biyolojik Yaş', 'Anti-Aging', 'Longevity', 'Protokol'],
     icon: '🧬',
   },
-  {
-    slug: 'genclik-skoru-nasil-hesaplanir',
-    category: 'Gençlik Skoru',
-    categoryColor: 'amber',
-    title: 'Estelongy Gençlik Skoru Nasıl Hesaplanır?',
-    desc: 'C250 formülü, 5 bileşen ağırlıkları, yaş faktörü ve klinik onay süreci. Gençlik Skoru\'nun arkasındaki metodoloji şeffaf biçimde açıklanıyor.',
-    readTime: '6 dk',
-    tags: ['C250', 'Formül', 'Klinik Onay', 'Metodoloji'],
-    icon: '📊',
-  },
 ]
 
 const colorMap: Record<string, { badge: string; dot: string; tag: string }> = {

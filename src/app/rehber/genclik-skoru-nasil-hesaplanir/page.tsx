@@ -11,6 +11,7 @@ export const metadata: Metadata = {
     url: 'https://estelongy.com/rehber/genclik-skoru-nasil-hesaplanir',
   },
   alternates: { canonical: 'https://estelongy.com/rehber/genclik-skoru-nasil-hesaplanir' },
+  robots: { index: false, follow: false },
 }
 
 const jsonLd = {

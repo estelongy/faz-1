@@ -37,12 +37,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.85,
     },
-    {
-      url: `${BASE_URL}/rehber/genclik-skoru-nasil-hesaplanir`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.85,
-    },
 
     // ── Platform ───────────────────────────────────────────────────────────
     {
