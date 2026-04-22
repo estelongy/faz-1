@@ -334,27 +334,6 @@ export default function AnalizPage() {
               </div>
             </div>
 
-            {/* C250 Detayları */}
-            {result.c250Details && (
-              <div className="p-4 rounded-xl bg-violet-500/5 border border-violet-500/20 mb-6">
-                <p className="text-violet-400 text-xs font-semibold mb-2 uppercase tracking-wider">C250 Formülü</p>
-                <div className="grid grid-cols-3 gap-3 text-xs mb-3">
-                  <div>
-                    <p className="text-slate-500">Ham Skor</p>
-                    <p className="text-white font-bold">{result.c250Details.rawScore.toFixed(1)}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500">Yaş Faktörü</p>
-                    <p className="text-white font-bold">×{result.c250Details.ageFactor.toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500">C250 Sonucu</p>
-                    <p className="text-violet-400 font-bold">{result.c250Details.c250Result.toFixed(1)}</p>
-                  </div>
-                </div>
-                <p className="text-slate-400 text-xs italic">{result.c250Details.explanation}</p>
-              </div>
-            )}
 
             {/* Bileşen Metrikleri */}
             <div className="grid grid-cols-2 gap-4 mb-6">
