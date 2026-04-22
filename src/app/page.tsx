@@ -124,7 +124,7 @@ export default function Home() {
           </h1>
 
           <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Selfie ile ön analizini al, yaşam tarzı anketi ve hekim muayenesiyle "Klinik Onaylı"{' '}
+            Selfie ile ön analizini al, yaşam tarzı anketi ve hekim muayenesiyle &ldquo;Klinik Onaylı&rdquo;{' '}
             <span className="text-emerald-400 font-semibold">Estelongy Gençlik Skoru</span>&apos;na dönüştür.
           </p>
 
@@ -150,7 +150,7 @@ export default function Home() {
                   Gençlik Skorunu<br />Öğren
                 </h3>
                 <p className="text-slate-400 text-sm leading-relaxed mb-5">
-                  Selfie ile "Estelongy Gençlik Skorunu" saniyeler içinde al.
+                  Selfie ile &ldquo;Estelongy Gençlik Skorunu&rdquo; saniyeler içinde al.
                 </p>
                 <div className="flex items-center gap-2 text-violet-300 font-semibold text-sm group-hover:gap-3 transition-all">
                   <span>Analizi başlat</span>
