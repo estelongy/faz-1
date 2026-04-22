@@ -199,12 +199,12 @@ export default function GenclikSkoruNasilHesaplanirPage() {
             </p>
 
             <div className="p-5 rounded-2xl bg-slate-800/40 border border-slate-700 font-mono text-xs space-y-2">
-              <p className="text-slate-500">// Örnek hesaplama</p>
-              <p><span className="text-blue-400">c250_ön</span>       = <span className="text-white">75</span>  <span className="text-slate-600">// GPT-4 Vision sonucu</span></p>
-              <p><span className="text-violet-400">c250_ileri</span>   = <span className="text-white">82</span>  <span className="text-slate-600">// Klinikteki yeniden analiz (75&apos;in yerini alır)</span></p>
+              <p className="text-slate-500">{'// Örnek hesaplama'}</p>
+              <p><span className="text-blue-400">c250_ön</span>       = <span className="text-white">75</span>  <span className="text-slate-600">{'// GPT-4 Vision sonucu'}</span></p>
+              <p><span className="text-violet-400">c250_ileri</span>   = <span className="text-white">82</span>  <span className="text-slate-600">{'// Klinikteki yeniden analiz (75\'in yerini alır)'}</span></p>
               <p><span className="text-amber-400">hasta_anket</span>   = <span className="text-white">+1</span></p>
-              <p><span className="text-orange-400">klinik_anket</span> = <span className="text-white">+5</span>  <span className="text-slate-600">// hasta anketini replace eder</span></p>
-              <p><span className="text-emerald-400">tetkik</span>      = <span className="text-white">+0</span>  <span className="text-slate-600">// atlandı</span></p>
+              <p><span className="text-orange-400">klinik_anket</span> = <span className="text-white">+5</span>  <span className="text-slate-600">{'// hasta anketini replace eder'}</span></p>
+              <p><span className="text-emerald-400">tetkik</span>      = <span className="text-white">+0</span>  <span className="text-slate-600">{'// atlandı'}</span></p>
               <p className="border-t border-slate-700 pt-2"><span className="text-white">ara_toplam</span>   = 82 + 1 - 1 + 5 + 0 = <span className="text-amber-400">87</span></p>
               <p><span className="text-slate-500">×0.85</span>        = <span className="text-white">73.95</span></p>
               <p><span className="text-cyan-400">hekim_puani</span>  = <span className="text-white">78 × 0.15 = 11.7</span></p>
