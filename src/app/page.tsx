@@ -433,7 +433,7 @@ export default function Home() {
               },
               {
                 q: 'Klinik başvurusu nasıl çalışır?',
-                a: 'Kliniğinizi kaydedin, admin onayından sonra 10 başlangıç jetonu ile sisteme dahil olursunuz. Platform aboneliği yoktur; yalnızca hasta kabulünde 1 jeton harcanır.',
+                a: 'Kliniğinizi kaydedin; başvurunuz uzman ekibimiz tarafından incelenir ve onaylanır. Onay sonrasında müsaitlik takviminizi oluşturun, hasta kabulüne hemen başlayın. Kayıt ve İleri Analiz Hizmetleri ücretsizdir.',
               },
             ].map(item => (
               <details key={item.q}
