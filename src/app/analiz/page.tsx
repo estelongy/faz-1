@@ -305,7 +305,7 @@ export default function AnalizPage() {
                 </svg>
                 {usedFallback ? 'Ön Analiz · Tahmini Skor (AI servisi geçici kapalı)' : 'GPT-4 Vision · C250 Ön Analiz'}
               </div>
-              <h1 className="text-3xl font-bold text-white mb-2">Ön Analiz Skorunuz ✦</h1>
+              <h1 className="text-3xl font-bold text-white mb-2">Ön Analiz Skorunuz: <span className="text-violet-400">{result.overall}</span></h1>
               <p className="text-slate-400">
                 Kesin skor klinik muayenesiyle oluşur — randevu al,{' '}
                 <span className="text-emerald-400 font-semibold">Klinik Onaylı Gençlik Skoru</span> sertifikana ulaş
