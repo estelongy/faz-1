@@ -4,10 +4,10 @@ import ScoreBar from '@/components/ScoreBar'
 
 const SCORE_ZONES = [
   { label: 'Çok Düşük', range: '0 – 55',  color: '#ef4444', bg: 'bg-red-500/10',     border: 'border-red-500/20',    text: 'text-red-400',    desc: 'Gençlik Skoru çok düşük' },
-  { label: 'Düşük',     range: '56 – 65', color: '#f97316', bg: 'bg-orange-500/10',  border: 'border-orange-500/20', text: 'text-orange-400', desc: 'Gençlik Skoru düşük' },
-  { label: 'Normal',    range: '66 – 79', color: '#f59e0b', bg: 'bg-amber-500/10',   border: 'border-amber-500/20',  text: 'text-amber-400',  desc: 'Normal aralıkta' },
+  { label: 'Düşük',     range: '56 – 65', color: '#a855f7', bg: 'bg-purple-500/10',  border: 'border-purple-500/20', text: 'text-purple-400', desc: 'Gençlik Skoru düşük' },
+  { label: 'Normal',    range: '66 – 79', color: '#eab308', bg: 'bg-yellow-500/10',  border: 'border-yellow-500/20', text: 'text-yellow-400', desc: 'Normal aralıkta' },
   { label: 'İyi',       range: '80 – 89', color: '#22c55e', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20',text: 'text-emerald-400',desc: 'Gençlik Skoru iyi' },
-  { label: 'Harika',    range: '90 – 100',color: '#00d4ff', bg: 'bg-sky-500/10',     border: 'border-sky-500/20',    text: 'text-sky-400',    desc: 'Olağanüstü Gençlik Skoru' },
+  { label: 'Çok İyi',   range: '90 – 100',color: '#3b82f6', bg: 'bg-blue-500/10',    border: 'border-blue-500/20',   text: 'text-blue-400',   desc: 'Olağanüstü Gençlik Skoru' },
 ]
 
 const STEPS = [
@@ -333,7 +333,7 @@ export default function Home() {
                   <div
                     className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-black shrink-0"
                     style={{ backgroundColor: `${z.color}20`, color: z.color }}>
-                    {z.label === 'Harika' ? '95' :
+                    {z.label === 'Çok İyi' ? '95' :
                      z.label === 'İyi'    ? '84' :
                      z.label === 'Normal' ? '72' :
                      z.label === 'Düşük'  ? '60' : '40'}
