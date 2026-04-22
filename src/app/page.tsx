@@ -263,7 +263,7 @@ export default function Home() {
                   {/* 03 — +10 puan highlight */}
                   {step.num === '03' && (
                     <div className="mt-3 inline-flex items-center gap-1.5 self-start px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
-                      ✦ +10 puana kadar artır
+                      ✦ Skorunu Artır
                     </div>
                   )}
 
@@ -309,7 +309,7 @@ export default function Home() {
               <div className="space-y-3">
                 {[
                   { label: 'Ön Analiz', desc: 'Selfie ile anında, ücretsiz', badge: 'Herkese açık' },
-                  { label: 'Yaşam Tarzı Anketi', desc: 'Yaşam tarzı katkısı +10 puan', badge: 'Ücretsiz' },
+                  { label: 'Yaşam Tarzı Anketi', desc: 'Skorunu Artır', badge: 'Ücretsiz' },
                   { label: 'Klinik Onaylı Gençlik Skoru', desc: 'Hekim doğrulamalı sertifika', badge: 'Paylaşılabilir' },
                 ].map(item => (
                   <div key={item.label} className="flex items-center gap-3 p-4 rounded-xl bg-slate-800/50 border border-slate-700">
