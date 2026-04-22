@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import ScoreBar from '@/components/ScoreBar'
+import LogoIcon from '@/components/LogoIcon'
 
 const SCORE_ZONES = [
   { label: 'Çok Düşük', range: '0 – 55',  color: '#ef4444', bg: 'bg-red-500/10',     border: 'border-red-500/20',    text: 'text-red-400',    desc: 'Gençlik Skoru çok düşük' },
@@ -93,11 +94,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
-              </div>
+              <LogoIcon size={36} />
               <span className="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
                 Estelongy
               </span>
