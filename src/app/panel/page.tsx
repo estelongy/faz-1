@@ -226,16 +226,25 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                   phase={currentPhase}
                   animated={false}
                 />
-                {/* Klinik onaylı skor → paylaş butonu */}
-                {latestAnalysis?.final_overall != null && (
+                {/* Paylaş butonu — klinik onaylı veya ön analiz */}
+                {latestAnalysis != null && latestScore != null && (
                   <div className="mt-5 pt-5 border-t border-slate-700/50 flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-emerald-400 text-xs font-bold mb-0.5">✦ KLİNİK ONAYLI ESTELONGY GENÇLİK SKORU</p>
-                      <p className="text-slate-400 text-xs">Skorunu arkadaşlarınla paylaş</p>
+                      {latestAnalysis.final_overall != null ? (
+                        <>
+                          <p className="text-emerald-400 text-xs font-bold mb-0.5">✦ KLİNİK ONAYLI ESTELONGY GENÇLİK SKORU</p>
+                          <p className="text-slate-400 text-xs">Skorunu arkadaşlarınla paylaş</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-violet-400 text-xs font-bold mb-0.5">Estelongy Gençlik Skorum ✦</p>
+                          <p className="text-slate-400 text-xs">Ön analiz skorunu paylaş</p>
+                        </>
+                      )}
                     </div>
                     <PaylasModal
                       analysisId={latestAnalysis.id}
-                      score={latestAnalysis.final_overall}
+                      score={latestScore}
                       firstName={profile?.full_name?.split(' ')[0] ?? 'Kullanıcı'}
                     />
                   </div>
