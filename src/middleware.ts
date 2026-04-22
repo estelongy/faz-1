@@ -8,6 +8,9 @@ const PROTECTED = ['/panel', '/klinik', '/admin', '/anket', '/analiz', '/randevu
 // Giriş yapılmışsa erişilmemesi gereken rotalar (tam eşleşme)
 const AUTH_ONLY = ['/giris', '/kayit', '/kurumsal/giris']
 
+// Sadece admin rolüne açık rotalar (prefix eşleşmesi)
+const ADMIN_ONLY = ['/formlestelongy', '/rehber/genclik-skoru-nasil-hesaplanir']
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } })
 
@@ -41,6 +44,22 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/giris'
     return NextResponse.redirect(url)
+  }
+
+  // Admin-only rotalar: giriş yok → /giris, admin değil → /panel
+  const isAdminOnly = ADMIN_ONLY.some(p => pathname.startsWith(p))
+  if (isAdminOnly) {
+    if (!session) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/giris'
+      return NextResponse.redirect(url)
+    }
+    const role = (session.user.app_metadata as Record<string, string>)?.role
+    if (role !== 'admin') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/panel'
+      return NextResponse.redirect(url)
+    }
   }
 
   // Giriş yapılmış → /giris veya /kayit → /panel'e yönlendir
