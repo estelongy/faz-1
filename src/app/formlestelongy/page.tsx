@@ -1,5 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Estelongy Gençlik Skoru — C250 Formülü ve Metodoloji',
@@ -28,7 +32,12 @@ const SCORE_ZONES = [
   { range: '90 – 100',label: 'Harika',    color: '#00d4ff', bg: 'bg-sky-500/10',     border: 'border-sky-500/20',    text: 'text-sky-400' },
 ]
 
-export default function FormulPage() {
+export default async function FormulPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/giris')
+  if ((user.app_metadata as Record<string, string>)?.role !== 'admin') redirect('/panel')
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-40">
