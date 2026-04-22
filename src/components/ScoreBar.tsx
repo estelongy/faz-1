@@ -43,10 +43,10 @@ function polar(cx: number, cy: number, r: number, deg: number) {
 // ── Renk bölgeleri ──────────────────────────────────────────────
 const ZONE_DEFS = [
   { pct: 0.55, color: '#ef4444', name: 'Çok Düşük', range: '0–55'   },
-  { pct: 0.10, color: '#f97316', name: 'Düşük',     range: '56–65'  },
-  { pct: 0.14, color: '#f59e0b', name: 'Normal',    range: '66–79'  },
+  { pct: 0.10, color: '#a855f7', name: 'Düşük',     range: '56–65'  },
+  { pct: 0.14, color: '#f97316', name: 'Normal',    range: '66–79'  },
   { pct: 0.10, color: '#22c55e', name: 'İyi',       range: '80–89'  },
-  { pct: 0.11, color: '#00d4ff', name: 'Harika',    range: '90–100' },
+  { pct: 0.11, color: '#3b82f6', name: 'Çok İyi',   range: '90–100' },
 ]
 
 // Her bölge için dasharray + dashoffset hesapla
@@ -177,7 +177,7 @@ export default function ScoreBar({
       {/* ── SVG Gauge ── */}
       <div className="relative flex justify-center"
            style={{ filter: `drop-shadow(0 2px 16px ${zone.color}35)` }}>
-        <svg viewBox="0 0 300 228" className="w-full max-w-xs">
+        <svg viewBox="0 0 300 250" className="w-full max-w-xs">
           <defs>
             <linearGradient id="ng" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%"   stopColor="#475569" />
@@ -215,7 +215,7 @@ export default function ScoreBar({
 
           {/* 4. Yuvarlatılmış bitiş ucu */}
           <circle cx={CX} cy={CY} r={R} fill="none"
-            stroke="#00d4ff" strokeWidth={SW}
+            stroke="#3b82f6" strokeWidth={SW}
             strokeDasharray={`1 ${CIRC - 1}`}
             strokeDashoffset={CIRC - ARC_LEN + 0.5}
             strokeLinecap="round"
@@ -276,19 +276,19 @@ export default function ScoreBar({
             style={{ filter: `drop-shadow(0 0 6px ${zone.color})` }} />
           <circle cx={CX} cy={CY} r={4}  fill="#fff" opacity={0.55} />
 
-          {/* 11. Skor sayısı */}
-          <text x={CX} y={CY - 36} textAnchor="middle"
+          {/* 11. Skor sayısı — ibre altındaki gap alanında */}
+          <text x={CX} y={CY + 38} textAnchor="middle"
             fill={zone.color} fontSize="52" fontWeight="900" fontFamily="system-ui"
             style={{ filter: `drop-shadow(0 0 10px ${zone.color}80)` }}>
             {disp}
           </text>
-          <text x={CX} y={CY - 15} textAnchor="middle"
+          <text x={CX} y={CY + 57} textAnchor="middle"
             fill="#475569" fontSize="10" fontWeight="500">
             / 100
           </text>
-          <text x={CX} y={CY + 5} textAnchor="middle"
-            fill={zone.color} fontSize="11" fontWeight="700" letterSpacing="2" opacity={0.9}>
-            {zone.name.toUpperCase()}
+          <text x={CX} y={CY + 74} textAnchor="middle"
+            fill={zone.color} fontSize="11" fontWeight="700" letterSpacing="1" opacity={0.9}>
+            {zone.name}
           </text>
         </svg>
 
