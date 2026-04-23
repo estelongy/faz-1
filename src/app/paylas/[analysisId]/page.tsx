@@ -10,6 +10,7 @@ interface ScoreCard {
   first_name: string
   clinic_name: string
   completed_at: string
+  is_clinic_approved: boolean
 }
 
 async function loadCard(analysisId: string): Promise<ScoreCard | null> {
@@ -88,10 +89,16 @@ export default async function SharePage(
           boxShadow: `0 0 80px ${zone.color}20`,
         }}
       >
-        {/* Klinik onaylı damga */}
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-emerald-500 text-white text-xs font-black rounded-full shadow-lg whitespace-nowrap">
-          ✦ KLİNİK ONAYLI ✦
-        </div>
+        {/* Onay rozeti */}
+        {card.is_clinic_approved ? (
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-emerald-500 text-white text-xs font-black rounded-full shadow-lg whitespace-nowrap">
+            ✦ KLİNİK ONAYLI ✦
+          </div>
+        ) : (
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-violet-600 text-white text-xs font-black rounded-full shadow-lg whitespace-nowrap">
+            ✦ AI ANALİZİ ✦
+          </div>
+        )}
 
         {/* Hasta adı */}
         <p className="text-slate-400 text-sm mt-4 mb-1">Tebrikler</p>
@@ -120,16 +127,19 @@ export default async function SharePage(
 
         {/* Alt bilgi */}
         <div className="pt-5 border-t border-slate-700/50 text-xs text-slate-500 space-y-1">
-          <p>{card.clinic_name}</p>
+          {card.is_clinic_approved && card.clinic_name && <p>{card.clinic_name}</p>}
           <p>{dateStr}</p>
         </div>
       </div>
 
       {/* CTA */}
       <div className="mt-10 text-center max-w-md">
-        <h2 className="text-2xl font-bold text-white mb-3">Senin skorun ne?</h2>
+        <h2 className="text-2xl font-bold text-white mb-3">Senin Gençlik Skorun ne?</h2>
         <p className="text-slate-400 mb-6 text-sm">
-          <strong>Ücretsiz</strong> ön analizle başla, klinik onayıyla kesin Gençlik Skoruna ulaş.
+          {card.is_clinic_approved
+            ? <><strong>Ücretsiz</strong> ön analizle başla, klinik onayıyla kesin skoruna ulaş.</>
+            : <>Selfie yükle, <strong>30 saniyede</strong> AI analizinle Gençlik Skorunu öğren. Ücretsiz.</>
+          }
         </p>
         <Link
           href="/kayit?next=/analiz"

@@ -40,6 +40,7 @@ export default async function ShareOGImage({ params }: { params: { analysisId: s
   const zone = zoneFromScore(score)
   const firstName = card.first_name as string
   const clinicName = card.clinic_name as string
+  const isClinicApproved = card.is_clinic_approved as boolean
 
   return new ImageResponse(
     (
@@ -90,20 +91,20 @@ export default async function ShareOGImage({ params }: { params: { analysisId: s
           </div>
         </div>
 
-        {/* Üst sağ — Klinik onaylı damga */}
+        {/* Üst sağ — Onay rozeti */}
         <div style={{
           position: 'absolute',
           top: 50,
           right: 60,
           padding: '10px 20px',
           borderRadius: 999,
-          background: '#10b981',
+          background: isClinicApproved ? '#10b981' : '#7c3aed',
           color: 'white',
           fontSize: 18,
           fontWeight: 900,
           letterSpacing: '1px',
         }}>
-          ✦ KLİNİK ONAYLI ✦
+          {isClinicApproved ? '✦ KLİNİK ONAYLI ✦' : '✦ AI ANALİZİ ✦'}
         </div>
 
         {/* Orta — Skor kartı */}
