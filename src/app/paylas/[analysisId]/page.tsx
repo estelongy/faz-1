@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import ShareScoreBar from '@/components/ShareScoreBar'
 
 export const dynamic = 'force-dynamic'
 
@@ -104,16 +105,10 @@ export default async function SharePage(
         <p className="text-slate-400 text-sm mt-4 mb-1">Tebrikler</p>
         <h1 className="text-3xl font-black text-white mb-6">{card.first_name}</h1>
 
-        {/* Skor */}
-        <div className="mb-6">
-          <p className="text-slate-500 text-xs mb-2 uppercase tracking-wider">Gençlik Skoru</p>
-          <p
-            className="text-8xl font-black leading-none"
-            style={{ color: zone.color, textShadow: `0 0 40px ${zone.color}60` }}
-          >
-            {card.score}
-          </p>
-          <p className="text-slate-400 text-sm mt-1">/ 100</p>
+        {/* Skor + animasyonlu bar */}
+        <div className="mb-6 w-full">
+          <p className="text-slate-500 text-xs mb-4 uppercase tracking-wider">Gençlik Skoru</p>
+          <ShareScoreBar score={card.score} color={zone.color} />
         </div>
 
         {/* Renk bölgesi */}
