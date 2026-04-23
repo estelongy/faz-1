@@ -89,6 +89,13 @@ export default function KlinikBasvurForm({ action, hasError, isLoggedIn }: Props
             className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
         </div>
 
+        {/* Telefon */}
+        <div>
+          <label className="block text-sm text-slate-400 mb-2">Telefon <span className="text-red-400">*</span></label>
+          <input type="tel" name="phone" required placeholder="05XX XXX XX XX"
+            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
+        </div>
+
         {/* Konum */}
         <div>
           <label className="block text-sm text-slate-400 mb-2">Konum</label>

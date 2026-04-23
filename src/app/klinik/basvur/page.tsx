@@ -44,10 +44,11 @@ async function submitApplication(formData: FormData) {
     user = created.user
   }
 
-  const name       = formData.get('name') as string
-  const location   = formData.get('location') as string
-  const bio        = formData.get('bio') as string
-  const clinicType = formData.get('clinic_type') as string
+  const name        = formData.get('name') as string
+  const phone       = formData.get('phone') as string
+  const location    = formData.get('location') as string
+  const bio         = formData.get('bio') as string
+  const clinicType  = formData.get('clinic_type') as string
   const specialties = formData.getAll('specialties') as string[]
 
   // Yeni oluşturulan kullanıcılar için oturum cookie'si olmayacağından service client kullan
@@ -55,6 +56,7 @@ async function submitApplication(formData: FormData) {
   const { error } = await insertClient.from('clinics').insert({
     user_id:         user.id,
     name,
+    phone:           phone || null,
     location:        location || null,
     bio:             bio || null,
     clinic_type:     clinicType || null,
