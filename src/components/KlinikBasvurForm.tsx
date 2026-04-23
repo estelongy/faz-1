@@ -54,11 +54,14 @@ export default function KlinikBasvurForm({ action, hasError, isLoggedIn }: Props
     return () => document.removeEventListener('mousedown', handle)
   }, [])
 
+  // SMS OTP geçici olarak devre dışı (Twilio provider hazır olunca açılacak)
+  const OTP_ENABLED = false
+
   // Form submit → OTP gönder
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (otpVerifiedRef.current) {
-      // Doğrulama tamam, server action'a gönder
+    if (!OTP_ENABLED || otpVerifiedRef.current) {
+      // OTP kapalı veya doğrulama tamam — server action'a direkt gönder
       const formData = new FormData(formRef.current!)
       await action(formData)
       return

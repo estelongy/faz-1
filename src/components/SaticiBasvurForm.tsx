@@ -28,9 +28,12 @@ export default function SaticiBasvurForm({ action, hasError, isLoggedIn }: Props
   const [otpResend, setOtpResend]     = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
 
+  // SMS OTP geçici olarak devre dışı (Twilio provider hazır olunca açılacak)
+  const OTP_ENABLED = false
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (otpVerifiedRef.current) {
+    if (!OTP_ENABLED || otpVerifiedRef.current) {
       const formData = new FormData(formRef.current!)
       await action(formData)
       return

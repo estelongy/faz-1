@@ -61,20 +61,52 @@ export default function KayitPage() {
       return
     }
 
-    // SMS OTP gönder
-    setLoading(true)
+    // SMS OTP geçici olarak devre dışı (Twilio provider hazır olunca açılacak)
+    const OTP_ENABLED = false
     const e164 = formatPhone(phone)
-    const supabase = createClient()
-    const { error: otpErr } = await supabase.auth.signInWithOtp({ phone: e164 })
-    setLoading(false)
 
-    if (otpErr) {
-      setError('SMS gönderilemedi: ' + otpErr.message)
+    if (OTP_ENABLED) {
+      setLoading(true)
+      const supabase = createClient()
+      const { error: otpErr } = await supabase.auth.signInWithOtp({ phone: e164 })
+      setLoading(false)
+      if (otpErr) {
+        setError('SMS gönderilemedi: ' + otpErr.message)
+        return
+      }
+      setOtpPhone(e164)
+      setStep('otp')
+      setOtpResent(false)
       return
     }
-    setOtpPhone(e164)
-    setStep('otp')
-    setOtpResent(false)
+
+    // OTP kapalı → direkt API ile hesap oluştur
+    setLoading(true)
+    const birthYearNum = parseInt(birthYear)
+    const res = await fetch('/api/kayit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        password,
+        phone: e164,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        birth_year: birthYearNum,
+      }),
+    })
+    const result = await res.json()
+    if (!res.ok) {
+      setError(result.error || 'Hesap oluşturulamadı.')
+      setLoading(false)
+      return
+    }
+    const supabase = createClient()
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password })
+    setLoading(false)
+    if (signInErr) { setStep('verify'); return }
+    router.push('/panel')
+    router.refresh()
   }
 
   async function handleVerifyOtp() {
