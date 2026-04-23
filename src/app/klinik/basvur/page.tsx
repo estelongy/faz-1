@@ -19,11 +19,13 @@ async function submitApplication(formData: FormData) {
 
   // Giriş yapılmamışsa yeni hesap oluştur
   if (!user) {
-    const firstName = (formData.get('first_name') as string)?.trim()
-    const lastName  = (formData.get('last_name') as string)?.trim()
-    const email     = (formData.get('email') as string)?.trim()
-    const password  = formData.get('password') as string
-    const birthYear = formData.get('birth_year') as string
+    const firstName  = (formData.get('first_name') as string)?.trim()
+    const lastName   = (formData.get('last_name') as string)?.trim()
+    const email      = (formData.get('email') as string)?.trim()
+    const password   = formData.get('password') as string
+    const birthYear  = formData.get('birth_year') as string
+    const phoneInput = (formData.get('phone') as string)?.trim()
+    const phoneE164  = phoneInput ? (phoneInput.startsWith('+') ? phoneInput : (phoneInput.startsWith('0') ? '+9' + phoneInput.replace(/\D/g, '') : '+90' + phoneInput.replace(/\D/g, ''))) : undefined
 
     if (!firstName || !email || !password) redirect('/klinik/basvur?error=eksik')
 
@@ -31,7 +33,9 @@ async function submitApplication(formData: FormData) {
     const { data: created, error: createErr } = await admin.auth.admin.createUser({
       email,
       password,
+      phone: phoneE164,
       email_confirm: true,
+      phone_confirm: phoneE164 ? true : undefined,
       user_metadata: { first_name: firstName, last_name: lastName || '' },
     })
     if (createErr || !created.user) redirect('/klinik/basvur?error=hesap')

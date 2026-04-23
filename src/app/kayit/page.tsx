@@ -89,26 +89,36 @@ export default function KayitPage() {
       return
     }
 
-    // OTP doğrulandı → telefonla oluşan anonim session'u temizle, e-posta/şifre ile signUp yap
+    // OTP doğrulandı → telefonla oluşan anonim session'u temizle
     await supabase.auth.signOut()
 
+    // Admin API ile telefon + e-posta + şifre birlikte kayıt
     const birthYearNum = parseInt(birthYear)
-    const fullName = `${firstName.trim()} ${lastName.trim()}`
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName, phone: otpPhone, birth_year: birthYearNum, phone_verified: true },
-        emailRedirectTo: `${location.origin}/auth/callback`,
-      },
+    const res = await fetch('/api/kayit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        password,
+        phone: otpPhone,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        birth_year: birthYearNum,
+      }),
     })
-    setLoading(false)
+    const result = await res.json()
 
-    if (signUpError) {
-      setError(signUpError.message === 'User already registered' ? 'Bu e-posta zaten kayıtlı.' : signUpError.message)
+    if (!res.ok) {
+      setError(result.error || 'Hesap oluşturulamadı.')
+      setLoading(false)
       return
     }
-    if (data.user && !data.session) { setStep('verify'); return }
+
+    // Oluşan kullanıcıyla oturum aç
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password })
+    setLoading(false)
+    if (signInErr) { setStep('verify'); return }
+
     router.push('/panel')
     router.refresh()
   }
