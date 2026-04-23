@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import SaticiBasvurForm from '@/components/SaticiBasvurForm'
 
 export const metadata: Metadata = {
   title: 'Satıcı Başvurusu',
@@ -43,12 +44,14 @@ async function submitApplication(formData: FormData) {
 
   const company_name = formData.get('company_name') as string
   const tax_number   = formData.get('tax_number') as string
+  const phone        = formData.get('phone') as string
 
   const insertClient = createServiceClient()
   const { error } = await insertClient.from('vendors').insert({
     user_id:         user.id,
     company_name,
     tax_number:      tax_number || null,
+    phone:           phone || null,
     approval_status: 'pending',
     is_active:       false,
   })
@@ -170,76 +173,7 @@ export default async function SaticiBasvurPage({
           ))}
         </div>
 
-        {hasError && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3">
-            <svg className="w-5 h-5 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-red-400 text-sm">
-              Başvuru gönderilemedi. Zaten aktif bir başvurunuz olabilir veya bir hata oluştu. Lütfen tekrar deneyin.
-            </p>
-          </div>
-        )}
-
-        <form action={submitApplication} className="space-y-6">
-          {/* Hesap Bilgileri — sadece giriş yapılmamışsa */}
-          {!user && (
-            <div className="space-y-4 p-5 rounded-xl bg-slate-800/60 border border-slate-700">
-              <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Hesap Bilgileri</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-slate-400 mb-2">Ad <span className="text-red-400">*</span></label>
-                  <input type="text" name="first_name" required placeholder="Ahmet"
-                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
-                </div>
-                <div>
-                  <label className="block text-sm text-slate-400 mb-2">Soyad</label>
-                  <input type="text" name="last_name" placeholder="Yılmaz"
-                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm text-slate-400 mb-2">E-posta <span className="text-red-400">*</span></label>
-                <input type="email" name="email" required placeholder="ornek@email.com"
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-400 mb-2">Şifre <span className="text-red-400">*</span></label>
-                <input type="password" name="password" required placeholder="En az 8 karakter" minLength={8}
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-400 mb-2">Doğum Yılı</label>
-                <input type="number" name="birth_year" placeholder="1985" min={1920} max={new Date().getFullYear() - 18}
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm text-slate-400 mb-2">Şirket / Marka Adı <span className="text-red-400">*</span></label>
-            <input type="text" name="company_name" required placeholder="Örn: DermaCare Kozmetik A.Ş."
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
-          </div>
-
-          <div>
-            <label className="block text-sm text-slate-400 mb-2">Vergi Numarası</label>
-            <input type="text" name="tax_number" placeholder="1234567890"
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
-            <p className="text-slate-500 text-xs mt-1">Fatura işlemleri için gereklidir</p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-            <p className="text-amber-300 text-sm">
-              <strong>Not:</strong> Başvurunuz onaylandıktan sonra ürün ekleyebilir ve satışa başlayabilirsiniz.
-            </p>
-          </div>
-
-          <button type="submit"
-            className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-semibold rounded-xl transition-all text-lg">
-            Başvuruyu Gönder
-          </button>
-        </form>
+        <SaticiBasvurForm action={submitApplication} hasError={hasError} isLoggedIn={!!user} />
       </div>
     </main>
   )
