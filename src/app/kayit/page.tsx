@@ -15,6 +15,7 @@ export default function KayitPage() {
   const [email, setEmail]         = useState('')
   const [phone, setPhone]         = useState('')
   const [password, setPassword]   = useState('')
+  const [birthYear, setBirthYear] = useState('')
   const [agreed, setAgreed]       = useState(false)
 
   const [step, setStep]       = useState<Step>('form')
@@ -34,6 +35,12 @@ export default function KayitPage() {
 
     if (!firstName.trim() || !lastName.trim()) {
       setError('Ad ve soyad zorunludur.')
+      return
+    }
+    const birthYearNum = parseInt(birthYear)
+    const currentYear = new Date().getFullYear()
+    if (!birthYear || isNaN(birthYearNum) || birthYearNum < 1900 || birthYearNum > currentYear - 18) {
+      setError('Geçerli bir doğum yılı girin (18 yaş ve üzeri).')
       return
     }
     if (phone.replace(/\D/g, '').length < 10) {
@@ -57,7 +64,7 @@ export default function KayitPage() {
       email,
       password,
       options: {
-        data: { full_name: fullName, phone: formatPhone(phone) },
+        data: { full_name: fullName, phone: formatPhone(phone), birth_year: birthYearNum },
         emailRedirectTo: `${location.origin}/auth/callback`,
       },
     })
@@ -151,6 +158,24 @@ export default function KayitPage() {
                   placeholder="Soyadınız"
                   className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
               </div>
+            </div>
+
+            {/* Doğum Yılı */}
+            <div>
+              <label className="block text-sm text-slate-400 mb-2">
+                Doğum Yılı <span className="text-red-400">*</span>
+                <span className="text-slate-500 text-xs ml-1">(Skor hesabında kullanılır)</span>
+              </label>
+              <input
+                type="number"
+                required
+                min={1900}
+                max={new Date().getFullYear() - 18}
+                value={birthYear}
+                onChange={e => setBirthYear(e.target.value)}
+                placeholder={String(new Date().getFullYear() - 30)}
+                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+              />
             </div>
 
             {/* Telefon */}
