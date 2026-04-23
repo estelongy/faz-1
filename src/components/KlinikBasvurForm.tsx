@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { CLINIC_TYPES, TREATMENTS_BY_BRANCH } from '@/lib/randevu-filters'
+import { useState, useRef, useEffect } from 'react'
+import { CLINIC_TYPES, TREATMENTS_BY_BRANCH, LOCATIONS } from '@/lib/randevu-filters'
 
 interface Props {
   action: (formData: FormData) => Promise<void>
@@ -11,6 +11,22 @@ interface Props {
 export default function KlinikBasvurForm({ action, hasError }: Props) {
   const [clinicType, setClinicType] = useState('')
   const treatments = clinicType ? (TREATMENTS_BY_BRANCH[clinicType] ?? []) : []
+
+  // Konum autocomplete
+  const [locQuery, setLocQuery] = useState('')
+  const [locValue, setLocValue] = useState('')
+  const [locOpen, setLocOpen] = useState(false)
+  const locRef = useRef<HTMLDivElement>(null)
+  const locSuggestions = locQuery.trim().length >= 1
+    ? LOCATIONS.filter(l => l.toLowerCase().includes(locQuery.toLowerCase())).slice(0, 10)
+    : []
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (locRef.current && !locRef.current.contains(e.target as Node)) setLocOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [])
 
   return (
     <>
@@ -36,8 +52,58 @@ export default function KlinikBasvurForm({ action, hasError }: Props) {
         {/* Konum */}
         <div>
           <label className="block text-sm text-slate-400 mb-2">Konum</label>
-          <input type="text" name="location" placeholder="İstanbul, Kadıköy"
-            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
+          <input type="hidden" name="location" value={locValue} />
+          <div ref={locRef} className="relative">
+            {locValue ? (
+              <div className="flex items-center gap-2 px-4 py-3 bg-slate-900 border border-violet-500/40 rounded-xl">
+                <svg className="w-4 h-4 text-violet-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="text-white text-sm flex-1">{locValue}</span>
+                <button type="button" onClick={() => { setLocValue(''); setLocQuery('') }}
+                  className="text-slate-500 hover:text-white transition-colors">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus-within:border-violet-500/60 transition-colors">
+                <svg className="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={locQuery}
+                  onChange={e => { setLocQuery(e.target.value); setLocOpen(true) }}
+                  onFocus={() => { if (locQuery.trim().length >= 1) setLocOpen(true) }}
+                  placeholder="İstanbul, Kadıköy"
+                  className="flex-1 bg-transparent text-white placeholder-slate-500 text-sm focus:outline-none"
+                />
+                {locQuery && (
+                  <button type="button" onClick={() => { setLocQuery(''); setLocOpen(false) }}
+                    className="text-slate-500 hover:text-white transition-colors">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            )}
+            {locOpen && locSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden max-h-52 overflow-y-auto">
+                {locSuggestions.map(s => (
+                  <button key={s} type="button"
+                    onMouseDown={() => { setLocValue(s); setLocQuery(''); setLocOpen(false) }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors border-b border-slate-700/50 last:border-0">
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Klinik Tipi */}
