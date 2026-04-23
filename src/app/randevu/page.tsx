@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { FilterInput } from '@/components/FilterInput'
+import { BRANCHES, ALL_TREATMENTS, LOCATIONS, branchMatches, locationMatches } from '@/lib/randevu-filters'
 
 interface Clinic {
   id: string
@@ -76,10 +78,10 @@ export default function RandevuPage() {
   const [success, setSuccess] = useState(false)
 
   // Arama filtreleri
-  const [searchText, setSearchText] = useState('')
+  const [filterUzman, setFilterUzman] = useState<string>('')
+  const [filterBranch, setFilterBranch] = useState<string>(preselectedTip ?? '')
+  const [filterTreatment, setFilterTreatment] = useState<string>('')
   const [filterLocation, setFilterLocation] = useState<string>('')
-  const [filterSpecialty, setFilterSpecialty] = useState<string>('')
-  const [filterType, setFilterType] = useState<string>(preselectedTip ?? '')
 
   // Müsaitlik + dolu saatler
   const [availability, setAvailability] = useState<Availability[]>([])
@@ -114,47 +116,24 @@ export default function RandevuPage() {
     return out
   }, [selectedDay, busySlots])
 
-  // Lokasyon ve uzmanlık listelerini mevcut kliniklerden çıkar
-  const { locations, specialtiesList } = useMemo(() => {
-    const locSet = new Set<string>()
-    const specSet = new Set<string>()
-    clinics.forEach(c => {
-      if (c.location) {
-        // "İstanbul, Beylikdüzü" → ilk kısmı il olarak al
-        const city = c.location.split(',')[0].trim()
-        if (city) locSet.add(city)
-      }
-      c.specialties?.forEach(s => specSet.add(s))
-    })
-    return {
-      locations: Array.from(locSet).sort((a, b) => a.localeCompare(b, 'tr')),
-      specialtiesList: Array.from(specSet).sort((a, b) => a.localeCompare(b, 'tr')),
-    }
+  // Uzman önerileri: klinik adlarından dinamik
+  const uzmanSuggestions = useMemo(() => {
+    return clinics.map(c => c.name).sort((a, b) => a.localeCompare(b, 'tr'))
   }, [clinics])
 
   // Filtrelenmiş klinik listesi
   const filteredClinics = useMemo(() => {
-    const q = searchText.trim().toLowerCase()
     return clinics.filter(c => {
-      // Metin araması: ad veya uzmanlık
-      if (q) {
-        const nameMatch = c.name.toLowerCase().includes(q)
-        const specMatch = c.specialties?.some(s => s.toLowerCase().includes(q)) ?? false
-        const locMatch = c.location?.toLowerCase().includes(q) ?? false
-        if (!nameMatch && !specMatch && !locMatch) return false
-      }
-      // Lokasyon filtresi
-      if (filterLocation) {
-        const city = c.location?.split(',')[0].trim().toLowerCase() ?? ''
-        if (city !== filterLocation.toLowerCase()) return false
-      }
-      // Uzmanlık filtresi
-      if (filterSpecialty && !(c.specialties?.includes(filterSpecialty))) return false
-      // Klinik tipi filtresi (?tip= parametresinden)
-      if (filterType && c.clinic_type !== filterType) return false
+      if (filterUzman && !c.name.toLowerCase().includes(filterUzman.toLowerCase())) return false
+      if (filterBranch && !branchMatches(c.clinic_type, filterBranch)) return false
+      if (filterTreatment && !(c.specialties?.some(s => s.toLowerCase().includes(filterTreatment.toLowerCase())))) return false
+      if (filterLocation && !locationMatches(c.location, filterLocation)) return false
       return true
     })
-  }, [clinics, searchText, filterLocation, filterSpecialty, filterType])
+  }, [clinics, filterUzman, filterBranch, filterTreatment, filterLocation])
+
+  const hasFilter = !!(filterUzman || filterBranch || filterTreatment || filterLocation)
+  function clearAllFilters() { setFilterUzman(''); setFilterBranch(''); setFilterTreatment(''); setFilterLocation('') }
 
   useEffect(() => {
     const supabase = createClient()
@@ -299,40 +278,47 @@ export default function RandevuPage() {
 
             {/* Arama & Filtreler */}
             {!loading && clinics.length > 0 && (
-              <div className="mb-6 space-y-3">
-                <div className="relative">
-                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    type="text" value={searchText} onChange={e => setSearchText(e.target.value)}
-                    placeholder="Klinik, uzmanlık veya ilgi alanı ara..."
-                    className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors text-sm"
+              <div className="mb-6 space-y-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <FilterInput
+                    placeholder="Uzman ara... (ör: İzzet Gök)"
+                    icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
+                    value={filterUzman}
+                    suggestions={uzmanSuggestions}
+                    onSelect={setFilterUzman}
+                    onClear={() => setFilterUzman('')}
+                  />
+                  <FilterInput
+                    placeholder="Branş ara... (ör: Cildiye)"
+                    icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
+                    value={filterBranch}
+                    suggestions={BRANCHES}
+                    onSelect={setFilterBranch}
+                    onClear={() => setFilterBranch('')}
+                  />
+                  <FilterInput
+                    placeholder="Tedavi ara... (ör: Meme dikleştirme)"
+                    icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>}
+                    value={filterTreatment}
+                    suggestions={ALL_TREATMENTS}
+                    onSelect={setFilterTreatment}
+                    onClear={() => setFilterTreatment('')}
+                  />
+                  <FilterInput
+                    placeholder="Konum ara... (ör: Beylikdüzü)"
+                    icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+                    value={filterLocation}
+                    suggestions={LOCATIONS}
+                    onSelect={setFilterLocation}
+                    onClear={() => setFilterLocation('')}
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <select value={filterLocation} onChange={e => setFilterLocation(e.target.value)}
-                    className="px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-violet-500 transition-colors">
-                    <option value="">📍 Tüm şehirler</option>
-                    {locations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
-                  </select>
-                  <select value={filterSpecialty} onChange={e => setFilterSpecialty(e.target.value)}
-                    className="px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-violet-500 transition-colors">
-                    <option value="">🩺 Tüm uzmanlıklar</option>
-                    {specialtiesList.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-
-                {(searchText || filterLocation || filterSpecialty || filterType) && (
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500 flex items-center gap-2">
-                      {filteredClinics.length} klinik bulundu
-                      {filterType && <span className="px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/25">{filterType}</span>}
-                    </span>
-                    <button onClick={() => { setSearchText(''); setFilterLocation(''); setFilterSpecialty(''); setFilterType('') }}
-                      className="text-violet-400 hover:text-violet-300 transition-colors">
-                      Filtreleri temizle
+                {hasFilter && (
+                  <div className="flex items-center justify-between text-xs pt-0.5">
+                    <span className="text-slate-500">{filteredClinics.length} klinik bulundu</span>
+                    <button onClick={clearAllFilters} className="text-violet-400 hover:text-violet-300 transition-colors">
+                      Tüm filtreleri temizle
                     </button>
                   </div>
                 )}
@@ -359,7 +345,7 @@ export default function RandevuPage() {
                   </svg>
                 </div>
                 <p className="text-slate-400">Arama kriterlerinize uygun klinik bulunamadı.</p>
-                <button onClick={() => { setSearchText(''); setFilterLocation(''); setFilterSpecialty(''); setFilterType('') }}
+                <button onClick={clearAllFilters}
                   className="mt-3 text-violet-400 hover:text-violet-300 text-sm transition-colors">
                   Filtreleri temizle
                 </button>
