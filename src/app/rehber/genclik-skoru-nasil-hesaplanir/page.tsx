@@ -68,7 +68,7 @@ export default async function GenclikSkoruNasilHesaplanirPage() {
           <div className="max-w-3xl mx-auto px-4 h-16 flex items-center gap-3 text-sm">
             <Link href="/" className="text-slate-500 hover:text-white transition-colors">Estelongy</Link>
             <span className="text-slate-700">›</span>
-            <Link href="/rehber" className="text-slate-500 hover:text-white transition-colors">Rehber</Link>
+            <Link href="/rehber" className="text-slate-500 hover:text-white transition-colors">Gençlik Rehberi</Link>
             <span className="text-slate-700">›</span>
             <span className="text-white font-medium truncate">Gençlik Skoru Nasıl Hesaplanır?</span>
           </div>

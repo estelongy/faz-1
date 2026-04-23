@@ -28,7 +28,7 @@ export default function Footer() {
               <li><Link href="/randevu" className="text-slate-400 hover:text-white transition-colors">Klinik Randevu</Link></li>
               <li><Link href="/magaza" className="text-slate-400 hover:text-white transition-colors">Mağaza</Link></li>
               <li><Link href="/panel" className="text-slate-400 hover:text-white transition-colors">Panelim</Link></li>
-              <li><Link href="/rehber" className="text-slate-400 hover:text-white transition-colors">Rehber</Link></li>
+              <li><Link href="/rehber" className="text-slate-400 hover:text-white transition-colors">Gençlik Rehberi</Link></li>
             </ul>
           </div>
 

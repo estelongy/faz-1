@@ -105,7 +105,7 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <Link href="/rehber"
                 className="hidden sm:block text-slate-400 hover:text-white text-sm transition-colors">
-                Rehber
+                Gençlik Rehberi
               </Link>
               <Link href="/klinik/basvur"
                 className="hidden md:block text-slate-400 hover:text-white text-sm transition-colors">

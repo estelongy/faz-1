@@ -2,11 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Estelongy Rehberi — Estetik, Longevity ve Gençlik Skoru',
+  title: 'Gençlik Rehberi — Estetik, Longevity ve Gençlik Skoru | Estelongy',
   description: 'Estetik uygulamalar, cihaz tedavileri, longevity bilimine dair kapsamlı rehberler. Estelongy Gençlik Skoru\'nu ve klinik süreçleri derinlemesine öğrenin.',
   keywords: ['estetik uygulamalar', 'longevity', 'gençlik skoru', 'cihaz tedavileri', 'botoks', 'dolgu', 'HIFU', 'anti aging'],
   openGraph: {
-    title: 'Estelongy Rehberi — Estetik, Longevity ve Gençlik Skoru',
+    title: 'Gençlik Rehberi — Estetik, Longevity ve Gençlik Skoru | Estelongy',
     description: 'Estetik uygulamalar, cihaz tedavileri ve longevity bilimine dair kapsamlı rehberler.',
     url: 'https://estelongy.com/rehber',
   },
@@ -74,7 +74,7 @@ export default function RehberPage() {
             ← Estelongy
           </Link>
           <span className="text-slate-700">|</span>
-          <span className="text-white font-bold text-sm">Rehber</span>
+          <span className="text-white font-bold text-sm">Gençlik Rehberi</span>
         </div>
       </header>
 
@@ -82,7 +82,7 @@ export default function RehberPage() {
         {/* Hero */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-sm mb-6">
-            Estelongy Rehberi
+            Gençlik Rehberi
           </div>
           <h1 className="text-4xl sm:text-5xl font-black text-white mb-4 leading-tight">
             Estetik & Longevity<br />Bilgi Merkezi
