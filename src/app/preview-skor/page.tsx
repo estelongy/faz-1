@@ -2,10 +2,10 @@
 
 import ScoreBar from '@/components/ScoreBar'
 
-export default function TestSkorPage() {
+export default function PreviewSkorPage() {
   return (
     <div className="min-h-screen bg-[#0a0f1a] py-10 px-4 flex flex-col gap-10 items-center">
-      <h1 className="text-white text-xl font-bold tracking-widest">SCOREBAR TEST</h1>
+      <h1 className="text-white text-xl font-bold tracking-widest">SCOREBAR PREVIEW</h1>
 
       <div className="w-full max-w-xs">
         <p className="text-slate-500 text-xs mb-2 text-center">Normal — 73</p>

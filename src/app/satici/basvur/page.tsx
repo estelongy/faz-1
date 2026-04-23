@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
@@ -13,26 +14,47 @@ export const metadata: Metadata = {
 async function submitApplication(formData: FormData) {
   'use server'
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/giris')
+  let { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    const firstName = (formData.get('first_name') as string)?.trim()
+    const lastName  = (formData.get('last_name') as string)?.trim()
+    const email     = (formData.get('email') as string)?.trim()
+    const password  = formData.get('password') as string
+    const birthYear = formData.get('birth_year') as string
+
+    if (!firstName || !email || !password) redirect('/satici/basvur?error=eksik')
+
+    const admin = createServiceClient()
+    const { data: created, error: createErr } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { first_name: firstName, last_name: lastName || '' },
+    })
+    if (createErr || !created.user) redirect('/satici/basvur?error=hesap')
+
+    if (birthYear) {
+      await admin.from('profiles').update({ birth_year: parseInt(birthYear) }).eq('id', created.user.id)
+    }
+
+    user = created.user
+  }
 
   const company_name = formData.get('company_name') as string
-  const tax_number = formData.get('tax_number') as string
+  const tax_number   = formData.get('tax_number') as string
 
-  const { error } = await supabase.from('vendors').insert({
-    user_id: user.id,
+  const insertClient = createServiceClient()
+  const { error } = await insertClient.from('vendors').insert({
+    user_id:         user.id,
     company_name,
-    tax_number: tax_number || null,
+    tax_number:      tax_number || null,
     approval_status: 'pending',
-    is_active: false,
+    is_active:       false,
   })
 
   if (error) redirect('/satici/basvur?error=1')
-
-  // Not: Rol (app_metadata.role) admin onay anında set_user_role RPC ile atanır.
-  // Pending aşamasında rol "user" olarak kalır, panel erişimi approval_status'e bakar.
-
-  redirect('/panel?basvuru=satici')
+  redirect('/satici/basvur?success=1')
 }
 
 export default async function SaticiBasvurPage({
@@ -40,44 +62,72 @@ export default async function SaticiBasvurPage({
 }: {
   searchParams: Promise<Record<string, string>>
 }) {
-  const params = await searchParams
-  const hasError = params.error === '1'
-  const supabase = await createClient()
+  const params    = await searchParams
+  const hasError  = !!params.error
+  const isSuccess = params.success === '1'
+  const supabase  = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/giris')
 
-  const { data: existing } = await supabase
-    .from('vendors')
-    .select('id, approval_status')
-    .eq('user_id', user.id)
-    .single()
+  if (user) {
+    const { data: existing } = await supabase
+      .from('vendors')
+      .select('id, approval_status')
+      .eq('user_id', user.id)
+      .maybeSingle()
 
-  if (existing) {
+    if (existing) {
+      return (
+        <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center p-4">
+          <div className="w-full max-w-md text-center">
+            <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 ${
+              existing.approval_status === 'approved' ? 'bg-emerald-500/20' :
+              existing.approval_status === 'rejected' ? 'bg-red-500/20' : 'bg-amber-500/20'
+            }`}>
+              <svg className={`w-8 h-8 ${
+                existing.approval_status === 'approved' ? 'text-emerald-400' :
+                existing.approval_status === 'rejected' ? 'text-red-400' : 'text-amber-400'
+              }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">
+              {existing.approval_status === 'approved' ? 'Satıcı Hesabınız Aktif' :
+               existing.approval_status === 'rejected' ? 'Başvurunuz Reddedildi' : 'Başvurunuz İnceleniyor'}
+            </h2>
+            <p className="text-slate-400 text-sm mb-6">
+              {existing.approval_status === 'approved' ? 'Ürünlerinizi yönetebilirsiniz.' :
+               existing.approval_status === 'rejected' ? 'Başvurunuz onaylanmadı. Destek ekibiyle iletişime geçin.' :
+               'Başvurunuz admin onayı bekliyor. En kısa sürede değerlendirilecek.'}
+            </p>
+            <Link href={existing.approval_status === 'approved' ? '/satici/panel' : '/panel'}
+              className="inline-flex items-center justify-center w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold rounded-xl">
+              {existing.approval_status === 'approved' ? 'Satıcı Paneline Git' : 'Panele Dön'}
+            </Link>
+          </div>
+        </main>
+      )
+    }
+  }
+
+  if (isSuccess) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
-          <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 ${
-            existing.approval_status === 'approved' ? 'bg-emerald-500/20' :
-            existing.approval_status === 'rejected' ? 'bg-red-500/20' : 'bg-amber-500/20'
-          }`}>
-            <svg className={`w-8 h-8 ${
-              existing.approval_status === 'approved' ? 'text-emerald-400' :
-              existing.approval_status === 'rejected' ? 'text-red-400' : 'text-amber-400'
-            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-emerald-500/20 flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">
-            {existing.approval_status === 'approved' ? 'Satıcı Hesabınız Aktif' :
-             existing.approval_status === 'rejected' ? 'Başvurunuz Reddedildi' : 'Başvurunuz İnceleniyor'}
-          </h2>
-          <p className="text-slate-400 text-sm mb-6">
-            {existing.approval_status === 'approved' ? 'Ürünlerinizi yönetebilirsiniz.' :
-             existing.approval_status === 'rejected' ? 'Başvurunuz onaylanmadı. Destek ekibiyle iletişime geçin.' :
-             'Başvurunuz admin onayı bekliyor. En kısa sürede değerlendirilecek.'}
+          <h2 className="text-xl font-bold text-white mb-2">Başvurunuz Alındı</h2>
+          <p className="text-slate-400 text-sm mb-2">
+            Başvurunuz incelemeye alındı. En kısa sürede değerlendirilecek.
           </p>
-          <Link href="/panel" className="inline-flex items-center justify-center w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold rounded-xl">
-            Panele Dön
+          <p className="text-slate-500 text-xs mb-6">
+            Hesabınız oluşturuldu. Onay sonrası <strong className="text-slate-400">giriş yaparak</strong> satıcı panelinize erişebilirsiniz.
+          </p>
+          <Link href="/giris"
+            className="inline-flex items-center justify-center w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold rounded-xl">
+            Giriş Yap
           </Link>
         </div>
       </main>
@@ -88,7 +138,7 @@ export default async function SaticiBasvurPage({
     <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
       <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/panel" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
+          <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             Geri
           </Link>
@@ -103,7 +153,7 @@ export default async function SaticiBasvurPage({
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
           </div>
           <h1 className="text-2xl font-bold text-white">Satıcı Olarak Katıl</h1>
-          <p className="text-slate-400 text-sm mt-1">Cilt bakım ürünlerinizi Estelongy&apos;de satın</p>
+          <p className="text-slate-400 text-sm mt-1">Başvurunuz admin onayından sonra aktive edilir</p>
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-8">
@@ -126,12 +176,46 @@ export default async function SaticiBasvurPage({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p className="text-red-400 text-sm">
-              Başvuru gönderilemedi. Bir hata oluştu. Lütfen tekrar deneyin.
+              Başvuru gönderilemedi. Zaten aktif bir başvurunuz olabilir veya bir hata oluştu. Lütfen tekrar deneyin.
             </p>
           </div>
         )}
 
         <form action={submitApplication} className="space-y-6">
+          {/* Hesap Bilgileri — sadece giriş yapılmamışsa */}
+          {!user && (
+            <div className="space-y-4 p-5 rounded-xl bg-slate-800/60 border border-slate-700">
+              <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Hesap Bilgileri</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Ad <span className="text-red-400">*</span></label>
+                  <input type="text" name="first_name" required placeholder="Ahmet"
+                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Soyad</label>
+                  <input type="text" name="last_name" placeholder="Yılmaz"
+                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-2">E-posta <span className="text-red-400">*</span></label>
+                <input type="email" name="email" required placeholder="ornek@email.com"
+                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-2">Şifre <span className="text-red-400">*</span></label>
+                <input type="password" name="password" required placeholder="En az 8 karakter" minLength={8}
+                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-2">Doğum Yılı</label>
+                <input type="number" name="birth_year" placeholder="1985" min={1920} max={new Date().getFullYear() - 18}
+                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm text-slate-400 mb-2">Şirket / Marka Adı <span className="text-red-400">*</span></label>
             <input type="text" name="company_name" required placeholder="Örn: DermaCare Kozmetik A.Ş."

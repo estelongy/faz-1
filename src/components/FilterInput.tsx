@@ -11,6 +11,10 @@ interface FilterInputProps {
   onClear: () => void
 }
 
+function trNorm(s: string) {
+  return s.replace(/İ/g, 'i').replace(/I/g, 'i').replace(/ı/g, 'i').toLowerCase()
+}
+
 export function FilterInput({ placeholder, icon, value, suggestions, onSelect, onClear }: FilterInputProps) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
@@ -18,7 +22,7 @@ export function FilterInput({ placeholder, icon, value, suggestions, onSelect, o
 
   const filtered = query.trim().length >= 1
     ? suggestions
-        .filter(s => s.toLowerCase().includes(query.toLowerCase().trim()))
+        .filter(s => trNorm(s).includes(trNorm(query.trim())))
         .slice(0, 10)
     : []
 
