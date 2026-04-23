@@ -125,7 +125,7 @@ export default function EstetikCerrahiPage() {
             </span>
           </h1>
           <p className="text-slate-400 text-lg leading-relaxed max-w-2xl">
-            Rinoplastiden yüz germeye, liposuction'dan meme estetiğine — en yaygın estetik cerrahi prosedürleri,
+            Rinoplastiden yüz germeye, liposuction&apos;dan meme estetiğine — en yaygın estetik cerrahi prosedürleri,
             kimler için uygun olduğu ve operasyon sürecinde neler bekleneceği hakkında kapsamlı bir rehber.
           </p>
         </div>
