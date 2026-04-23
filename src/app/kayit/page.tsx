@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
-type Step = 'form' | 'verify'
+type Step = 'form' | 'otp' | 'verify'
 
 export default function KayitPage() {
   const router = useRouter()
@@ -21,6 +21,11 @@ export default function KayitPage() {
   const [step, setStep]       = useState<Step>('form')
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState<string | null>(null)
+
+  // OTP state
+  const [otpCode, setOtpCode]   = useState('')
+  const [otpPhone, setOtpPhone] = useState('')
+  const [otpResent, setOtpResent] = useState(false)
 
   function formatPhone(raw: string) {
     const d = raw.replace(/\D/g, '')
@@ -56,27 +61,67 @@ export default function KayitPage() {
       return
     }
 
+    // SMS OTP gönder
     setLoading(true)
+    const e164 = formatPhone(phone)
     const supabase = createClient()
-    const fullName = `${firstName.trim()} ${lastName.trim()}`
+    const { error: otpErr } = await supabase.auth.signInWithOtp({ phone: e164 })
+    setLoading(false)
 
+    if (otpErr) {
+      setError('SMS gönderilemedi: ' + otpErr.message)
+      return
+    }
+    setOtpPhone(e164)
+    setStep('otp')
+    setOtpResent(false)
+  }
+
+  async function handleVerifyOtp() {
+    if (otpCode.length !== 6) return
+    setLoading(true)
+    setError(null)
+    const supabase = createClient()
+    const { error: verErr } = await supabase.auth.verifyOtp({ phone: otpPhone, token: otpCode, type: 'sms' })
+    if (verErr) {
+      setError('Kod hatalı veya süresi dolmuş.')
+      setLoading(false)
+      return
+    }
+
+    // OTP doğrulandı → telefonla oluşan anonim session'u temizle, e-posta/şifre ile signUp yap
+    await supabase.auth.signOut()
+
+    const birthYearNum = parseInt(birthYear)
+    const fullName = `${firstName.trim()} ${lastName.trim()}`
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName, phone: formatPhone(phone), birth_year: birthYearNum },
+        data: { full_name: fullName, phone: otpPhone, birth_year: birthYearNum, phone_verified: true },
         emailRedirectTo: `${location.origin}/auth/callback`,
       },
     })
+    setLoading(false)
 
     if (signUpError) {
       setError(signUpError.message === 'User already registered' ? 'Bu e-posta zaten kayıtlı.' : signUpError.message)
-      setLoading(false)
       return
     }
-    if (data.user && !data.session) { setStep('verify'); setLoading(false); return }
+    if (data.user && !data.session) { setStep('verify'); return }
     router.push('/panel')
     router.refresh()
+  }
+
+  async function handleResendOtp() {
+    setLoading(true)
+    setError(null)
+    const supabase = createClient()
+    const { error: err } = await supabase.auth.signInWithOtp({ phone: otpPhone })
+    setLoading(false)
+    if (err) { setError('Tekrar gönderilemedi.'); return }
+    setOtpResent(true)
+    setOtpCode('')
   }
 
   async function handleResendEmail() {
@@ -87,6 +132,59 @@ export default function KayitPage() {
     if (error) setError('E-posta tekrar gönderilemedi.')
     setLoading(false)
   }
+
+  // ─── SMS OTP Doğrulama Ekranı ─────────────────────────────────────────
+  if (step === 'otp') return (
+    <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
+          <div className="w-14 h-14 mx-auto rounded-xl bg-blue-500/20 flex items-center justify-center mb-5">
+            <svg className="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-white text-center mb-1">Telefon Doğrulama</h2>
+          <p className="text-slate-400 text-sm text-center mb-5">
+            <span className="text-white font-medium">{otpPhone}</span> numarasına 6 haneli kod gönderdik.
+          </p>
+
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            value={otpCode}
+            onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
+            placeholder="_ _ _ _ _ _"
+            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-center text-2xl tracking-widest placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors mb-3"
+            autoFocus
+          />
+
+          {error && (
+            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm mb-3">{error}</div>
+          )}
+          {otpResent && !error && (
+            <p className="text-emerald-400 text-sm text-center mb-3">Kod tekrar gönderildi.</p>
+          )}
+
+          <button onClick={handleVerifyOtp} disabled={otpCode.length !== 6 || loading}
+            className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 text-white font-semibold rounded-xl transition-all mb-3">
+            {loading ? 'Doğrulanıyor...' : 'Doğrula ve Kayıt Ol'}
+          </button>
+
+          <div className="flex gap-2">
+            <button onClick={handleResendOtp} disabled={loading}
+              className="flex-1 py-2 text-slate-400 hover:text-white text-sm transition-colors">
+              Tekrar Gönder
+            </button>
+            <button onClick={() => { setStep('form'); setOtpCode(''); setError(null) }}
+              className="flex-1 py-2 text-slate-400 hover:text-white text-sm transition-colors">
+              Geri
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  )
 
   // ─── E-posta Doğrulama Ekranı ──────────────────────────────────────────
   if (step === 'verify') return (
@@ -252,7 +350,7 @@ export default function KayitPage() {
 
             <button type="submit" disabled={loading || !agreed}
               className="w-full py-3.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all mt-2">
-              {loading ? 'Kayıt oluşturuluyor...' : 'Kayıt Ol'}
+              {loading ? 'SMS Gönderiliyor...' : 'Kayıt Ol'}
             </button>
           </form>
 
