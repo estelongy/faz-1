@@ -11,11 +11,16 @@ export const metadata: Metadata = {
 }
 
 const CLINIC_TYPES = [
-  'Dermatoloji',
-  'Plastik & Estetik Cerrahi',
+  'Plastik ve Estetik Cerrahi',
+  'Dermatoloji / Cildiye',
+  'Kulak Burun Boğaz (KBB)',
+  'Göz Hastalıkları',
   'Medikal Estetik',
-  'Fonksiyonel Tıp · Longevity',
-  'K.B.B. Uzmanı',
+  'Genital Estetik (Jinekoloji)',
+  'Genital Estetik (Üroloji)',
+  'Fonksiyonel Tıp ve Longevity',
+  'Obezite ve Metabolizma',
+  'Diş Hekimliği ve Ağız Estetiği',
 ]
 
 const SPECIALTIES = [
