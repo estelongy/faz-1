@@ -164,7 +164,6 @@ export default function KayitPage() {
             <div>
               <label className="block text-sm text-slate-400 mb-2">
                 Doğum Yılı <span className="text-red-400">*</span>
-                <span className="text-slate-500 text-xs ml-1">(Skor hesabında kullanılır)</span>
               </label>
               <input
                 type="number"
