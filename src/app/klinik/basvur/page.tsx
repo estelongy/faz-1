@@ -4,30 +4,12 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import KlinikBasvurForm from '@/components/KlinikBasvurForm'
 
 export const metadata: Metadata = {
   title: 'Klinik Başvurusu',
   description: 'Kliniğinizi Estelongy platformuna kaydedin. Hastaları kolayca yönetin.',
 }
-
-const CLINIC_TYPES = [
-  'Plastik ve Estetik Cerrahi',
-  'Dermatoloji / Cildiye',
-  'Kulak Burun Boğaz (KBB)',
-  'Göz Hastalıkları',
-  'Medikal Estetik',
-  'Genital Estetik (Jinekoloji)',
-  'Genital Estetik (Üroloji)',
-  'Fonksiyonel Tıp ve Longevity',
-  'Obezite ve Metabolizma',
-  'Diş Hekimliği ve Ağız Estetiği',
-]
-
-const SPECIALTIES = [
-  'Cilt Bakımı', 'Lazer Tedavisi', 'Botoks & Dolgu', 'PRP Tedavisi',
-  'Kimyasal Peeling', 'Mezoterapi', 'Leke Tedavisi', 'Akne Tedavisi',
-  'Skar Tedavisi', 'Saç Ekimi', 'Epilasyon', 'Antiaging',
-]
 
 async function submitApplication(formData: FormData) {
   'use server'
@@ -53,9 +35,6 @@ async function submitApplication(formData: FormData) {
   })
 
   if (error) redirect('/klinik/basvur?error=1')
-
-  // Not: Rol (app_metadata.role) admin onay anında set_user_role RPC ile atanır.
-  // Pending aşamasında rol "user" olarak kalır, panel erişimi approval_status'e bakar.
 
   redirect('/panel?basvuru=klinik')
 }
@@ -134,72 +113,7 @@ export default async function KlinikBasvurPage({
           <p className="text-slate-400 text-sm mt-1">Başvurunuz admin onayından sonra aktive edilir</p>
         </div>
 
-        {hasError && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3">
-            <svg className="w-5 h-5 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-red-400 text-sm">
-              Başvuru gönderilemedi. Zaten aktif bir başvurunuz olabilir veya bir hata oluştu. Lütfen tekrar deneyin.
-            </p>
-          </div>
-        )}
-
-        <form action={submitApplication} className="space-y-6">
-          <div>
-            <label className="block text-sm text-slate-400 mb-2">Klinik Adı <span className="text-red-400">*</span></label>
-            <input type="text" name="name" required placeholder="Dr. Ahmet Yılmaz Dermatoloji Kliniği"
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
-          </div>
-
-          <div>
-            <label className="block text-sm text-slate-400 mb-2">Konum</label>
-            <input type="text" name="location" placeholder="İstanbul, Kadıköy"
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
-          </div>
-
-          <div>
-            <label className="block text-sm text-slate-400 mb-2">
-              Klinik Tipi <span className="text-red-400">*</span>
-            </label>
-            <select name="clinic_type" required defaultValue=""
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-violet-500 transition-colors appearance-none cursor-pointer">
-              <option value="" disabled>Uzmanlık alanınızı seçin...</option>
-              {CLINIC_TYPES.map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm text-slate-400 mb-2">Klinik Hakkında</label>
-            <textarea name="bio" rows={4} placeholder="Kliniğiniz hakkında kısa bir tanıtım yazısı..."
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none" />
-          </div>
-
-          <div>
-            <label className="block text-sm text-slate-400 mb-3">Uzmanlık Alanları</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {SPECIALTIES.map(s => (
-                <label key={s} className="flex items-center gap-2 p-3 rounded-xl border border-slate-700 hover:border-slate-600 cursor-pointer transition-colors group">
-                  <input type="checkbox" name="specialties" value={s} className="accent-violet-500 w-4 h-4" />
-                  <span className="text-slate-400 group-hover:text-white text-sm transition-colors">{s}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-            <p className="text-amber-300 text-sm">
-              <strong>Not:</strong> Başvurunuz onaylandıktan sonra klinik panelinize erişebilir ve randevu almaya başlayabilirsiniz.
-            </p>
-          </div>
-
-          <button type="submit"
-            className="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-semibold rounded-xl transition-all text-lg">
-            Başvuruyu Gönder
-          </button>
-        </form>
+        <KlinikBasvurForm action={submitApplication} hasError={hasError} />
       </div>
     </main>
   )

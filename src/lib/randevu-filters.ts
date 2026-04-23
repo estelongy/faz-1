@@ -1,4 +1,18 @@
-// Branşlar
+// Klinik kayıt formu + randevu pill'leri için ortak liste
+export const CLINIC_TYPES = [
+  'Plastik ve Estetik Cerrahi',
+  'Dermatoloji / Cildiye',
+  'Kulak Burun Boğaz (KBB)',
+  'Göz Hastalıkları',
+  'Medikal Estetik',
+  'Genital Estetik (Jinekoloji)',
+  'Genital Estetik (Üroloji)',
+  'Fonksiyonel Tıp ve Longevity',
+  'Obezite ve Metabolizma',
+  'Diş Hekimliği ve Ağız Estetiği',
+]
+
+// Branşlar (randevu filtresi için — klinik kayıtta CLINIC_TYPES kullan)
 export const BRANCHES = [
   'Plastik, Rekonstrüktif ve Estetik Cerrahi',
   'Dermatoloji / Cildiye',
@@ -14,7 +28,7 @@ export const BRANCHES = [
 
 // Tedaviler / Uygulamalar (branşa göre)
 export const TREATMENTS_BY_BRANCH: Record<string, string[]> = {
-  'Plastik, Rekonstrüktif ve Estetik Cerrahi': [
+  'Plastik ve Estetik Cerrahi': [
     'Rinoplasti', 'Septorinoplasti', 'Ameliyatsız Burun Dolgusu',
     'Yüz Germe', 'Boyun Germe', 'Kaş Kaldırma', 'Alın Germe',
     'Göz Kapağı Estetiği (Blefaroplasti)', 'Kepçe Kulak (Otoplasti)',
