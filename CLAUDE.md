@@ -3,8 +3,23 @@
 ## Proje Özeti
 
 **Estelongy** — Estetik sağlık alanında AI destekli klinik yönetim ve hasta takip platformu.  
-**Branch:** `claude/priceless-ellis` → deploy: `estelongy-clean.vercel.app`  
 **Stack:** Next.js 14 (App Router) · Tailwind · Supabase PostgreSQL (RLS) · OpenAI GPT-4o · Stripe · Resend · Sentry · Vercel
+
+### Git & Deploy Akışı (ÖNEMLİ)
+
+```
+Feature branch:  claude/priceless-ellis  →  preview URL (faz1-git-claude-priceless-ellis-*.vercel.app)
+Production:      main                     →  estelongy-clean.vercel.app  (Vercel production alias)
+```
+
+**Canlıya çıkarmak için adımlar:**
+1. Değişiklikleri `claude/priceless-ellis` branch'ine commit + push et
+2. Main worktree'ye geç: `cd C:/Users/Orjin/estelongy-faz1`
+3. Merge et: `git merge claude/priceless-ellis --no-ff -m "Merge branch 'claude/priceless-ellis'"`
+4. Push et: `git push origin main` → Vercel production build tetiklenir
+5. Build durumu: Vercel MCP `list_deployments` (projectId: `prj_uwPFDSAW6bG9RGHeaAzqtflu3dgw`, team: `team_6KIGU5JvMoWBV5To6nncBNnc`)
+
+Sadece feature branch'e push deploy'u canlıya yansıtmaz — preview kalır.
 
 ---
 
