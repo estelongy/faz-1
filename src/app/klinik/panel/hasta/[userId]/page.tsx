@@ -7,26 +7,11 @@ import { createClient } from '@/lib/supabase/server'
 import ScoreBar, { type ScorePhase } from '@/components/ScoreBar'
 import ScoreChart, { type ScorePoint } from '@/components/ScoreChart'
 import KlinikNotlar, { type ClinicNote } from './KlinikNotlar'
+import ZiyaretKarti, { type ZiyaretItem, type ZiyaretAnalysis } from '@/components/ZiyaretKarti'
+import { saveVisitNotesAction } from './ziyaret-actions'
 
 export const metadata: Metadata = {
   title: 'Hasta Detayı',
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  pending:     'Beklemede',
-  confirmed:   'Onaylandı',
-  in_progress: 'Görüşmede',
-  completed:   'Tamamlandı',
-  cancelled:   'İptal',
-  no_show:     'Gelmedi',
-}
-const STATUS_COLOR: Record<string, string> = {
-  pending:     'bg-amber-500/20 text-amber-400',
-  confirmed:   'bg-blue-500/20 text-blue-400',
-  in_progress: 'bg-violet-500/20 text-violet-400',
-  completed:   'bg-emerald-500/20 text-emerald-400',
-  cancelled:   'bg-red-500/20 text-red-400',
-  no_show:     'bg-slate-500/20 text-slate-400',
 }
 
 export default async function HastaDetayPage({
@@ -52,7 +37,7 @@ export default async function HastaDetayPage({
   // Bu kliniğe ait randevular (azalan sıra)
   const { data: appts } = await supabase
     .from('appointments')
-    .select('id, appointment_date, status, notes, clinic_notes, created_at')
+    .select('id, appointment_date, status, notes, clinic_notes, procedure_notes, recommendations, created_at')
     .eq('user_id', params.userId)
     .eq('clinic_id', clinic.id)
     .order('appointment_date', { ascending: false })
@@ -61,7 +46,7 @@ export default async function HastaDetayPage({
   // Analizler (artan sıra — grafik için)
   const { data: analyses } = await supabase
     .from('analyses')
-    .select('id, web_overall, temp_overall, final_overall, status, created_at')
+    .select('id, web_overall, temp_overall, final_overall, status, created_at, doctor_notes, doctor_approved_scores, web_scores, appointment_id')
     .eq('user_id', params.userId)
     .order('created_at', { ascending: true })
     .limit(30)
@@ -115,6 +100,76 @@ export default async function HastaDetayPage({
     updated_at: n.updated_at,
     author_name: n.author_id ? authorByid.get(n.author_id) ?? null : null,
   }))
+
+  // ── Ziyaret zaman çizelgesi kur ─────────────────────────────
+  type RawAnalysis = NonNullable<typeof analyses>[number]
+  const analysesByAppt = new Map<string, RawAnalysis>()
+  const looseAnalyses: RawAnalysis[] = []
+  ;(analyses ?? []).forEach(a => {
+    if (a.appointment_id) analysesByAppt.set(a.appointment_id, a)
+    else looseAnalyses.push(a)
+  })
+
+  const toZA = (a: RawAnalysis): ZiyaretAnalysis => ({
+    id: a.id,
+    web_overall: a.web_overall,
+    temp_overall: a.temp_overall,
+    final_overall: a.final_overall,
+    status: a.status,
+    created_at: a.created_at,
+    doctor_notes: a.doctor_notes,
+    doctor_approved_scores: (a.doctor_approved_scores ?? null) as ZiyaretAnalysis['doctor_approved_scores'],
+    web_scores: (a.web_scores ?? null) as Record<string, number> | null,
+  })
+
+  const visitItems: ZiyaretItem[] = (appts ?? []).map(apt => {
+    const a = analysesByAppt.get(apt.id) ?? null
+    return {
+      kind: 'visit',
+      id: apt.id,
+      date: apt.appointment_date ?? apt.created_at,
+      status: apt.status,
+      reasonNote: apt.notes ?? null,
+      clinicNote: apt.clinic_notes ?? null,
+      procedureNotes: apt.procedure_notes ?? null,
+      recommendations: apt.recommendations ?? null,
+      analysis: a ? toZA(a) : null,
+      scoreDelta: null,
+      appointmentId: apt.id,
+      isActive: ['pending', 'confirmed', 'in_progress'].includes(apt.status),
+      userId: params.userId,
+    }
+  })
+
+  const selfItems: ZiyaretItem[] = looseAnalyses.map(a => ({
+    kind: 'self_analysis',
+    id: a.id,
+    date: a.created_at,
+    status: a.status ?? '',
+    reasonNote: null,
+    clinicNote: null,
+    procedureNotes: null,
+    recommendations: null,
+    analysis: toZA(a),
+    scoreDelta: null,
+    appointmentId: null,
+    isActive: false,
+    userId: params.userId,
+  }))
+
+  // Kronolojik sırala (yeni → eski)
+  const timeline = [...visitItems, ...selfItems].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  )
+
+  // Skor farkı: önceki ziyaretin final skoruna göre
+  const chronological = [...timeline].reverse()
+  let prevFinal: number | null = null
+  for (const it of chronological) {
+    const cur = it.analysis?.final_overall ?? it.analysis?.web_overall ?? it.analysis?.temp_overall ?? null
+    if (prevFinal != null && cur != null) it.scoreDelta = Math.round((cur - prevFinal) * 10) / 10
+    if (cur != null) prevFinal = cur
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
@@ -203,122 +258,28 @@ export default async function HastaDetayPage({
         {/* ── Klinik Notları ── */}
         <KlinikNotlar userId={params.userId} notes={notes} />
 
-        {/* ── Randevular tablosu ── */}
-        <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-            <h2 className="text-white font-bold">Randevular ({appts?.length ?? 0})</h2>
-          </div>
-
-          {appts && appts.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-800">
-                    <th className="text-left px-4 py-3 text-slate-400 font-medium">Tarih & Saat</th>
-                    <th className="text-left px-4 py-3 text-slate-400 font-medium">Durum</th>
-                    <th className="text-left px-4 py-3 text-slate-400 font-medium">Hasta Notu</th>
-                    <th className="text-left px-4 py-3 text-slate-400 font-medium">Klinik Notu</th>
-                    <th className="text-left px-4 py-3 text-slate-400 font-medium">İşlem</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {appts.map(apt => {
-                    const isActive = ['pending', 'confirmed', 'in_progress'].includes(apt.status)
-                    return (
-                      <tr key={apt.id} className="hover:bg-slate-800/40 transition-colors">
-                        <td className="px-4 py-3 text-slate-300 text-xs whitespace-nowrap">
-                          {apt.appointment_date
-                            ? new Date(apt.appointment_date).toLocaleDateString('tr-TR', {
-                                day: 'numeric', month: 'long', year: 'numeric',
-                                hour: '2-digit', minute: '2-digit',
-                              })
-                            : '—'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLOR[apt.status] ?? STATUS_COLOR.pending}`}>
-                            {STATUS_LABEL[apt.status] ?? apt.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-slate-500 text-xs max-w-[140px] truncate">
-                          {apt.notes || '—'}
-                        </td>
-                        <td className="px-4 py-3 text-slate-500 text-xs max-w-[140px] truncate">
-                          {apt.clinic_notes || '—'}
-                        </td>
-                        <td className="px-4 py-3">
-                          {isActive ? (
-                            <Link
-                              href={`/klinik/panel/randevu/${apt.id}`}
-                              className="text-xs px-3 py-1.5 rounded-lg bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 transition-colors font-medium">
-                              {apt.status === 'in_progress' ? 'Devam Et →' : 'Başlat →'}
-                            </Link>
-                          ) : (
-                            <span className="text-slate-700 text-xs">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+        {/* ── Ziyaret Zaman Çizelgesi ── */}
+        <div className="mt-6 space-y-4">
+          <h2 className="text-white font-bold text-lg px-1">
+            Ziyaret & Analiz Geçmişi ({timeline.length})
+          </h2>
+          {timeline.length > 0 ? (
+            timeline.map(item => (
+              <ZiyaretKarti
+                key={`${item.kind}-${item.id}`}
+                item={item}
+                editable={item.kind === 'visit'}
+                klinikAkisLink
+                saveVisitNotes={saveVisitNotesAction}
+              />
+            ))
           ) : (
-            <div className="text-center py-12 text-slate-600">
-              Bu kliniğe ait randevu bulunamadı
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 py-12 text-center text-slate-600">
+              Henüz ziyaret veya analiz bulunmuyor
             </div>
           )}
         </div>
 
-        {/* ── Analizler özeti ── */}
-        {analyses && analyses.length > 0 && (
-          <div className="mt-6 bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-800">
-              <h2 className="text-white font-bold">Analiz Geçmişi ({analyses.length})</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-800">
-                    <th className="text-left px-4 py-3 text-slate-400 font-medium">Tarih</th>
-                    <th className="text-left px-4 py-3 text-slate-400 font-medium">Ön Analiz</th>
-                    <th className="text-left px-4 py-3 text-slate-400 font-medium">Klinik Onaylı</th>
-                    <th className="text-left px-4 py-3 text-slate-400 font-medium">Durum</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {[...analyses].reverse().map(a => (
-                    <tr key={a.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="px-4 py-3 text-slate-400 text-xs">
-                        {new Date(a.created_at).toLocaleDateString('tr-TR')}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-white font-bold">
-                          {a.web_overall ?? a.temp_overall ?? '—'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {a.final_overall != null ? (
-                          <span className="text-[#00d4ff] font-black">{a.final_overall}</span>
-                        ) : (
-                          <span className="text-slate-600">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          a.status === 'completed'
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : 'bg-violet-500/20 text-violet-400'
-                        }`}>
-                          {a.status === 'completed' ? 'Tamamlandı' : 'Beklemede'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
       </div>
     </main>
   )

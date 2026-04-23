@@ -55,7 +55,10 @@
 scores.score_type          → CHECK IN ('web','device','doctor_approved','final')
 notification_queue.type    → CHECK IN ('email','sms','push')
 appointments.status        → ENUM (pending,confirmed,in_progress,completed,cancelled)
+appointments.procedure_notes, recommendations → text (klinik yazar, hasta okur)
 analyses.web_ai_raw        → JSONB  |  analyses.web_scores → JSONB
+analyses.appointment_id    → uuid (ziyarete bağlı analiz; null ise bağımsız)
+analyses.doctor_approved_scores → JSONB { tetkik, ileri_analiz_c250, hekim_skoru }
 ```
 
 **RPC:** `consume_jeton(p_clinic_id, p_appointment_id)` · `generate_referral_code(p_user_id)` · `decrement_product_stock`
@@ -100,6 +103,18 @@ RESEND_API_KEY · CRON_SECRET · NEXT_PUBLIC_SENTRY_DSN · SENTRY_ORG · SENTRY_
 
 Akış: Kabul → Hasta Anketi → Klinik Anketi → Tetkik → İleri Analiz → Hekim Onayı  
 Final = (toplam × 0.85) + (hekim_puanı × 0.15)
+
+---
+
+## Ziyaret Zaman Çizelgesi
+
+Hem klinik (`/klinik/panel/hasta/[userId]`) hem hasta (`/panel`) tarafında ziyaret bazlı birleşik kart akışı.
+
+- **Ortak bileşen:** `src/components/ZiyaretKarti.tsx`
+- **Server action:** `src/app/klinik/panel/hasta/[userId]/ziyaret-actions.ts` → `saveVisitNotesAction`
+- **Kart içeriği:** geliş sebebi · klinik notu · **yapılan işlem** (klinik edit) · **hekim önerileri** (klinik edit) · ön analiz C250 · tetkik sonuçları (referans aralığı + renk) · ileri analiz cihaz ölçümü · hekim değerlendirmesi + doktor notları · önceki ziyarete göre skor farkı rozeti
+- **Birleştirme mantığı:** `analyses.appointment_id` ile eşleşen analizler ziyaret kartı içine; eşleşmeyenler "Bağımsız Ön Analiz" kartı olarak ayrı.
+- **RLS:** `appointments_clinic_update` (mevcut) yeterli — `procedure_notes` ve `recommendations` aynı politikayla yazılabiliyor.
 
 ---
 
@@ -153,6 +168,12 @@ Final = (toplam × 0.85) + (hekim_puanı × 0.15)
 - [ ] Vercel Env: `OPENAI_API_KEY` · `CRON_SECRET` · `RESEND_API_KEY`
 - [ ] Sentry proje → DSN'leri Vercel'e ekle
 - [ ] Stripe live mode → KYC tamamla
+
+### Ziyaret Akışı İyileştirmeleri (Yapılacak)
+- [ ] Klinik akışı tamamlanınca `analyses.appointment_id` otomatik dolsun (şu an manuel backfill gerekti)
+- [ ] "İşlem sonrası takip" — hasta 10 gün sonra yeni ön analiz yaptığında, sonraki randevuya otomatik ilişkilendir ve öncekinin kartında "takip sonucu" olarak göster
+- [ ] Hekim önerileri değişince hastaya bildirim (notification_queue)
+- [ ] Kart içinde "öncekine göre" grafik mini-sparkline (nem, kırışıklık trend)
 
 ### Bildirim Sistemi (Yapılacak)
 - [ ] Randevu alınınca hastaya e-posta gönder (şu an sadece kuyruğa yazılıyor, cron tetiklenmiyor)

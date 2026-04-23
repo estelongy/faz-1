@@ -17,6 +17,7 @@ import ScoreFixedBadge from '@/components/ScoreFixedBadge'
 import PaylasModal from '@/components/PaylasModal'
 import UserBadges from '@/components/UserBadges'
 import RandevuQRModal from '@/components/RandevuQRModal'
+import ZiyaretKarti, { type ZiyaretItem, type ZiyaretAnalysis } from '@/components/ZiyaretKarti'
 import { checkAndAwardBadges, updateStreak } from './badge-actions'
 
 const APT_STATUS_LABEL: Record<string, string> = {
@@ -70,7 +71,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
 
   const { data: allAnalysesRaw } = await supabase
     .from('analyses')
-    .select('id, web_overall, temp_overall, final_overall, status, created_at')
+    .select('id, web_overall, temp_overall, final_overall, status, created_at, doctor_notes, doctor_approved_scores, web_scores, appointment_id')
     .eq('user_id', user.id)
     .order('created_at', { ascending: true })
     .limit(30)
@@ -93,6 +94,14 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
     .eq('user_id', user.id)
     .order('appointment_date', { ascending: false })
     .limit(5)
+
+  // Timeline için tüm geçmiş ziyaretler
+  const { data: allAppointmentsRaw } = await supabase
+    .from('appointments')
+    .select('id, appointment_date, status, notes, clinic_notes, procedure_notes, recommendations, created_at, clinics(name)')
+    .eq('user_id', user.id)
+    .order('appointment_date', { ascending: false })
+    .limit(30)
 
   // Rozet + streak (hata durumunda sessizce geç)
   const [badgeKeys, streak] = await Promise.all([
@@ -125,6 +134,71 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
   const activeAppt = appointments?.find(a =>
     a.status === 'pending' || a.status === 'confirmed' || a.status === 'in_progress'
   ) ?? null
+
+  // ── Ziyaret zaman çizelgesi ─────────────────────────────────
+  const analysesByAppt = new Map<string, NonNullable<typeof allAnalysesRaw>[number]>()
+  const looseAnalyses: NonNullable<typeof allAnalysesRaw> = []
+  ;(allAnalysesRaw ?? []).forEach(a => {
+    if (a.appointment_id) analysesByAppt.set(a.appointment_id, a)
+    else looseAnalyses.push(a)
+  })
+  type RawA = NonNullable<typeof allAnalysesRaw>[number]
+  const toZA = (a: RawA): ZiyaretAnalysis => ({
+    id: a.id,
+    web_overall: a.web_overall,
+    temp_overall: a.temp_overall,
+    final_overall: a.final_overall,
+    status: a.status,
+    created_at: a.created_at,
+    doctor_notes: a.doctor_notes,
+    doctor_approved_scores: (a.doctor_approved_scores ?? null) as ZiyaretAnalysis['doctor_approved_scores'],
+    web_scores: (a.web_scores ?? null) as Record<string, number> | null,
+  })
+  const visitItems: ZiyaretItem[] = (allAppointmentsRaw ?? []).map(apt => {
+    const a = analysesByAppt.get(apt.id) ?? null
+    return {
+      kind: 'visit',
+      id: apt.id,
+      date: apt.appointment_date ?? apt.created_at,
+      status: apt.status,
+      reasonNote: apt.notes ?? null,
+      clinicNote: apt.clinic_notes ?? null,
+      procedureNotes: apt.procedure_notes ?? null,
+      recommendations: apt.recommendations ?? null,
+      analysis: a ? toZA(a) : null,
+      scoreDelta: null,
+      appointmentId: apt.id,
+      isActive: ['pending', 'confirmed', 'in_progress'].includes(apt.status),
+      userId: user.id,
+    }
+  })
+  const selfItems: ZiyaretItem[] = looseAnalyses.map(a => ({
+    kind: 'self_analysis',
+    id: a.id,
+    date: a.created_at,
+    status: a.status ?? '',
+    reasonNote: null,
+    clinicNote: null,
+    procedureNotes: null,
+    recommendations: null,
+    analysis: toZA(a),
+    scoreDelta: null,
+    appointmentId: null,
+    isActive: false,
+    userId: user.id,
+  }))
+  const timeline: ZiyaretItem[] = [...visitItems, ...selfItems].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  )
+  // Skor farkı: kronolojik (eski→yeni) üzerinden hesap
+  {
+    let prevFinal: number | null = null
+    for (const it of [...timeline].reverse()) {
+      const cur = it.analysis?.final_overall ?? it.analysis?.web_overall ?? it.analysis?.temp_overall ?? null
+      if (prevFinal != null && cur != null) it.scoreDelta = Math.round((cur - prevFinal) * 10) / 10
+      if (cur != null) prevFinal = cur
+    }
+  }
 
   const skorDurumu = getSkorDurumu(latestAnalysis, latestScoreRow, activeAppt)
   const skorDurumLabel = getSkorDurumuLabel(skorDurumu)
@@ -457,6 +531,26 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
             )}
           </div>
         </div>
+
+        {/* ── Ziyaret & Analiz Zaman Çizelgesi ── */}
+        {timeline.length > 0 && (
+          <section className="mt-8 space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-white font-bold text-lg">Ziyaret & Ölçüm Geçmişi</h2>
+              <span className="text-slate-500 text-xs">{timeline.length} kayıt</span>
+            </div>
+            <p className="text-slate-500 text-sm px-1 -mt-2">
+              Klinik ziyaretleriniz, yapılan işlemler, hekim önerileri ve her ziyarette alınan ölçüm sonuçları
+            </p>
+            {timeline.map(item => (
+              <ZiyaretKarti
+                key={`${item.kind}-${item.id}`}
+                item={item}
+                editable={false}
+              />
+            ))}
+          </section>
+        )}
       </div>
 
       {/* Sabit EGS Skoru — client component, her zaman güncel */}
