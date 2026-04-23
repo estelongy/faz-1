@@ -64,23 +64,31 @@ export default function KlinikBasvurForm({ action, hasError, isLoggedIn }: Props
       return
     }
     const phoneInput = (formRef.current?.elements.namedItem('phone') as HTMLInputElement)?.value
-    if (!phoneInput) return
+    if (!phoneInput) {
+      setOtpError('Telefon numarası giriniz.')
+      return
+    }
 
     const e164 = toE164(phoneInput)
     setOtpPhone(e164)
     setOtpLoading(true)
     setOtpError('')
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOtp({ phone: e164 })
-    setOtpLoading(false)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOtp({ phone: e164 })
+      setOtpLoading(false)
 
-    if (error) {
-      setOtpError('SMS gönderilemedi: ' + error.message)
-      return
+      if (error) {
+        setOtpError('SMS gönderilemedi: ' + error.message)
+        return
+      }
+      setOtpStep(true)
+      setOtpResend(false)
+    } catch (err: unknown) {
+      setOtpLoading(false)
+      setOtpError('Beklenmeyen hata: ' + (err instanceof Error ? err.message : String(err)))
     }
-    setOtpStep(true)
-    setOtpResend(false)
   }
 
   // OTP doğrula
@@ -347,6 +355,12 @@ export default function KlinikBasvurForm({ action, hasError, isLoggedIn }: Props
             <strong>Not:</strong> Başvurunuz onaylandıktan sonra klinik panelinize erişebilir ve randevu almaya başlayabilirsiniz.
           </p>
         </div>
+
+        {otpError && !otpStep && (
+          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+            <p className="text-red-400 text-sm">{otpError}</p>
+          </div>
+        )}
 
         <button type="submit" disabled={otpLoading}
           className="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 text-white font-semibold rounded-xl transition-all text-lg">
