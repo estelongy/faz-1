@@ -15,6 +15,16 @@ export const metadata: Metadata = {
 
 const ARTICLES = [
   {
+    slug: 'estetik-cerrahi',
+    category: 'Cerrahi',
+    categoryColor: 'rose',
+    title: 'Estetik Cerrahi İşlemleri Rehberi',
+    desc: 'Rinoplasti, yüz germe, blefaroplasti, liposuction ve vücut şekillendirme — estetik cerrahi prosedürlerini, kimlere uygun olduğunu ve sürecin nasıl işlediğini öğrenin.',
+    readTime: '10 dk',
+    tags: ['Rinoplasti', 'Yüz Germe', 'Blefaroplasti', 'Liposuction'],
+    icon: '🔬',
+  },
+  {
     slug: 'estetik-uygulamalar',
     category: 'Estetik',
     categoryColor: 'violet',
@@ -51,6 +61,7 @@ const colorMap: Record<string, { badge: string; dot: string; tag: string }> = {
   blue:    { badge: 'bg-blue-500/20 text-blue-300 border-blue-500/30',       dot: 'bg-blue-400',   tag: 'bg-blue-500/10 text-blue-400' },
   emerald: { badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', dot: 'bg-emerald-400', tag: 'bg-emerald-500/10 text-emerald-400' },
   amber:   { badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30',    dot: 'bg-amber-400',  tag: 'bg-amber-500/10 text-amber-400' },
+  rose:    { badge: 'bg-rose-500/20 text-rose-300 border-rose-500/30',       dot: 'bg-rose-400',   tag: 'bg-rose-500/10 text-rose-400' },
 }
 
 export default function RehberPage() {
