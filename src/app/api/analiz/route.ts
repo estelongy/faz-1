@@ -191,6 +191,16 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Oturum açık değil' }, { status: 401 })
 
+    // Profil: birth_year oku
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('birth_year')
+      .eq('id', user.id)
+      .single()
+    const actualAge = profile?.birth_year
+      ? new Date().getFullYear() - profile.birth_year
+      : null
+
     // Rate limiting: IP başına 5 analiz / saat
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown'
     const rl = rateLimitAnaliz(ip)
@@ -215,8 +225,10 @@ export async function POST(req: NextRequest) {
     }
 
     // C250 hesaplama
+    // Yaş faktörü: önce gerçek yaş (profilden), yoksa GPT tahmini
     const rawScore  = applyC250(gptData.component_scores)
-    const af        = ageFactor(gptData.estimated_skin_age)
+    const ageForFactor = actualAge ?? gptData.estimated_skin_age
+    const af        = ageFactor(ageForFactor)
     const c250Score = clamp(rawScore * af)
 
     const result: AnalizResult = {
@@ -250,6 +262,8 @@ export async function POST(req: NextRequest) {
             c250Details:   result.c250Details,
             confidence:    gptData.confidence,
             usedFallback,
+            actual_age:    actualAge,
+            estimated_skin_age: gptData.estimated_skin_age,
           },
           web_scores: {
             wrinkles:        gptData.component_scores.wrinkles,
