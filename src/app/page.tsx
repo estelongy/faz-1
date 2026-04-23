@@ -105,11 +105,11 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <Link href="/rehber"
                 className="hidden sm:block text-slate-400 hover:text-white text-sm transition-colors">
-                Gençlik Rehberi
+                Rehber
               </Link>
               <Link href="/klinik/basvur"
                 className="hidden md:block text-slate-400 hover:text-white text-sm transition-colors">
-                Sağlık Profesyoneli Başvurusu
+                Klinik Başvurusu
               </Link>
               <Link href="/giris" className="text-slate-400 hover:text-white text-sm transition-colors">
                 Giriş Yap
@@ -369,20 +369,31 @@ export default function Home() {
       <section className="py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/15 to-cyan-500/15 border border-blue-400/30 text-blue-300 text-sm font-semibold mb-5 tracking-wide">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              Özel Hastaneler, Tıp Merkezleri, Klinikler ve Muayenehaneler için
-            </div>
-            <h2 className="text-4xl font-black text-white mb-4">
-              Sizi arayan hastalar,{' '}
+            <h2 className="text-4xl sm:text-5xl font-black text-white mb-5">
+              Bilimi Güzelliğe{' '}
               <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                sizi buluyor
+                Dönüştüren Klinikler
               </span>
             </h2>
-            <p className="text-slate-400 mt-3 max-w-lg mx-auto leading-relaxed">
-              Müsaitlik takviminizi oluşturun.<br />
+
+            {/* Uzmanlık alanı pill'leri */}
+            <div className="flex flex-wrap justify-center gap-2 mb-6">
+              {[
+                'Dermatoloji',
+                'Plastik & Estetik Cerrahi',
+                'Medikal Estetik',
+                'Fonksiyonel Tıp · Longevity',
+                'K.B.B. Uzmanı',
+              ].map(alan => (
+                <span key={alan}
+                  className="px-3.5 py-1.5 rounded-full border border-blue-400/25 bg-blue-500/10 text-blue-300 text-xs font-medium tracking-wide">
+                  {alan}
+                </span>
+              ))}
+            </div>
+
+            <p className="text-slate-400 max-w-lg mx-auto leading-relaxed">
+              Özel Hastaneler, Tıp Merkezleri, Klinikler ve Muayenehaneler için.<br />
               Cilt analizini tamamlamış hastalar doğrudan randevunuzu alsın.
             </p>
           </div>
