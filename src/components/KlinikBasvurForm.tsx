@@ -6,9 +6,10 @@ import { CLINIC_TYPES, TREATMENTS_BY_BRANCH, LOCATIONS } from '@/lib/randevu-fil
 interface Props {
   action: (formData: FormData) => Promise<void>
   hasError: boolean
+  isLoggedIn: boolean
 }
 
-export default function KlinikBasvurForm({ action, hasError }: Props) {
+export default function KlinikBasvurForm({ action, hasError, isLoggedIn }: Props) {
   const [clinicType, setClinicType] = useState('')
   const treatments = clinicType ? (TREATMENTS_BY_BRANCH[clinicType] ?? []) : []
 
@@ -42,6 +43,40 @@ export default function KlinikBasvurForm({ action, hasError }: Props) {
       )}
 
       <form action={action} className="space-y-6">
+        {/* Hesap Bilgileri — sadece giriş yapılmamışsa */}
+        {!isLoggedIn && (
+          <div className="space-y-4 p-5 rounded-xl bg-slate-800/60 border border-slate-700">
+            <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Hesap Bilgileri</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-slate-400 mb-2">Ad <span className="text-red-400">*</span></label>
+                <input type="text" name="first_name" required placeholder="Ahmet"
+                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-2">Soyad</label>
+                <input type="text" name="last_name" placeholder="Yılmaz"
+                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm text-slate-400 mb-2">E-posta <span className="text-red-400">*</span></label>
+              <input type="email" name="email" required placeholder="ornek@email.com"
+                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
+            </div>
+            <div>
+              <label className="block text-sm text-slate-400 mb-2">Şifre <span className="text-red-400">*</span></label>
+              <input type="password" name="password" required placeholder="En az 8 karakter" minLength={8}
+                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
+            </div>
+            <div>
+              <label className="block text-sm text-slate-400 mb-2">Doğum Yılı</label>
+              <input type="number" name="birth_year" placeholder="1985" min={1920} max={new Date().getFullYear() - 18}
+                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors" />
+            </div>
+          </div>
+        )}
+
         {/* Klinik Adı */}
         <div>
           <label className="block text-sm text-slate-400 mb-2">Klinik Adı <span className="text-red-400">*</span></label>

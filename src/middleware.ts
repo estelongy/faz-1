@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 // Giriş gerektiren rotalar (prefix eşleşmesi)
-const PROTECTED = ['/panel', '/klinik', '/admin', '/anket', '/analiz', '/randevu', '/test-skor']
+const PROTECTED = ['/panel', '/klinik/panel', '/satici/panel', '/admin', '/anket', '/analiz', '/randevu', '/test-skor']
 
 // Giriş yapılmışsa erişilmemesi gereken rotalar (tam eşleşme)
 const AUTH_ONLY = ['/giris', '/kayit', '/kurumsal/giris']

@@ -2,166 +2,170 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<title>Logo Öneri</title>
+<title>Logo Önizleme</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #0a0f1a; font-family: system-ui, sans-serif; padding: 48px 32px; color: #fff; }
-  h2 { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #475569; margin-bottom: 20px; }
-  .row { display: flex; align-items: center; gap: 32px; margin-bottom: 48px; flex-wrap: wrap; }
-  .label { font-size: 11px; color: #475569; margin-top: 8px; text-align: center; }
-  .divider { width: 100%; height: 1px; background: #1e293b; margin: 16px 0 40px; }
-  .bg-light { background: #f1f5f9; border-radius: 12px; padding: 16px; }
+  body { background: #050c18; font-family: system-ui, sans-serif; padding: 48px 32px; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 40px; }
+  .label { font-size: 11px; color: #475569; text-align: center; margin-top: 8px; letter-spacing: 2px; text-transform: uppercase; }
+  .row { display: flex; align-items: flex-end; gap: 32px; flex-wrap: wrap; justify-content: center; }
+  .col { display: flex; flex-direction: column; align-items: center; }
+  .nav { background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 12px 24px; display: flex; align-items: center; gap: 10px; }
+  .nav span { font-size: 20px; font-weight: 800; background: linear-gradient(90deg,#a78bfa,#818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .white-bg { background: #f8fafc; border-radius: 16px; padding: 24px 32px; display: flex; align-items: center; gap: 12px; }
+  .white-bg .name { font-size: 22px; font-weight: 800; color: #1e293b; }
+  .white-bg .sub { font-size: 10px; color: #7c3aed; letter-spacing: 3px; text-transform: uppercase; }
+  h2 { font-size: 11px; letter-spacing: 3px; color: #334155; text-transform: uppercase; }
 </style>
 </head>
 <body>
 
-<h2>Versiyon A — Minimal Monogram (önerilen UI logosu)</h2>
-<div class="row">
-
-  <!-- LARGE -->
-  <div>
-    <svg width="180" height="56" viewBox="0 0 180 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Icon -->
-      <g>
-        <!-- Circle bg -->
-        <circle cx="28" cy="28" r="22" fill="url(#grad_a)" opacity="0.15"/>
-        <circle cx="28" cy="28" r="22" stroke="url(#grad_a)" stroke-width="1.5" fill="none"/>
-        <!-- Face profile silhouette -->
-        <path d="M26 14 C22 14 19 17 19 21 C19 24 20.5 26.5 23 28 L23 32 C23 33.1 23.9 34 25 34 L31 34 C32.1 34 33 33.1 33 32 L33 28 C35.5 26.5 37 24 37 21 C37 17 34 14 30 14 Z" fill="url(#grad_a)" opacity="0.9"/>
-        <!-- DNA helix simplified — two crossing curves -->
-        <path d="M33 18 Q36 21 33 24 Q36 27 33 30" stroke="#7c3aed" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <path d="M35 18 Q32 21 35 24 Q32 27 35 30" stroke="#a78bfa" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-        <!-- Horizontal bars of DNA -->
-        <line x1="33" y1="18.5" x2="35" y2="18.5" stroke="#7c3aed" stroke-width="1" opacity="0.8"/>
-        <line x1="32.5" y1="21" x2="35.5" y2="21" stroke="#7c3aed" stroke-width="1" opacity="0.6"/>
-        <line x1="33" y1="23.5" x2="35" y2="23.5" stroke="#7c3aed" stroke-width="1" opacity="0.8"/>
-        <line x1="32.5" y1="26" x2="35.5" y2="26" stroke="#7c3aed" stroke-width="1" opacity="0.6"/>
-        <line x1="33" y1="28.5" x2="35" y2="28.5" stroke="#7c3aed" stroke-width="1" opacity="0.8"/>
-      </g>
-      <!-- Wordmark -->
-      <text x="60" y="24" font-family="system-ui" font-size="18" font-weight="800" fill="white" letter-spacing="-0.5">Estelongy</text>
-      <text x="61" y="39" font-family="system-ui" font-size="9" font-weight="500" fill="#7c3aed" letter-spacing="3">AESTHETIC &amp; LONGEVITY</text>
-      <defs>
-        <linearGradient id="grad_a" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#7c3aed"/>
-          <stop offset="100%" stop-color="#a78bfa"/>
-        </linearGradient>
-      </defs>
-    </svg>
-    <div class="label">Full — nav bar</div>
-  </div>
-
-  <!-- MEDIUM -->
-  <div>
-    <svg width="40" height="40" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="28" cy="28" r="26" fill="url(#grad_b)" opacity="0.15"/>
-      <circle cx="28" cy="28" r="26" stroke="url(#grad_b)" stroke-width="1.5" fill="none"/>
-      <path d="M26 14 C22 14 19 17 19 21 C19 24 20.5 26.5 23 28 L23 32 C23 33.1 23.9 34 25 34 L31 34 C32.1 34 33 33.1 33 32 L33 28 C35.5 26.5 37 24 37 21 C37 17 34 14 30 14 Z" fill="url(#grad_b)" opacity="0.9"/>
-      <path d="M33 18 Q36 21 33 24 Q36 27 33 30" stroke="#7c3aed" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <path d="M35 18 Q32 21 35 24 Q32 27 35 30" stroke="#a78bfa" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-      <line x1="33" y1="18.5" x2="35" y2="18.5" stroke="#7c3aed" stroke-width="1" opacity="0.8"/>
-      <line x1="32.5" y1="21" x2="35.5" y2="21" stroke="#7c3aed" stroke-width="1" opacity="0.6"/>
-      <line x1="33" y1="23.5" x2="35" y2="23.5" stroke="#7c3aed" stroke-width="1" opacity="0.8"/>
-      <line x1="32.5" y1="26" x2="35.5" y2="26" stroke="#7c3aed" stroke-width="1" opacity="0.6"/>
-      <line x1="33" y1="28.5" x2="35" y2="28.5" stroke="#7c3aed" stroke-width="1" opacity="0.8"/>
-      <defs>
-        <linearGradient id="grad_b" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#7c3aed"/>
-          <stop offset="100%" stop-color="#a78bfa"/>
-        </linearGradient>
-      </defs>
-    </svg>
-    <div class="label">40px</div>
-  </div>
-
-  <!-- SMALL -->
-  <div>
-    <svg width="24" height="24" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="28" cy="28" r="26" fill="#7c3aed" opacity="0.2"/>
-      <circle cx="28" cy="28" r="26" stroke="#7c3aed" stroke-width="2" fill="none"/>
-      <path d="M26 14 C22 14 19 17 19 21 C19 24 20.5 26.5 23 28 L23 32 C23 33.1 23.9 34 25 34 L31 34 C32.1 34 33 33.1 33 32 L33 28 C35.5 26.5 37 24 37 21 C37 17 34 14 30 14 Z" fill="#a78bfa"/>
-      <path d="M33 18 Q36 21 33 24 Q36 27 33 30" stroke="#7c3aed" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <path d="M35 18 Q32 21 35 24 Q32 27 35 30" stroke="#c4b5fd" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-    </svg>
-    <div class="label">24px / favicon</div>
-  </div>
-
+<!-- BÜYÜK TEK İKON -->
+<div class="col">
+  <svg width="260" height="260" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="lg_ring1" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   stop-color="#e2e8f0"/>
+        <stop offset="30%"  stop-color="#93c5fd"/>
+        <stop offset="70%"  stop-color="#c0cfe8"/>
+        <stop offset="100%" stop-color="#4f46e5"/>
+      </linearGradient>
+      <linearGradient id="lg_ring2" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   stop-color="#7c3aed"/>
+        <stop offset="100%" stop-color="#93c5fd"/>
+      </linearGradient>
+      <linearGradient id="lg_dna_l" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%"   stop-color="#fef08a"/>
+        <stop offset="40%"  stop-color="#f59e0b"/>
+        <stop offset="100%" stop-color="#b45309"/>
+      </linearGradient>
+      <linearGradient id="lg_dna_r" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%"   stop-color="#fcd34d"/>
+        <stop offset="50%"  stop-color="#d97706"/>
+        <stop offset="100%" stop-color="#92400e"/>
+      </linearGradient>
+      <linearGradient id="lg_face" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   stop-color="#f1f5f9"/>
+        <stop offset="60%"  stop-color="#cbd5e1"/>
+        <stop offset="100%" stop-color="#94a3b8"/>
+      </linearGradient>
+      <radialGradient id="rg_star" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stop-color="#bfdbfe" stop-opacity="1"/>
+        <stop offset="60%"  stop-color="#3b82f6" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="rg_glow2" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stop-color="#fbbf24" stop-opacity="0.8"/>
+        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <!-- Dış halka -->
+    <path d="M 18 72 A 38 38 0 1 1 82 72" stroke="url(#lg_ring1)" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M 22 74 A 33 33 0 1 1 78 74" stroke="url(#lg_ring2)" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.55"/>
+    <circle cx="18" cy="72" r="3" fill="url(#lg_ring1)" opacity="0.9"/>
+    <circle cx="82" cy="72" r="2.2" fill="#f59e0b" opacity="0.8"/>
+    <!-- DNA Sol strand -->
+    <path d="M 34 20 C 27 30 43 37 34 47 C 25 57 41 64 34 74" stroke="url(#lg_dna_l)" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+    <!-- DNA Sağ strand -->
+    <path d="M 44 20 C 51 30 35 37 44 47 C 53 57 37 64 44 74" stroke="url(#lg_dna_r)" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+    <!-- DNA barlar -->
+    <line x1="34" y1="22" x2="44" y2="22" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round" opacity="0.95"/>
+    <line x1="37" y1="29" x2="41" y2="29" stroke="#fcd34d" stroke-width="1.4" stroke-linecap="round" opacity="0.75"/>
+    <line x1="34" y1="36" x2="44" y2="36" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round" opacity="0.95"/>
+    <line x1="37" y1="43" x2="41" y2="43" stroke="#fcd34d" stroke-width="1.4" stroke-linecap="round" opacity="0.75"/>
+    <line x1="34" y1="50" x2="44" y2="50" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round" opacity="0.95"/>
+    <line x1="37" y1="57" x2="41" y2="57" stroke="#fcd34d" stroke-width="1.4" stroke-linecap="round" opacity="0.75"/>
+    <line x1="34" y1="64" x2="44" y2="64" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round" opacity="0.95"/>
+    <line x1="37" y1="71" x2="41" y2="71" stroke="#fcd34d" stroke-width="1.4" stroke-linecap="round" opacity="0.75"/>
+    <!-- Yüz profili -->
+    <path d="M 56 18 C 53 18 51 19.5 50 21 C 49 22.5 49.5 24.5 51 26 C 52 27 52.5 28 52 29.5 C 51.5 31 50.5 32 50.5 33.5 C 50.5 35 51.5 36.5 52 38 C 52 40 51 42 50 43.5 L 50 52 C 50 53.5 51 54.5 52 54.5 L 60 54.5 L 60 52 C 63 50.5 65 47.5 65 44 C 65 40 63 36 61 33 C 63 30 64 26 63 22.5 C 62 19.5 59 18 56 18 Z" fill="url(#lg_face)"/>
+    <path d="M 53 54.5 L 53 61 C 53 62 53.8 62.5 55 62.5 L 59 62.5 C 60.2 62.5 61 62 61 61 L 61 54.5 Z" fill="url(#lg_face)" opacity="0.7"/>
+    <!-- Mavi yıldız -->
+    <circle cx="39" cy="12" r="6" fill="url(#rg_star)"/>
+    <circle cx="39" cy="12" r="2"  fill="#bfdbfe" opacity="0.95"/>
+    <line x1="39" y1="8"  x2="39" y2="10" stroke="#bfdbfe" stroke-width="1" opacity="0.7"/>
+    <line x1="39" y1="14" x2="39" y2="16" stroke="#bfdbfe" stroke-width="1" opacity="0.7"/>
+    <line x1="35" y1="12" x2="37" y2="12" stroke="#bfdbfe" stroke-width="1" opacity="0.7"/>
+    <line x1="41" y1="12" x2="43" y2="12" stroke="#bfdbfe" stroke-width="1" opacity="0.7"/>
+    <!-- Alt altın parıltı -->
+    <circle cx="80" cy="70" r="4" fill="url(#rg_glow2)"/>
+    <circle cx="80" cy="70" r="1.5" fill="#fbbf24" opacity="0.9"/>
+  </svg>
+  <div class="label">260px — tam boy</div>
 </div>
 
-<div class="divider"></div>
+<!-- NAV BAR SİMÜLASYONU -->
+<div class="nav">
+  <svg width="38" height="38" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="n1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#e2e8f0"/><stop offset="30%" stop-color="#93c5fd"/><stop offset="100%" stop-color="#4f46e5"/></linearGradient>
+      <linearGradient id="n2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="100%" stop-color="#b45309"/></linearGradient>
+      <linearGradient id="n3" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fcd34d"/><stop offset="100%" stop-color="#92400e"/></linearGradient>
+      <linearGradient id="n4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f1f5f9"/><stop offset="100%" stop-color="#94a3b8"/></linearGradient>
+      <radialGradient id="n5" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#bfdbfe"/><stop offset="100%" stop-color="#bfdbfe" stop-opacity="0"/></radialGradient>
+    </defs>
+    <path d="M 18 72 A 38 38 0 1 1 82 72" stroke="url(#n1)" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <circle cx="18" cy="72" r="3" fill="url(#n1)"/>
+    <circle cx="82" cy="72" r="2.2" fill="#f59e0b" opacity="0.8"/>
+    <path d="M 34 20 C 27 30 43 37 34 47 C 25 57 41 64 34 74" stroke="url(#n2)" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+    <path d="M 44 20 C 51 30 35 37 44 47 C 53 57 37 64 44 74" stroke="url(#n3)" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+    <line x1="34" y1="36" x2="44" y2="36" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="34" y1="50" x2="44" y2="50" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="34" y1="64" x2="44" y2="64" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M 56 18 C 53 18 51 19.5 50 21 C 49 22.5 49.5 24.5 51 26 C 52 27 52.5 28 52 29.5 C 51.5 31 50.5 32 50.5 33.5 C 50.5 35 51.5 36.5 52 38 C 52 40 51 42 50 43.5 L 50 52 C 50 53.5 51 54.5 52 54.5 L 60 54.5 L 60 52 C 63 50.5 65 47.5 65 44 C 65 40 63 36 61 33 C 63 30 64 26 63 22.5 C 62 19.5 59 18 56 18 Z" fill="url(#n4)"/>
+    <circle cx="39" cy="12" r="5" fill="url(#n5)"/>
+    <circle cx="39" cy="12" r="2" fill="#bfdbfe"/>
+  </svg>
+  <span>Estelongy</span>
+</div>
 
-<h2>Versiyon B — Köşeli Kare (mevcut siteyle uyumlu)</h2>
+<!-- BOYUT SKALASI -->
+<h2>Farklı boyutlar</h2>
 <div class="row">
-
-  <!-- LARGE B -->
-  <div>
-    <svg width="180" height="56" viewBox="0 0 180 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="4" y="8" width="40" height="40" rx="10" fill="url(#grad_c)"/>
-      <!-- Face profile + DNA combined -->
-      <path d="M20 18 C17 18 15 20 15 23 C15 25.5 16.2 27.5 18 29 L18 33 C18 33.6 18.4 34 19 34 L25 34 C25.6 34 26 33.6 26 33 L26 29 C27.8 27.5 29 25.5 29 23 C29 20 27 18 24 18 Z" fill="white" opacity="0.95"/>
-      <path d="M27 20 Q30 22.5 27 25 Q30 27.5 27 30" stroke="white" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.7"/>
-      <path d="M29.5 20 Q26.5 22.5 29.5 25 Q26.5 27.5 29.5 30" stroke="white" stroke-width="1.1" fill="none" stroke-linecap="round" opacity="0.5"/>
-      <!-- wordmark -->
-      <text x="52" y="24" font-family="system-ui" font-size="18" font-weight="800" fill="white" letter-spacing="-0.5">Estelongy</text>
-      <text x="53" y="39" font-family="system-ui" font-size="9" font-weight="500" fill="#7c3aed" letter-spacing="3">AESTHETIC &amp; LONGEVITY</text>
-      <defs>
-        <linearGradient id="grad_c" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#7c3aed"/>
-          <stop offset="100%" stop-color="#6d28d9"/>
-        </linearGradient>
-      </defs>
-    </svg>
-    <div class="label">Full — nav bar</div>
+  <!-- Tüm boyutlar için aynı SVG, farklı width/height -->
+  <div class="col">
+    <svg width="80" height="80" viewBox="0 0 100 100" fill="none"><use href="#logo-symbol"/></svg>
+    <div class="label">80px</div>
   </div>
-
-  <!-- ICON B 40px -->
-  <div>
-    <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="48" height="48" rx="12" fill="url(#grad_d)"/>
-      <path d="M21 11 C17 11 14 14 14 18 C14 21 15.5 23.5 18 25 L18 30 C18 31.1 18.9 32 20 32 L26 32 C27.1 32 28 31.1 28 30 L28 25 C30.5 23.5 32 21 32 18 C32 14 29 11 25 11 Z" fill="white" opacity="0.95"/>
-      <path d="M29 14 Q33 17 29 20 Q33 23 29 26" stroke="white" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.65"/>
-      <path d="M32 14 Q28 17 32 20 Q28 23 32 26" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.45"/>
-      <defs>
-        <linearGradient id="grad_d" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#7c3aed"/>
-          <stop offset="100%" stop-color="#6d28d9"/>
-        </linearGradient>
-      </defs>
-    </svg>
-    <div class="label">40px</div>
+  <div class="col">
+    <svg width="48" height="48" viewBox="0 0 100 100" fill="none"><use href="#logo-symbol"/></svg>
+    <div class="label">48px</div>
   </div>
-
-  <!-- ICON B 24px -->
-  <div>
-    <svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="48" height="48" rx="12" fill="#7c3aed"/>
-      <path d="M21 11 C17 11 14 14 14 18 C14 21 15.5 23.5 18 25 L18 30 C18 31.1 18.9 32 20 32 L26 32 C27.1 32 28 31.1 28 30 L28 25 C30.5 23.5 32 21 32 18 C32 14 29 11 25 11 Z" fill="white"/>
-      <path d="M29 14 Q33 17 29 20 Q33 23 29 26" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.6"/>
-      <path d="M32 14 Q28 17 32 20 Q28 23 32 26" stroke="white" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.4"/>
-    </svg>
-    <div class="label">24px / favicon</div>
+  <div class="col">
+    <svg width="32" height="32" viewBox="0 0 100 100" fill="none"><use href="#logo-symbol"/></svg>
+    <div class="label">32px</div>
+  </div>
+  <div class="col">
+    <svg width="20" height="20" viewBox="0 0 100 100" fill="none"><use href="#logo-symbol"/></svg>
+    <div class="label">20px</div>
   </div>
 </div>
 
-<div class="divider"></div>
-
-<h2>Açık arka plan testi (kartvizit, kağıt)</h2>
-<div class="row">
-  <div class="bg-light">
-    <svg width="180" height="56" viewBox="0 0 180 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="4" y="8" width="40" height="40" rx="10" fill="url(#grad_e)"/>
-      <path d="M21 11 C17 11 14 14 14 18 C14 21 15.5 23.5 18 25 L18 30 C18 31.1 18.9 32 20 32 L26 32 C27.1 32 28 31.1 28 30 L28 25 C30.5 23.5 32 21 32 18 C32 14 29 11 25 11 Z" fill="white" opacity="0.95"/>
-      <path d="M29 14 Q33 17 29 20 Q33 23 29 26" stroke="white" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.65"/>
-      <path d="M32 14 Q28 17 32 20 Q28 23 32 26" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.45"/>
-      <text x="52" y="24" font-family="system-ui" font-size="18" font-weight="800" fill="#1e293b" letter-spacing="-0.5">Estelongy</text>
-      <text x="53" y="39" font-family="system-ui" font-size="9" font-weight="500" fill="#7c3aed" letter-spacing="3">AESTHETIC &amp; LONGEVITY</text>
-      <defs>
-        <linearGradient id="grad_e" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#7c3aed"/>
-          <stop offset="100%" stop-color="#6d28d9"/>
-        </linearGradient>
-      </defs>
-    </svg>
+<!-- BEYAZ ARKA PLAN -->
+<h2>Açık zemin (kartvizit, kağıt)</h2>
+<div class="white-bg">
+  <svg width="52" height="52" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="w1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#cbd5e1"/><stop offset="100%" stop-color="#4f46e5"/></linearGradient>
+      <linearGradient id="w2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fef08a"/><stop offset="100%" stop-color="#b45309"/></linearGradient>
+      <linearGradient id="w3" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fcd34d"/><stop offset="100%" stop-color="#92400e"/></linearGradient>
+      <linearGradient id="w4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#94a3b8"/><stop offset="100%" stop-color="#64748b"/></linearGradient>
+    </defs>
+    <path d="M 18 72 A 38 38 0 1 1 82 72" stroke="url(#w1)" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <circle cx="18" cy="72" r="3" fill="url(#w1)"/>
+    <circle cx="82" cy="72" r="2.2" fill="#f59e0b" opacity="0.9"/>
+    <path d="M 34 20 C 27 30 43 37 34 47 C 25 57 41 64 34 74" stroke="url(#w2)" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+    <path d="M 44 20 C 51 30 35 37 44 47 C 53 57 37 64 44 74" stroke="url(#w3)" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+    <line x1="34" y1="22" x2="44" y2="22" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="34" y1="36" x2="44" y2="36" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="34" y1="50" x2="44" y2="50" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="34" y1="64" x2="44" y2="64" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M 56 18 C 53 18 51 19.5 50 21 C 49 22.5 49.5 24.5 51 26 C 52 27 52.5 28 52 29.5 C 51.5 31 50.5 32 50.5 33.5 C 50.5 35 51.5 36.5 52 38 C 52 40 51 42 50 43.5 L 50 52 C 50 53.5 51 54.5 52 54.5 L 60 54.5 L 60 52 C 63 50.5 65 47.5 65 44 C 65 40 63 36 61 33 C 63 30 64 26 63 22.5 C 62 19.5 59 18 56 18 Z" fill="url(#w4)"/>
+    <circle cx="39" cy="12" r="4" fill="#3b82f6" opacity="0.3"/>
+    <circle cx="39" cy="12" r="2" fill="#3b82f6" opacity="0.8"/>
+  </svg>
+  <div>
+    <div class="name">Estelongy</div>
+    <div class="sub">Aesthetic &amp; Longevity</div>
   </div>
 </div>
 
