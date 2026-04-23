@@ -9,6 +9,11 @@ interface Props {
   isLoggedIn: boolean
 }
 
+// Türkçe karakter duyarlı normalize (İ→i, ı→i gibi sorunları çözer)
+function trNorm(s: string) {
+  return s.replace(/İ/g, 'i').replace(/I/g, 'i').replace(/ı/g, 'i').toLowerCase()
+}
+
 export default function KlinikBasvurForm({ action, hasError, isLoggedIn }: Props) {
   const [clinicType, setClinicType] = useState('')
   const treatments = clinicType ? (TREATMENTS_BY_BRANCH[clinicType] ?? []) : []
@@ -19,7 +24,7 @@ export default function KlinikBasvurForm({ action, hasError, isLoggedIn }: Props
   const [locOpen, setLocOpen] = useState(false)
   const locRef = useRef<HTMLDivElement>(null)
   const locSuggestions = locQuery.trim().length >= 1
-    ? LOCATIONS.filter(l => l.toLowerCase().includes(locQuery.toLowerCase())).slice(0, 10)
+    ? LOCATIONS.filter(l => trNorm(l).includes(trNorm(locQuery))).slice(0, 10)
     : []
   useEffect(() => {
     function handle(e: MouseEvent) {
