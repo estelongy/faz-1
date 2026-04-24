@@ -69,11 +69,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, jobid: smsRes.jobid })
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    const stack = err instanceof Error ? err.stack : undefined
-    console.error('[OTP Send] Beklenmedik hata:', msg)
-    console.error('[OTP Send] Stack:', stack)
-    // GEÇİCİ DEBUG: detayı response'ta göster
-    return NextResponse.json({ error: 'Sunucu hatası', debug: msg }, { status: 500 })
+    console.error('[OTP Send] Beklenmedik hata:', err instanceof Error ? err.message : err)
+    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 })
   }
 }
