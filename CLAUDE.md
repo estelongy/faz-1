@@ -8,7 +8,7 @@
 ### Git & Deploy Akışı
 
 ```
-Production branch:  claude/priceless-ellis  →  estelongy-clean.vercel.app
+Production branch:  claude/priceless-ellis  →  faz1.vercel.app
 ```
 
 Vercel production branch ayarı `claude/priceless-ellis` yapıldı. Branch'e her push direkt production'a gider — merge/main adımı **yok**.
