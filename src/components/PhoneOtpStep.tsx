@@ -43,7 +43,7 @@ export default function PhoneOtpStep({ phone, onVerified, onBack, autoSend = tru
       }
       setPhase('entering')
       setInfo('Kod telefonunuza gönderildi. SMS kutunuza bakın.')
-      setCooldown(60)  // 60 sn kilit
+      setCooldown(180)  // 3 dk kilit (backend rate limit ile uyumlu)
     } catch {
       setPhase('error')
       setError('Bağlantı hatası, tekrar deneyin.')
@@ -137,7 +137,9 @@ export default function PhoneOtpStep({ phone, onVerified, onBack, autoSend = tru
               disabled={cooldown > 0 || phase === 'verifying'}
               className="text-slate-400 hover:text-white text-sm disabled:opacity-40"
             >
-              {cooldown > 0 ? `Yeni kod gönder (${cooldown}s)` : 'Yeni kod gönder'}
+              {cooldown > 0
+                ? `Yeni kod gönder (${Math.floor(cooldown / 60)}:${String(cooldown % 60).padStart(2, '0')})`
+                : 'Yeni kod gönder'}
             </button>
             {onBack && (
               <button onClick={onBack} className="text-slate-400 hover:text-white text-sm">

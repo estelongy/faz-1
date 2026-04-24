@@ -6,7 +6,7 @@
  *   - otp:attempts:{phone} → yanlış deneme sayacı, TTL 300s
  *
  * Rate limit limitleri:
- *   - otpPerMinute: aynı telefon dakikada 1 OTP isteği
+ *   - otpPerMinute: aynı telefon 3 dakikada 1 OTP isteği
  *   - otpPerHour:   aynı telefon saatte 5 OTP isteği
  */
 
@@ -19,10 +19,10 @@ export const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 })
 
-/** Aynı telefon dakikada 1 OTP isteği */
+/** Aynı telefon 3 dakikada 1 OTP isteği */
 export const otpPerMinute = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(1, '1 m'),
+  limiter: Ratelimit.slidingWindow(1, '3 m'),
   prefix: 'ratelimit:otp:min',
   analytics: false,
 })

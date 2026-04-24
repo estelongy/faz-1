@@ -30,12 +30,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Rate limit: dakika
+    // Rate limit: 3 dakika
     const minuteRes = await otpPerMinute.limit(normalized)
     if (!minuteRes.success) {
       return NextResponse.json(
-        { error: 'Çok sık deneme. Lütfen 1 dakika bekleyin.' },
-        { status: 429, headers: { 'Retry-After': '60' } }
+        { error: 'Çok sık deneme. Lütfen 3 dakika bekleyin.' },
+        { status: 429, headers: { 'Retry-After': '180' } }
       )
     }
 
