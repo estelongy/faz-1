@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import ScoreBar from '@/components/ScoreBar'
 import { HASTA_ANKET_SORULARI, hastaAnketPuani, type AnketSoru } from '@/lib/anket-sorular'
+import RandevuFlow from '@/components/RandevuFlow'
 
 // ─── Tipler ──────────────────────────────────────────────────────────────────
 type ExpandedCard = 'anket' | 'randevu' | 'urun' | null
@@ -49,32 +50,6 @@ function scoreToApparentAge(score: number): number {
   return Math.round(Math.max(18, 18 + (100 - score) * 0.74))
 }
 
-interface Availability {
-  day_of_week: number
-  start_time: string
-  end_time: string
-  slot_duration_minutes: number
-  is_active: boolean
-}
-
-function timeToMin(t: string) { const [h, m] = t.split(':').map(Number); return h * 60 + m }
-function minToTime(min: number) { return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}` }
-
-function generateSlots(av: Availability | undefined): string[] {
-  if (!av || !av.is_active) return []
-  const start = timeToMin(av.start_time), end = timeToMin(av.end_time)
-  const step = av.slot_duration_minutes || 30
-  const out: string[] = []
-  for (let t = start; t + step <= end; t += step) out.push(minToTime(t))
-  return out
-}
-
-function getNext7Days() {
-  const out: Date[] = []
-  const today = new Date()
-  for (let i = 1; i <= 7; i++) { const d = new Date(today); d.setDate(today.getDate() + i); out.push(d) }
-  return out
-}
 
 function metricColor(value: number, invert = false) {
   const v = invert ? 100 - value : value
@@ -390,10 +365,7 @@ export default function SkorMerkeziPage() {
               </div>
             }
           >
-            <RandevuPanel
-              clinics={clinics}
-              onSuccess={() => setExpanded(null)}
-            />
+            <RandevuFlow embedded onSuccess={() => setExpanded(null)} />
           </ActionCard>
 
           {/* ÜRÜN KARTI */}
@@ -521,217 +493,6 @@ function ActionCard({ icon, title, subtitle, preview, children, isExpanded, onTo
   )
 }
 
-// ─── Inline Randevu Paneli ───────────────────────────────────────────────────
-
-function RandevuPanel({ clinics, onSuccess }: { clinics: Clinic[]; onSuccess: () => void }) {
-  const supabase = useMemo(() => createClient(), [])
-  const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null)
-  const [availability, setAvailability] = useState<Availability[]>([])
-  const [busySlots, setBusySlots] = useState<Set<string>>(new Set())
-  const [loadingAvail, setLoadingAvail] = useState(false)
-  const [selectedDay, setSelectedDay] = useState<Date | null>(null)
-  const [selectedTime, setSelectedTime] = useState<string | null>(null)
-  const [notes, setNotes] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-
-  const days = useMemo(getNext7Days, [])
-
-  // Klinik seçilince müsaitlik çek
-  useEffect(() => {
-    if (!selectedClinic) {
-      setAvailability([])
-      setBusySlots(new Set())
-      setSelectedDay(null)
-      setSelectedTime(null)
-      return
-    }
-    setLoadingAvail(true)
-    Promise.all([
-      supabase
-        .from('clinic_availability')
-        .select('day_of_week, start_time, end_time, slot_duration_minutes, is_active')
-        .eq('clinic_id', selectedClinic.id),
-      supabase
-        .from('appointments')
-        .select('appointment_date')
-        .eq('clinic_id', selectedClinic.id)
-        .in('status', ['pending', 'confirmed', 'in_progress'])
-        .gte('appointment_date', new Date().toISOString())
-        .lte('appointment_date', new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()),
-    ]).then(([availRes, apptRes]) => {
-      setAvailability((availRes.data ?? []) as Availability[])
-      const busy = new Set<string>()
-      for (const a of apptRes.data ?? []) {
-        const dt = new Date(a.appointment_date)
-        const dateKey = dt.toISOString().split('T')[0]
-        const timeKey = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
-        busy.add(`${dateKey} ${timeKey}`)
-      }
-      setBusySlots(busy)
-      setLoadingAvail(false)
-    })
-  }, [selectedClinic, supabase])
-
-  const slotsForDay = useMemo(() => {
-    if (!selectedDay) return []
-    const dow = selectedDay.getDay()
-    const av = availability.find(a => a.day_of_week === dow)
-    return generateSlots(av)
-  }, [selectedDay, availability])
-
-  async function confirmBooking() {
-    if (!selectedClinic || !selectedDay || !selectedTime) return
-    setSaving(true)
-    setError(null)
-    try {
-      const [h, m] = selectedTime.split(':').map(Number)
-      const dt = new Date(selectedDay)
-      dt.setHours(h, m, 0, 0)
-
-      const res = await fetch('/api/randevu/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clinicId: selectedClinic.id,
-          dateTime: dt.toISOString(),
-          notes,
-        }),
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error ?? 'Randevu oluşturulamadı')
-
-      setSuccess(`Randevunuz oluşturuldu — ${selectedClinic.name} · ${selectedDay.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })} ${selectedTime}`)
-      setTimeout(() => onSuccess(), 1500)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Hata')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  if (success) {
-    return (
-      <div className="p-6 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-center">
-        <div className="text-4xl mb-2">✅</div>
-        <p className="text-emerald-300 font-semibold">{success}</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-4">
-      {/* 1. Klinik seç */}
-      <div>
-        <p className="text-slate-400 text-xs mb-2 font-semibold">1. Klinik Seç</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
-          {clinics.map(c => (
-            <button
-              key={c.id}
-              onClick={() => { setSelectedClinic(c); setSelectedDay(null); setSelectedTime(null) }}
-              className={`text-left p-3 rounded-xl border transition-colors ${
-                selectedClinic?.id === c.id
-                  ? 'bg-violet-500/20 border-violet-500'
-                  : 'bg-slate-900/50 border-slate-700 hover:border-slate-600'
-              }`}
-            >
-              <p className="text-white text-sm font-semibold truncate">{c.name}</p>
-              <p className="text-slate-500 text-xs">{c.city ?? 'Türkiye'}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 2. Gün seç */}
-      {selectedClinic && (
-        <div>
-          <p className="text-slate-400 text-xs mb-2 font-semibold">2. Gün Seç</p>
-          {loadingAvail ? (
-            <p className="text-slate-500 text-sm">Müsaitlik yükleniyor…</p>
-          ) : (
-            <div className="grid grid-cols-7 gap-1">
-              {days.map(d => {
-                const dow = d.getDay()
-                const hasSlots = availability.some(a => a.day_of_week === dow && a.is_active)
-                const isSelected = selectedDay?.toDateString() === d.toDateString()
-                return (
-                  <button
-                    key={d.toISOString()}
-                    disabled={!hasSlots}
-                    onClick={() => { setSelectedDay(d); setSelectedTime(null) }}
-                    className={`p-2 rounded-lg border text-center transition-colors ${
-                      isSelected
-                        ? 'bg-violet-500/20 border-violet-500'
-                        : hasSlots
-                          ? 'bg-slate-900/50 border-slate-700 hover:border-slate-600'
-                          : 'bg-slate-900/30 border-slate-800 opacity-40 cursor-not-allowed'
-                    }`}
-                  >
-                    <p className="text-[10px] text-slate-500 uppercase">{d.toLocaleDateString('tr-TR', { weekday: 'short' })}</p>
-                    <p className="text-white text-sm font-bold">{d.getDate()}</p>
-                    <p className="text-[10px] text-slate-600">{d.toLocaleDateString('tr-TR', { month: 'short' })}</p>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 3. Saat seç */}
-      {selectedDay && slotsForDay.length > 0 && (
-        <div>
-          <p className="text-slate-400 text-xs mb-2 font-semibold">3. Saat Seç</p>
-          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-            {slotsForDay.map(t => {
-              const dateKey = selectedDay.toISOString().split('T')[0]
-              const isBusy = busySlots.has(`${dateKey} ${t}`)
-              const isSelected = selectedTime === t
-              return (
-                <button
-                  key={t}
-                  disabled={isBusy}
-                  onClick={() => setSelectedTime(t)}
-                  className={`py-2 rounded-lg text-sm font-semibold transition-colors ${
-                    isSelected
-                      ? 'bg-violet-500 text-white'
-                      : isBusy
-                        ? 'bg-slate-900/30 text-slate-700 line-through cursor-not-allowed'
-                        : 'bg-slate-900/50 text-slate-300 border border-slate-700 hover:border-violet-500/50'
-                  }`}
-                >
-                  {t}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 4. Not + Onay */}
-      {selectedTime && (
-        <div className="space-y-3 pt-2 border-t border-slate-700">
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            placeholder="Not (isteğe bağlı): geliş sebebi, alerji vs."
-            rows={2}
-            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none focus:border-violet-500 resize-none"
-          />
-          {error && <p className="text-red-400 text-xs">{error}</p>}
-          <button
-            onClick={confirmBooking}
-            disabled={saving}
-            className="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 disabled:opacity-50 text-white font-semibold rounded-xl"
-          >
-            {saving ? 'Oluşturuluyor…' : `Randevuyu Onayla — ${selectedDay?.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })} ${selectedTime}`}
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
 
 function SoruBlok({ soru, index, value, onChange }: { soru: AnketSoru; index: number; value: number | undefined; onChange: (v: number) => void }) {
   return (
