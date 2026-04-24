@@ -217,70 +217,82 @@ export default function SkorMerkeziPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
-        {/* ─── Üst: Sticky 2-sütun (Skor + Metrikler) ───────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 lg:sticky lg:top-20 lg:z-30 lg:bg-slate-900/95 lg:backdrop-blur-md lg:py-4 lg:-mx-4 lg:px-4 lg:border-b lg:border-slate-800">
+        {/* ─── Yan yana: Sol Skor (sticky) | Sağ Kartlar ─────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
 
-          {/* SOL — Skor İbresi */}
-          <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/60">
-            <ScoreBar
-              score={liveScore}
-              previousScore={isUpdating ? baseScore : undefined}
-              phase="ai_analiz"
-              animated
-            />
-            {isUpdating && (
-              <div className="mt-3 text-center">
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-                  Skorunuz güncelleniyor… (+{tahminiSkorBonusu.toFixed(1)} puan)
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* SAĞ — Metrikler + Biyolojik Yaş */}
-          <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/60">
-            {gercekYas !== null && (
-              <div className="mb-4 pb-4 border-b border-slate-700">
-                <div className="flex items-center justify-around">
-                  <div className="text-center">
-                    <p className="text-slate-500 text-xs mb-1">Gerçek Yaş</p>
-                    <p className="text-white text-2xl font-bold">{gercekYas}</p>
-                  </div>
-                  <div className="text-slate-600">→</div>
-                  <div className="text-center">
-                    <p className="text-slate-500 text-xs mb-1">Görünüm Yaşı</p>
-                    <p className={`text-2xl font-bold ${yasFarki && yasFarki > 0 ? 'text-emerald-400' : yasFarki && yasFarki < 0 ? 'text-amber-400' : 'text-white'}`}>
-                      {gorunumYas}
-                    </p>
-                  </div>
+          {/* ───── SOL — Skor + Biyo. Yaş + Metrikler (sticky) ─────── */}
+          <div className="lg:sticky lg:top-20 lg:self-start">
+            <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/60">
+              <ScoreBar
+                score={liveScore}
+                previousScore={isUpdating ? baseScore : undefined}
+                phase="ai_analiz"
+                animated
+              />
+              {isUpdating && (
+                <div className="mt-3 text-center">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+                    Skorunuz güncelleniyor… (+{tahminiSkorBonusu.toFixed(1)} puan)
+                  </span>
                 </div>
-                {yasFarki !== null && yasFarki !== 0 && (
-                  <p className={`text-center text-xs font-semibold mt-2 ${yasFarki > 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                    {yasFarki > 0 ? `${yasFarki} yıl daha genç ✨` : `${Math.abs(yasFarki)} yıl daha yaşlı`}
-                  </p>
-                )}
+              )}
+
+              {/* Biyolojik Yaş */}
+              {gercekYas !== null && (
+                <div className="mt-6 pt-6 border-t border-slate-700">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-base">🧬</span>
+                    <span className="text-white font-semibold text-sm">Biyolojik Yaş</span>
+                    <span className="ml-auto text-[10px] text-slate-500 italic">placeholder</span>
+                  </div>
+                  <div className="flex items-center justify-around">
+                    <div className="text-center">
+                      <p className="text-slate-500 text-xs mb-1">Gerçek Yaş</p>
+                      <p className="text-white text-2xl font-bold">{gercekYas}</p>
+                    </div>
+                    <div className="text-slate-600 text-xl">→</div>
+                    <div className="text-center">
+                      <p className="text-slate-500 text-xs mb-1">Görünüm Yaşı</p>
+                      <p className={`text-2xl font-bold ${yasFarki && yasFarki > 0 ? 'text-emerald-400' : yasFarki && yasFarki < 0 ? 'text-amber-400' : 'text-white'}`}>
+                        {gorunumYas}
+                      </p>
+                    </div>
+                  </div>
+                  {yasFarki !== null && yasFarki !== 0 && (
+                    <p className={`text-center text-xs font-semibold mt-2 ${yasFarki > 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {yasFarki > 0 ? `${yasFarki} yıl daha genç ✨` : `${Math.abs(yasFarki)} yıl daha yaşlı`}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Metrikler */}
+              <div className="mt-6 pt-6 border-t border-slate-700">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-base">🔬</span>
+                  <span className="text-white font-semibold text-sm">Cilt Metrikleri</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  {analysis.web_scores?.hydration !== undefined && (
+                    <Metric label="Nem" value={analysis.web_scores.hydration} unit="%" />
+                  )}
+                  {analysis.web_scores?.wrinkles !== undefined && (
+                    <Metric label="Kırışıklık" value={analysis.web_scores.wrinkles} unit="/100" invert />
+                  )}
+                  {analysis.web_scores?.pigmentation !== undefined && (
+                    <Metric label="Pigmentasyon" value={analysis.web_scores.pigmentation} unit="/100" invert />
+                  )}
+                  {analysis.web_scores?.tone_uniformity !== undefined && (
+                    <Metric label="Cilt Tonu" value={analysis.web_scores.tone_uniformity} unit="%" />
+                  )}
+                </div>
               </div>
-            )}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              {analysis.web_scores?.hydration !== undefined && (
-                <Metric label="Nem" value={analysis.web_scores.hydration} unit="%" />
-              )}
-              {analysis.web_scores?.wrinkles !== undefined && (
-                <Metric label="Kırışıklık" value={analysis.web_scores.wrinkles} unit="/100" invert />
-              )}
-              {analysis.web_scores?.pigmentation !== undefined && (
-                <Metric label="Pigmentasyon" value={analysis.web_scores.pigmentation} unit="/100" invert />
-              )}
-              {analysis.web_scores?.tone_uniformity !== undefined && (
-                <Metric label="Cilt Tonu" value={analysis.web_scores.tone_uniformity} unit="%" />
-              )}
             </div>
           </div>
-        </div>
 
-        {/* ─── Alt: Aksiyon Kartları (Önizlemeli) ─────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+          {/* ───── SAĞ — 3 Dikey Aksiyon Kartı ───────────────────────── */}
+          <div className="space-y-4">
 
           {/* ANKET KARTI */}
           <ActionCard
@@ -418,6 +430,7 @@ export default function SkorMerkeziPage() {
               </Link>
             </div>
           </ActionCard>
+          </div>
         </div>
       </div>
     </main>
@@ -455,7 +468,7 @@ function ActionCard({ icon, title, subtitle, preview, children, isExpanded, onTo
   return (
     <div className={`rounded-2xl border transition-all ${
       isExpanded
-        ? 'bg-slate-800 border-violet-500/50 md:col-span-3'
+        ? 'bg-slate-800 border-violet-500/50'
         : 'bg-slate-800/50 border-slate-700/60 hover:border-slate-600 cursor-pointer'
     }`}>
       <button onClick={onToggle} className="w-full text-left p-5">
