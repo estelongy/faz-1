@@ -253,7 +253,7 @@ function SkorMerkeziInner() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8 relative">
         {/* Backdrop — açık kartı tıklayarak kapamak için */}
         {expanded && (
           <button
@@ -269,7 +269,7 @@ function SkorMerkeziInner() {
 
           {/* ───── SOL — Skor + Biyo. Yaş + Metrikler (sticky) ─────── */}
           <div className="lg:sticky lg:top-20 lg:self-start">
-            <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/60">
+            <div className="p-5 rounded-2xl bg-slate-800/50 border border-slate-700/60">
               <ScoreBar
                 score={liveScore}
                 previousScore={isUpdating ? baseScore : undefined}
@@ -278,62 +278,46 @@ function SkorMerkeziInner() {
               />
               {isUpdating && (
                 <div className="mt-3 text-center">
-                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-semibold">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/20 border border-violet-500/30 text-violet-300 text-sm font-semibold">
                     <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
                     Skorunuz güncelleniyor… (+{tahminiSkorBonusu.toFixed(1)} puan)
                   </span>
                 </div>
               )}
 
-              {/* Biyolojik Yaş */}
+              {/* Biyolojik Yaş — tek satır */}
               {gercekYas !== null && (
-                <div className="mt-6 pt-6 border-t border-slate-700">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-base">🧬</span>
-                    <span className="text-white font-semibold text-sm">Biyolojik Yaş</span>
-                    <span className="ml-auto text-[10px] text-slate-500 italic">placeholder</span>
-                  </div>
-                  <div className="flex items-center justify-around">
-                    <div className="text-center">
-                      <p className="text-slate-500 text-xs mb-1">Gerçek Yaş</p>
-                      <p className="text-white text-2xl font-bold">{gercekYas}</p>
-                    </div>
-                    <div className="text-slate-600 text-xl">→</div>
-                    <div className="text-center">
-                      <p className="text-slate-500 text-xs mb-1">Görünüm Yaşı</p>
-                      <p className={`text-2xl font-bold ${yasFarki && yasFarki > 0 ? 'text-emerald-400' : yasFarki && yasFarki < 0 ? 'text-amber-400' : 'text-white'}`}>
-                        {gorunumYas}
-                      </p>
-                    </div>
-                  </div>
+                <div className="mt-5 pt-5 border-t border-slate-700 flex items-center justify-center gap-3 flex-wrap">
+                  <span className="text-xl">🧬</span>
+                  <span className="text-slate-400 text-base">Gerçek yaş</span>
+                  <span className="text-white text-2xl font-bold">{gercekYas}</span>
+                  <span className="text-slate-600 text-lg">→</span>
+                  <span className="text-slate-400 text-base">Görünüm</span>
+                  <span className={`text-2xl font-bold ${yasFarki && yasFarki > 0 ? 'text-emerald-400' : yasFarki && yasFarki < 0 ? 'text-amber-400' : 'text-white'}`}>
+                    {gorunumYas}
+                  </span>
                   {yasFarki !== null && yasFarki !== 0 && (
-                    <p className={`text-center text-xs font-semibold mt-2 ${yasFarki > 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                      {yasFarki > 0 ? `${yasFarki} yıl daha genç ✨` : `${Math.abs(yasFarki)} yıl daha yaşlı`}
-                    </p>
+                    <span className={`text-base font-semibold ${yasFarki > 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      · {yasFarki > 0 ? `${yasFarki} yıl genç ✨` : `${Math.abs(yasFarki)} yıl yaşlı`}
+                    </span>
                   )}
                 </div>
               )}
 
-              {/* Metrikler */}
-              <div className="mt-6 pt-6 border-t border-slate-700">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-base">🔬</span>
-                  <span className="text-white font-semibold text-sm">Cilt Metrikleri</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  {analysis.web_scores?.hydration !== undefined && (
-                    <Metric label="Nem" value={analysis.web_scores.hydration} unit="%" />
-                  )}
-                  {analysis.web_scores?.wrinkles !== undefined && (
-                    <Metric label="Kırışıklık" value={analysis.web_scores.wrinkles} unit="/100" invert />
-                  )}
-                  {analysis.web_scores?.pigmentation !== undefined && (
-                    <Metric label="Pigmentasyon" value={analysis.web_scores.pigmentation} unit="/100" invert />
-                  )}
-                  {analysis.web_scores?.tone_uniformity !== undefined && (
-                    <Metric label="Cilt Tonu" value={analysis.web_scores.tone_uniformity} unit="%" />
-                  )}
-                </div>
+              {/* Metrikler — 4 kolon yatay, büyük punto */}
+              <div className="mt-5 pt-5 border-t border-slate-700 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {analysis.web_scores?.hydration !== undefined && (
+                  <Metric label="Nem" value={analysis.web_scores.hydration} unit="%" />
+                )}
+                {analysis.web_scores?.wrinkles !== undefined && (
+                  <Metric label="Kırışıklık" value={analysis.web_scores.wrinkles} unit="/100" invert />
+                )}
+                {analysis.web_scores?.pigmentation !== undefined && (
+                  <Metric label="Pigmentasyon" value={analysis.web_scores.pigmentation} unit="/100" invert />
+                )}
+                {analysis.web_scores?.tone_uniformity !== undefined && (
+                  <Metric label="Cilt Tonu" value={analysis.web_scores.tone_uniformity} unit="%" />
+                )}
               </div>
             </div>
           </div>
@@ -547,11 +531,11 @@ function SkorMerkeziInner() {
 function Metric({ label, value, unit, invert = false }: { label: string; value: number; unit: string; invert?: boolean }) {
   return (
     <div>
-      <div className="flex justify-between mb-1">
-        <span className="text-slate-400">{label}</span>
-        <span className={`font-bold ${metricColor(value, invert)}`}>{value}{unit}</span>
-      </div>
-      <div className="h-1 bg-slate-700 rounded-full overflow-hidden">
+      <p className="text-slate-400 text-sm mb-1">{label}</p>
+      <p className={`text-xl font-bold mb-1.5 ${metricColor(value, invert)}`}>
+        {value}<span className="text-slate-500 text-sm font-normal ml-0.5">{unit}</span>
+      </p>
+      <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
         <div className={`h-full ${metricBar(value, invert)}`} style={{ width: `${value}%` }} />
       </div>
     </div>
@@ -580,10 +564,10 @@ function ActionCard({ icon, title, subtitle, preview, children, isExpanded, onTo
         <div className="flex items-start justify-between mb-3">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xl">{icon}</span>
-              <h3 className="text-white font-bold">{title}</h3>
+              <span className="text-2xl">{icon}</span>
+              <h3 className="text-white font-bold text-lg">{title}</h3>
             </div>
-            <p className="text-slate-500 text-xs">{subtitle}</p>
+            <p className="text-slate-400 text-sm">{subtitle}</p>
           </div>
           {isExpanded ? (
             <svg className="w-5 h-5 text-slate-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
