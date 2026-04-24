@@ -13,7 +13,6 @@ import { pathForRole } from '@/lib/auth-redirect'
 import ScoreBar from '@/components/ScoreBar'
 import { getSkorDurumu, getScorePhase, getSkorDurumuLabel, getSkorDurumuColor } from '@/lib/skor-durum'
 import ScoreChart, { type ScorePoint } from '@/components/ScoreChart'
-import ScoreFixedBadge from '@/components/ScoreFixedBadge'
 import PaylasModal from '@/components/PaylasModal'
 import UserBadges from '@/components/UserBadges'
 import RandevuQRModal from '@/components/RandevuQRModal'
@@ -263,27 +262,55 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
           </div>
         )}
 
-        {/* Hoşgeldin */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">
-            Merhaba, <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">{profile?.full_name?.split(' ')[0] ?? 'Kullanıcı'}</span> 👋
-          </h1>
-          <p className="text-slate-400 mt-1">Cilt sağlığınızı takip edin</p>
+        {/* Hoşgeldin + Skor Rozeti + Tarih */}
+        <div className="mb-6 flex flex-wrap items-center gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white inline-flex items-center gap-2">
+              Merhaba,{' '}
+              <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
+                {profile?.full_name?.split(' ')[0] ?? 'Kullanıcı'}
+              </span>
+              <span>👋</span>
+            </h1>
+            <p className="text-slate-400 text-sm mt-0.5">Cilt sağlığınızı takip edin</p>
+          </div>
+
+          {/* Skor rozeti — aynı latestScore */}
+          {latestScore !== null && (() => {
+            const s = latestScore
+            const label = s >= 90 ? 'Çok İyi' : s >= 80 ? 'İyi' : s >= 66 ? 'Normal' : s >= 56 ? 'Düşük' : 'Çok Düşük'
+            const ring  = s >= 90 ? 'border-blue-500/40 bg-blue-500/10' : s >= 80 ? 'border-emerald-500/40 bg-emerald-500/10' : s >= 66 ? 'border-amber-500/40 bg-amber-500/10' : s >= 56 ? 'border-orange-500/40 bg-orange-500/10' : 'border-red-500/40 bg-red-500/10'
+            const dot   = s >= 90 ? 'bg-blue-400' : s >= 80 ? 'bg-emerald-400' : s >= 66 ? 'bg-amber-400' : s >= 56 ? 'bg-orange-400' : 'bg-red-400'
+            const num   = s >= 90 ? 'text-blue-300' : s >= 80 ? 'text-emerald-300' : s >= 66 ? 'text-amber-300' : s >= 56 ? 'text-orange-300' : 'text-red-300'
+            const pill  = s >= 90 ? 'bg-blue-500/20 text-blue-300' : s >= 80 ? 'bg-emerald-500/20 text-emerald-300' : s >= 66 ? 'bg-amber-500/20 text-amber-300' : s >= 56 ? 'bg-orange-500/20 text-orange-300' : 'bg-red-500/20 text-red-300'
+            return (
+              <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl border backdrop-blur-md ${ring}`}>
+                <div className={`w-2 h-2 rounded-full animate-pulse ${dot}`} />
+                <span className="text-slate-300 text-sm font-medium">Gençlik Skoru</span>
+                <span className={`text-2xl font-black ${num}`}>{s}</span>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${pill}`}>{label}</span>
+                {latestAnalysis?.final_overall != null && <span className="text-emerald-400 text-xs font-medium">✦ Onaylı</span>}
+              </div>
+            )
+          })()}
+
+          {latestAnalysis != null && (
+            <span className="text-slate-500 text-sm whitespace-nowrap">
+              {new Date(latestAnalysis.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
+          )}
         </div>
 
         {/* Güncel Analiz başlığı */}
         {latestAnalysis != null && (
           <div className="mb-3 flex items-center gap-2">
             <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-violet-500 to-purple-600" />
-            <h2 className="text-xl font-bold text-white">Güncel Analiz</h2>
-            <span className="text-slate-500 text-xs ml-auto">
-              {new Date(latestAnalysis.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </span>
+            <h2 className="text-lg font-bold text-white">Güncel Analiz</h2>
           </div>
         )}
 
         {/* EGS Skor Kartı */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* EGS Bar — 2 kolon */}
           <div className="lg:col-span-2 p-6 rounded-2xl border border-slate-700 bg-slate-800/50 backdrop-blur-sm">
             {latestScore !== null ? (
@@ -531,8 +558,6 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
         )}
       </div>
 
-      {/* Sabit EGS Skoru — client component, her zaman güncel */}
-      <ScoreFixedBadge />
     </main>
   )
 }
