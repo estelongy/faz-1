@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 
 // Giriş gerektiren rotalar (prefix eşleşmesi)
 // /randevu herkese açık — girişsiz kullanıcılar saat seçtikten sonra modal'dan email-OTP ile kaydolup onaylar
-const PROTECTED = ['/panel', '/klinik/panel', '/satici/panel', '/admin', '/anket', '/analiz', '/test-skor']
+const PROTECTED = ['/panel', '/klinik/panel', '/satici/panel', '/admin', '/anket', '/analiz', '/skor', '/test-skor']
 
 // Giriş yapılmışsa erişilmemesi gereken rotalar (tam eşleşme)
 const AUTH_ONLY = ['/giris', '/kayit', '/kurumsal/giris']

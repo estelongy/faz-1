@@ -517,27 +517,18 @@ export default function AnalizPage() {
             {/* Aksiyon butonları */}
             <div className="space-y-3">
               <Link
-                href="/anket"
-                className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-semibold rounded-xl transition-all"
+                href="/skor"
+                className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-semibold rounded-xl transition-all text-lg shadow-lg shadow-violet-500/20"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Longevity Anketi ile Skorunu Artır →
-              </Link>
-              <Link
-                href="/randevu"
-                className="w-full flex items-center justify-center gap-2 py-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-semibold rounded-xl transition-all"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Uzman Randevusu Al
+                Skor Merkezini Aç →
               </Link>
               <button
                 onClick={saveAndGoPanel}
                 disabled={saving}
-                className="w-full py-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 text-slate-400 font-medium rounded-xl transition-all disabled:opacity-50 text-sm"
+                className="w-full py-3 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 text-slate-400 font-medium rounded-xl transition-all disabled:opacity-50 text-sm"
               >
                 {saving ? 'Yükleniyor...' : 'Panele Dön'}
               </button>
