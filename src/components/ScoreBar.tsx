@@ -16,25 +16,38 @@ interface ScoreBarProps {
 }
 
 // ── Gauge sabitler ──────────────────────────────────────────────
-const CX = 150, CY = 148          // merkez
-const R  = 108                     // yarıçap
-const SW = 18                      // stroke genişliği
-const CIRC = 2 * Math.PI * R       // çevre ≈ 678.6
+const CX = 150, CY = 148
+const R  = 108
+const SW = 18
+const CIRC = 2 * Math.PI * R
 
-const ARC_DEG  = 240               // yayın toplam açısı (7:30 → 4:30)
-const ARC_LEN  = (ARC_DEG / 360) * CIRC   // görünür yay uzunluğu
-const GAP_LEN  = CIRC - ARC_LEN           // alt boşluk
-
-// Dönüş: SVG çemberi 3'ten (sağ) başlar → 135° döndürünce 7:30'a gelir
+const ARC_DEG  = 240
+const ARC_LEN  = (ARC_DEG / 360) * CIRC
+const GAP_LEN  = CIRC - ARC_LEN
 const ROT = 135
+const START_MATH = 225
 
-// Standart açı hesabı (ibre için):  score 0 → 225°  score 100 → -15°
-const START_MATH = 225             // 7:30 pozisyonu
-function scoreToMathAngle(score: number) {
-  return START_MATH - (Math.min(Math.max(score, 0), 100) / 100) * ARC_DEG
+// ── Non-lineer mapping: 80 puan = tepe noktası (12 hizası) ──────
+// Sol yarı (0→80): kırmızı %35 · mor %25 · sarı %40 (of 56.25%)
+// Sağ yarı (80→100): yeşil %70 · cyan %30 (of 43.75%)
+const SCORE_BOUNDS = [0,       56,      66,      80,      90,      100]
+const FRAC_BOUNDS  = [0, 0.19688, 0.33750, 0.5625, 0.86875, 1.0]
+
+function scoreToFrac(s: number) {
+  s = Math.min(Math.max(s, 0), 100)
+  for (let i = 1; i < SCORE_BOUNDS.length; i++) {
+    if (s <= SCORE_BOUNDS[i]) {
+      const t = (s - SCORE_BOUNDS[i - 1]) / (SCORE_BOUNDS[i] - SCORE_BOUNDS[i - 1])
+      return FRAC_BOUNDS[i - 1] + t * (FRAC_BOUNDS[i] - FRAC_BOUNDS[i - 1])
+    }
+  }
+  return 1
 }
 
-// Polar → Kartezyen (y-ekseni ters çevrilmiş SVG için)
+function scoreToMathAngle(score: number) {
+  return START_MATH - scoreToFrac(score) * ARC_DEG
+}
+
 function polar(cx: number, cy: number, r: number, deg: number) {
   const rad = (deg * Math.PI) / 180
   return { x: cx + r * Math.cos(rad), y: cy - r * Math.sin(rad) }
@@ -42,14 +55,13 @@ function polar(cx: number, cy: number, r: number, deg: number) {
 
 // ── Renk bölgeleri ──────────────────────────────────────────────
 const ZONE_DEFS = [
-  { pct: 0.55, color: '#ef4444', name: 'Çok Düşük', range: '0–55'   },
-  { pct: 0.10, color: '#a855f7', name: 'Düşük',     range: '56–65'  },
-  { pct: 0.14, color: '#eab308', name: 'Normal',    range: '66–79'  },
-  { pct: 0.10, color: '#22c55e', name: 'İyi',       range: '80–89'  },
-  { pct: 0.11, color: '#3b82f6', name: 'Çok İyi',   range: '90–100' },
+  { pct: 0.19688, color: '#ef4444', name: 'Çok Düşük', range: '0–55'   },
+  { pct: 0.14063, color: '#a855f7', name: 'Düşük',     range: '56–65'  },
+  { pct: 0.22500, color: '#eab308', name: 'Normal',    range: '66–79'  },
+  { pct: 0.30625, color: '#22c55e', name: 'İyi',       range: '80–89'  },
+  { pct: 0.13125, color: '#3b82f6', name: 'Çok İyi',   range: '90–100' },
 ]
 
-// Her bölge için dasharray + dashoffset hesapla
 let cumLen = 0
 const ZONES = ZONE_DEFS.map(z => {
   const len   = z.pct * ARC_LEN
@@ -59,7 +71,7 @@ const ZONES = ZONE_DEFS.map(z => {
     ...z,
     len,
     dasharray:  `${len} ${CIRC - len}`,
-    dashoffset: CIRC - start,       // formül: C - startPos
+    dashoffset: CIRC - start,
   }
 })
 
@@ -71,9 +83,8 @@ function getZone(score: number) {
   return ZONES[0]
 }
 
-// ── Tick işaretleri: sadece bölge sınırları, 0 ve 100 YOK ───────
 const MAJOR_TICKS = [56, 66, 80, 90]
-const MINOR_TICKS = [10, 20, 30, 40, 70]
+const MINOR_TICKS = [20, 40, 70, 95]
 
 // ── Aşamalar ────────────────────────────────────────────────────
 const PHASES = [
@@ -152,8 +163,7 @@ export default function ScoreBar({
   const rPt  = polar(CX, CY, 8,  ang - 90)
   const tail = polar(CX, CY, 15, ang + 180)
 
-  // Aktif glow uzunluğu (score'a kadar olan yay)
-  const glowLen = (disp / 100) * ARC_LEN
+  const glowLen = scoreToFrac(disp) * ARC_LEN
 
   return (
     <div className="w-full select-none">
