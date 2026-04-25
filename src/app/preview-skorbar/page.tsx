@@ -52,7 +52,7 @@ export default function PreviewSkorBarPage() {
             <li>80–89 → 56.25–75% (yeşil)</li>
             <li>90–100 → 75–100% (cyan, sağ bölge — kalın)</li>
           </ul>
-          <p className="pt-2">• 80'i geçen kullanıcı görsel olarak tepenin sağına geçer → "hedefi geçtim" hissi.</p>
+          <p className="pt-2">{`• 80'i geçen kullanıcı görsel olarak tepenin sağına geçer → "hedefi geçtim" hissi.`}</p>
         </div>
       </div>
     </main>
