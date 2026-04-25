@@ -27,7 +27,7 @@ export default function PreviewSkorBarPage() {
                 <span className="text-xs text-slate-500 uppercase tracking-widest">Skor</span>
                 <div className="text-3xl font-black text-white">{s}</div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-6">
                 <div className="bg-slate-950/40 rounded-xl p-4">
                   <p className="text-center text-amber-400 text-xs font-semibold mb-2 uppercase tracking-widest">Mevcut</p>
                   <ScoreBar score={s} phase="ai_analiz" animated={false} />
