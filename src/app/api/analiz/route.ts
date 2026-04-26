@@ -166,18 +166,53 @@ Important:
 
 // ─── Fallback (OpenAI down ise) ─────────────────────────────────────────────
 
-function generateFallback(): GPTResponse {
-  const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
+/**
+ * Yaşa göre beklenen skor bandında tahmini skor üretir.
+ * Fotoğraf analizi yapılmaz — kör tahmin.
+ *
+ * Bantlar:
+ *  < 28  → 80–89  (İyi)
+ *  28–35 → 76–82  (Normal/İyi)
+ *  36–45 → 66–79  (Normal)
+ *  46–55 → 57–79  (Normal/Düşük)
+ *  56–65 → 56–65  (Düşük)
+ *  66+   → 56–65  (Düşük)
+ */
+function generateFallback(actualAge: number): GPTResponse {
+  const rand    = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
+  const clampV  = (v: number) => Math.min(100, Math.max(0, v))
+  const noise   = () => rand(-8, 8)
+
+  // Yaşa göre hedef final skor bandı
+  let targetMin: number, targetMax: number
+  if (actualAge < 28)       { targetMin = 80; targetMax = 89 }
+  else if (actualAge <= 35) { targetMin = 76; targetMax = 82 }
+  else if (actualAge <= 45) { targetMin = 66; targetMax = 79 }
+  else if (actualAge <= 55) { targetMin = 57; targetMax = 79 }
+  else                      { targetMin = 56; targetMax = 65 }
+
+  const targetFinal = rand(targetMin, targetMax)
+
+  // Yaş faktörü (ageFactor ile aynı mantık)
+  const af = actualAge <= 25 ? 1.02
+           : actualAge <= 35 ? 1.00
+           : actualAge <= 45 ? 0.97
+           : actualAge <= 55 ? 0.93
+           : 0.88
+
+  // Hedef raw skoru (ters yaş faktörüyle)
+  const targetRaw = clampV(Math.round(targetFinal / af))
+
   return {
     component_scores: {
-      wrinkles:        rand(10, 35),
-      pigmentation:    rand(10, 30),
-      hydration:       rand(60, 85),
-      tone_uniformity: rand(60, 85),
-      under_eye:       rand(55, 80),
+      hydration:       clampV(targetRaw + noise()),
+      tone_uniformity: clampV(targetRaw + noise()),
+      wrinkles:        clampV(100 - targetRaw + noise()),  // ters: düşük = iyi
+      pigmentation:    clampV(100 - targetRaw + noise()),  // ters: düşük = iyi
+      under_eye:       clampV(targetRaw + noise()),
     },
-    estimated_skin_age: rand(24, 36),
-    confidence: 0.3, // düşük güven — fallback olduğunu gösterir
+    estimated_skin_age: rand(Math.max(18, actualAge - 5), actualAge + 5),
+    confidence: 0.3,
     brief_explanation: 'AI servisi geçici olarak kullanılamıyor. Tahmini skor gösterilmektedir.',
   }
 }
@@ -224,7 +259,7 @@ export async function POST(req: NextRequest) {
       gptData = await callGPT4Vision(base64, mimeType)
     } catch (err) {
       console.error('[AI Analiz] GPT-4 Vision hatası, fallback kullanılıyor:', err)
-      gptData = generateFallback()
+      gptData = generateFallback(actualAge)
       usedFallback = true
     }
 
