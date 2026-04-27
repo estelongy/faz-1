@@ -3,7 +3,7 @@
 ## Proje Özeti
 
 **Estelongy** — Estetik sağlık alanında AI destekli klinik yönetim ve hasta takip platformu.  
-**Stack:** Next.js 14 (App Router) · Tailwind · Supabase PostgreSQL (RLS) · OpenAI GPT-4o · Stripe · Resend · Sentry · Vercel
+**Stack:** Next.js 14 (App Router) · Tailwind · Supabase PostgreSQL (RLS) · OpenAI gpt-5.4-mini · Stripe · Resend · Sentry · Vercel
 
 ### Git & Deploy Akışı (ÖNEMLİ)
 
@@ -17,7 +17,7 @@ Production:      main                     →  estelongy-clean.vercel.app  (Verc
 2. Main worktree'ye geç: `cd C:/Users/Orjin/estelongy-faz1`
 3. Merge et: `git merge claude/priceless-ellis --no-ff -m "Merge branch 'claude/priceless-ellis'"`
 4. Push et: `git push origin main` → Vercel production build tetiklenir
-5. Build durumu: Vercel MCP `list_deployments` (projectId: `prj_uwPFDSAW6bG9RGHeaAzqtflu3dgw`, team: `team_6KIGU5JvMoWBV5To6nncBNnc`)
+5. Build durumu: Vercel MCP `list_deployments` (projectId: `prj_qQ0N5SSfH8kqaY61qyiAFIOy9pVS`, team: `team_6KIGU5JvMoWBV5To6nncBNnc`)
 
 Sadece feature branch'e push deploy'u canlıya yansıtmaz — preview kalır.
 
@@ -44,7 +44,7 @@ Sadece feature branch'e push deploy'u canlıya yansıtmaz — preview kalır.
 /panel                   → Hasta paneli (rozetler, analizler, siparişler)
 /panel/referral          → Referral + komisyon
 /panel/leaderboard       → Anonim skor sıralaması
-/analiz                  → GPT-4 Vision + C250 analiz
+/analiz                  → gpt-5.4-mini Vision + C250 analiz
 /anket                   → Longevity anketi
 /randevu                 → Klinik seç + müsaitlik + randevu
 /magaza  /magaza/[slug]  → Ürün listesi + detay
@@ -90,9 +90,9 @@ RESEND_API_KEY · CRON_SECRET · NEXT_PUBLIC_SENTRY_DSN · SENTRY_ORG · SENTRY_
 
 ---
 
-## AI — GPT-4 Vision + C250
+## AI — gpt-5.4-mini Vision + C250
 
-`POST /api/analiz` (rate limit: IP başına 5/saat) → Base64 → GPT-4o → 5 bileşen → C250 → skor
+`POST /api/analiz` (rate limit: IP başına 5/saat) → Base64 → gpt-5.4-mini → 5 bileşen → C250 → skor
 
 **C250 Ağırlıkları:**
 

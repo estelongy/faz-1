@@ -133,7 +133,7 @@ Important:
 - estimated_skin_age should reflect the skin's biological age, not the person's actual age`
 
   const response = await client.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'gpt-5.4-mini',
     max_tokens: 500,
     messages: [
       {
