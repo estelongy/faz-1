@@ -59,9 +59,9 @@ export function rateLimit(
 
 // ─── Önceden tanımlı limitler ─────────────────────────────────────────────
 
-/** AI analiz endpoint'i: IP başına 50 istek / 60 dakika (test için yüksek) */
+/** AI analiz endpoint'i: IP başına 5 istek / 60 dakika */
 export function rateLimitAnaliz(ip: string) {
-  return rateLimit(`analiz:${ip}`, 50, 60 * 60 * 1000)
+  return rateLimit(`analiz:${ip}`, 5, 60 * 60 * 1000)
 }
 
 /** Auth endpoint'i: IP başına 10 istek / 15 dakika */

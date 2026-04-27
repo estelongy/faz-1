@@ -252,22 +252,14 @@ export async function POST(req: NextRequest) {
     const mimeType = body.mimeType ?? 'image/jpeg'
     const base64 = body.image.replace(/^data:[^;]+;base64,/, '')
 
-    // GPT-4 Vision çağrısı (hata durumunda fallback)
+    // GPT Vision çağrısı (hata durumunda fallback)
     let gptData: GPTResponse
     let usedFallback = false
-    let debugError: string | null = null
     try {
       gptData = await callGPT4Vision(base64, mimeType)
     } catch (err: unknown) {
-      const e = err as { status?: number; message?: string; error?: { message?: string; code?: string; type?: string } }
-      debugError = JSON.stringify({
-        status: e?.status,
-        message: e?.message,
-        code: e?.error?.code,
-        type: e?.error?.type,
-        innerMessage: e?.error?.message,
-      })
-      console.error('[AI Analiz] GPT hatası DETAY:', debugError)
+      const e = err as { status?: number; message?: string; error?: { message?: string; code?: string } }
+      console.error('[AI Analiz] GPT hatası:', e?.status, e?.error?.code, e?.message ?? e?.error?.message)
       gptData = generateFallback(actualAge)
       usedFallback = true
     }
@@ -341,7 +333,7 @@ export async function POST(req: NextRequest) {
       console.error('[AI Analiz] DB kayıt hatası:', dbErr)
     }
 
-    return NextResponse.json({ ok: true, result, usedFallback, debugError })
+    return NextResponse.json({ ok: true, result, usedFallback })
   } catch (err) {
     console.error('[AI Analiz] Beklenmedik hata:', err)
     return NextResponse.json({ error: 'Analiz sırasında bir hata oluştu. Lütfen tekrar deneyin.' }, { status: 500 })
