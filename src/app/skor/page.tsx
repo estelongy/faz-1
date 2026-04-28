@@ -260,13 +260,13 @@ function SkorMerkeziInner() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8 relative">
-        {/* Backdrop — açık kartı tıklayarak kapamak için */}
+        {/* Backdrop — açık kartı tıklayarak kapamak için (tam ekran) */}
         {expanded && (
           <button
             type="button"
             aria-label="Kartı kapat"
             onClick={() => setExpanded(null)}
-            className="hidden lg:block fixed inset-0 top-16 bg-slate-900/60 backdrop-blur-sm z-30"
+            className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-40"
           />
         )}
 
@@ -561,13 +561,41 @@ interface ActionCardProps {
 }
 
 function ActionCard({ icon, title, subtitle, preview, children, isExpanded, onToggle }: ActionCardProps) {
+  // ── Açık (tam ekran modal) ────────────────────────────────────────────
+  if (isExpanded) {
+    return (
+      <div
+        className="fixed inset-x-2 inset-y-4 sm:inset-x-4 sm:inset-y-8 lg:inset-y-12 lg:left-1/2 lg:-translate-x-1/2 lg:w-full lg:max-w-2xl rounded-3xl border border-violet-500/50 bg-slate-800 shadow-2xl shadow-violet-900/40 z-50 flex flex-col overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+      >
+        {/* Modal başlık — sticky */}
+        <div className="flex items-start justify-between p-5 border-b border-slate-700 bg-slate-800 shrink-0">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-2xl">{icon}</span>
+              <h3 className="text-white font-bold text-lg">{title}</h3>
+            </div>
+            <p className="text-slate-400 text-sm">{subtitle}</p>
+          </div>
+          <button onClick={onToggle} aria-label="Kapat" className="text-slate-400 hover:text-white p-1 -m-1">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        {/* Modal içerik — gerekirse kaydırılır, ama tam ekranda olduğu için genelde sığar */}
+        <div className="flex-1 overflow-y-auto px-5 py-5">
+          {children}
+        </div>
+      </div>
+    )
+  }
+
+  // ── Kapalı (yan kart önizleme) ────────────────────────────────────────
   return (
-    <div className={`rounded-2xl border transition-all flex flex-col ${
-      isExpanded
-        ? 'bg-slate-800 border-violet-500/50 lg:absolute lg:inset-x-0 lg:top-0 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:shadow-2xl lg:shadow-violet-900/40 z-40'
-        : 'bg-slate-800/50 border-slate-700/60 hover:border-slate-600 cursor-pointer lg:flex-1 lg:min-h-0'
-    }`}>
-      <button onClick={onToggle} className="w-full text-left p-5 lg:sticky lg:top-0 lg:bg-slate-800 lg:z-10 lg:rounded-t-2xl flex-1 flex flex-col">
+    <div className="rounded-2xl border bg-slate-800/50 border-slate-700/60 hover:border-slate-600 cursor-pointer lg:flex-1 lg:min-h-0 transition-all flex flex-col">
+      <button onClick={onToggle} className="w-full text-left p-5 flex-1 flex flex-col">
         <div className="flex items-start justify-between mb-3">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -576,23 +604,12 @@ function ActionCard({ icon, title, subtitle, preview, children, isExpanded, onTo
             </div>
             <p className="text-slate-400 text-sm">{subtitle}</p>
           </div>
-          {isExpanded ? (
-            <svg className="w-5 h-5 text-slate-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          )}
+          <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
         </div>
-        {!isExpanded && <div className="flex-1 flex items-center">{preview}</div>}
+        <div className="flex-1 flex items-center">{preview}</div>
       </button>
-      {isExpanded && (
-        <div className="px-5 pb-5">
-          {children}
-        </div>
-      )}
     </div>
   )
 }
