@@ -8,18 +8,15 @@
 ### Git & Deploy Akışı (ÖNEMLİ)
 
 ```
-Feature branch:  claude/priceless-ellis  →  preview URL (faz1-git-claude-priceless-ellis-*.vercel.app)
-Production:      main                     →  estelongy-clean.vercel.app  (Vercel production alias)
+Production branch:  claude/priceless-ellis  →  estelongy-clean.vercel.app
 ```
 
-**Canlıya çıkarmak için adımlar:**
-1. Değişiklikleri `claude/priceless-ellis` branch'ine commit + push et
-2. Main worktree'ye geç: `cd C:/Users/Orjin/estelongy-faz1`
-3. Merge et: `git merge claude/priceless-ellis --no-ff -m "Merge branch 'claude/priceless-ellis'"`
-4. Push et: `git push origin main` → Vercel production build tetiklenir
-5. Build durumu: Vercel MCP `list_deployments` (projectId: `prj_qQ0N5SSfH8kqaY61qyiAFIOy9pVS`, team: `team_6KIGU5JvMoWBV5To6nncBNnc`)
+**Canlıya çıkarmak için tek adım:**
+1. Değişiklikleri `claude/priceless-ellis` branch'ine commit + push et → Vercel production build tetiklenir
 
-Sadece feature branch'e push deploy'u canlıya yansıtmaz — preview kalır.
+**ASLA `main`'e push etme** — `main` Vercel'de production değil, push etmek sadece preview üretir ve işe yaramaz.
+
+Build durumu: Vercel MCP `list_deployments` (projectId: `prj_qQ0N5SSfH8kqaY61qyiAFIOy9pVS`, team: `team_6KIGU5JvMoWBV5To6nncBNnc`)
 
 ---
 
