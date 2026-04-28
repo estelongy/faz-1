@@ -39,8 +39,8 @@ export async function adresKaydetAction(input: AdresInput): Promise<{ ok: boolea
   const distTrim = input.district.trim()
   const addrTrim = input.address_line.trim()
 
-  if (fnTrim.length < 3)                         return { ok: false, error: 'Ad soyad en az 3 karakter olmalı.' }
-  if (!/^[\p{L} .'-]+$/u.test(fnTrim))           return { ok: false, error: 'Ad soyad sadece harf içerebilir.' }
+  if (fnTrim.length < 3)                                    return { ok: false, error: 'Ad soyad en az 3 karakter olmalı.' }
+  if (!/^[a-zA-ZğüşıöçĞÜŞİÖÇ .'-]+$/.test(fnTrim))           return { ok: false, error: 'Ad soyad sadece harf içerebilir.' }
   if (phoneRaw.length < 10)                      return { ok: false, error: 'Geçerli bir telefon numarası girin.' }
   if (cityTrim.length < 2)                       return { ok: false, error: 'İl en az 2 karakter olmalı.' }
   if (distTrim.length < 2)                       return { ok: false, error: 'İlçe en az 2 karakter olmalı.' }

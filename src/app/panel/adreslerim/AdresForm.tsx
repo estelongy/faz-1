@@ -50,7 +50,7 @@ export default function AdresForm({ initial, onClose, onSaved }: Props) {
     const addrTrim = addr.trim()
 
     if (fnTrim.length < 3) { setError('Ad soyad en az 3 karakter olmalı.'); return }
-    if (!/^[\p{L} .'-]+$/u.test(fnTrim)) { setError('Ad soyad sadece harf içerebilir.'); return }
+    if (!/^[a-zA-ZğüşıöçĞÜŞİÖÇ .'-]+$/.test(fnTrim)) { setError('Ad soyad sadece harf içerebilir.'); return }
     if (phoneRaw.length < 10) { setError('Geçerli bir telefon numarası girin (en az 10 hane).'); return }
     if (cityTrim.length < 2) { setError('İl en az 2 karakter olmalı.'); return }
     if (distTrim.length < 2) { setError('İlçe en az 2 karakter olmalı.'); return }
