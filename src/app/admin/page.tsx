@@ -15,6 +15,9 @@ export default async function AdminPage() {
   if (!user) redirect('/giris')
   if ((user.app_metadata as Record<string, string>)?.role !== 'admin') redirect('/panel')
 
+  const role = (user.app_metadata as Record<string, string>)?.role
+  if (role !== 'admin') redirect('/panel')
+
   // İstatistikler paralel çek
   const [
     { count: totalUsers },

@@ -29,10 +29,10 @@ export interface AnalizResult {
   pores: number             // yapay (GPT'den gelmez, türetilir)
   skinAge: number
   confidence: number
-  eaDetails: {
+  c250Details: {
     rawScore: number
     ageFactor: number
-    eaResult: number
+    c250Result: number
     explanation: string
   }
   colorZone: string | null
@@ -40,10 +40,10 @@ export interface AnalizResult {
   isAI: true
 }
 
-// ─── Estelongy Algoritması ─────────────────────────────────────────────────
+// ─── C250 Formülü ──────────────────────────────────────────────────────────
 
 /**
- * Estelongy Algoritması: GPT bileşen skorlarından ham Gençlik Skoru hesaplar
+ * C250 formülü: GPT bileşen skorlarından ham EGS hesaplar
  *
  * Ağırlıklar (toplam 1.0):
  *  hydration:       0.25
@@ -52,7 +52,7 @@ export interface AnalizResult {
  *  pigmentation:    0.15 (ters: 100-pigmentation)
  *  under_eye:       0.10
  */
-function applyEA(scores: GPTComponentScores): number {
+function applyC250(scores: GPTComponentScores): number {
   const hydration    = clamp(scores.hydration, 0, 100)
   const toneUniform  = clamp(scores.tone_uniformity, 0, 100)
   const wrinkleGood  = clamp(100 - scores.wrinkles, 0, 100)
@@ -134,7 +134,7 @@ Important:
 
   const response = await client.chat.completions.create({
     model: 'gpt-5.4-mini',
-    max_completion_tokens: 500,
+    max_tokens: 500,
     messages: [
       {
         role: 'user',
@@ -166,53 +166,18 @@ Important:
 
 // ─── Fallback (OpenAI down ise) ─────────────────────────────────────────────
 
-/**
- * Yaşa göre beklenen skor bandında tahmini skor üretir.
- * Fotoğraf analizi yapılmaz — kör tahmin.
- *
- * Bantlar:
- *  < 28  → 80–89  (İyi)
- *  28–35 → 76–82  (Normal/İyi)
- *  36–45 → 66–79  (Normal)
- *  46–55 → 57–79  (Normal/Düşük)
- *  56–65 → 56–65  (Düşük)
- *  66+   → 56–65  (Düşük)
- */
-function generateFallback(actualAge: number): GPTResponse {
-  const rand    = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
-  const clampV  = (v: number) => Math.min(100, Math.max(0, v))
-  const noise   = () => rand(-8, 8)
-
-  // Yaşa göre hedef final skor bandı
-  let targetMin: number, targetMax: number
-  if (actualAge < 28)       { targetMin = 80; targetMax = 89 }
-  else if (actualAge <= 35) { targetMin = 76; targetMax = 82 }
-  else if (actualAge <= 45) { targetMin = 66; targetMax = 79 }
-  else if (actualAge <= 55) { targetMin = 57; targetMax = 79 }
-  else                      { targetMin = 56; targetMax = 65 }
-
-  const targetFinal = rand(targetMin, targetMax)
-
-  // Yaş faktörü (ageFactor ile aynı mantık)
-  const af = actualAge <= 25 ? 1.02
-           : actualAge <= 35 ? 1.00
-           : actualAge <= 45 ? 0.97
-           : actualAge <= 55 ? 0.93
-           : 0.88
-
-  // Hedef raw skoru (ters yaş faktörüyle)
-  const targetRaw = clampV(Math.round(targetFinal / af))
-
+function generateFallback(): GPTResponse {
+  const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
   return {
     component_scores: {
-      hydration:       clampV(targetRaw + noise()),
-      tone_uniformity: clampV(targetRaw + noise()),
-      wrinkles:        clampV(100 - targetRaw + noise()),  // ters: düşük = iyi
-      pigmentation:    clampV(100 - targetRaw + noise()),  // ters: düşük = iyi
-      under_eye:       clampV(targetRaw + noise()),
+      wrinkles:        rand(10, 35),
+      pigmentation:    rand(10, 30),
+      hydration:       rand(60, 85),
+      tone_uniformity: rand(60, 85),
+      under_eye:       rand(55, 80),
     },
-    estimated_skin_age: rand(Math.max(18, actualAge - 5), actualAge + 5),
-    confidence: 0.3,
+    estimated_skin_age: rand(24, 36),
+    confidence: 0.3, // düşük güven — fallback olduğunu gösterir
     brief_explanation: 'AI servisi geçici olarak kullanılamıyor. Tahmini skor gösterilmektedir.',
   }
 }
@@ -232,13 +197,9 @@ export async function POST(req: NextRequest) {
       .select('birth_year')
       .eq('id', user.id)
       .single()
-    if (!profile?.birth_year) {
-      return NextResponse.json(
-        { error: 'NO_BIRTH_YEAR', message: 'Doğum yılı eksik. Lütfen profilinizi güncelleyin.' },
-        { status: 400 }
-      )
-    }
-    const actualAge = new Date().getFullYear() - profile.birth_year
+    const actualAge = profile?.birth_year
+      ? new Date().getFullYear() - profile.birth_year
+      : null
 
     // Rate limiting: IP başına 5 analiz / saat
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown'
@@ -252,41 +213,40 @@ export async function POST(req: NextRequest) {
     const mimeType = body.mimeType ?? 'image/jpeg'
     const base64 = body.image.replace(/^data:[^;]+;base64,/, '')
 
-    // GPT Vision çağrısı (hata durumunda fallback)
+    // GPT-4 Vision çağrısı (hata durumunda fallback)
     let gptData: GPTResponse
     let usedFallback = false
     try {
       gptData = await callGPT4Vision(base64, mimeType)
-    } catch (err: unknown) {
-      const e = err as { status?: number; message?: string; error?: { message?: string; code?: string } }
-      console.error('[AI Analiz] GPT hatası:', e?.status, e?.error?.code, e?.message ?? e?.error?.message)
-      gptData = generateFallback(actualAge)
+    } catch (err) {
+      console.error('[AI Analiz] GPT-4 Vision hatası, fallback kullanılıyor:', err)
+      gptData = generateFallback()
       usedFallback = true
     }
 
-    // Estelongy Algoritması hesaplama
+    // C250 hesaplama
     // Yaş faktörü: önce gerçek yaş (profilden), yoksa GPT tahmini
-    const rawScore  = applyEA(gptData.component_scores)
+    const rawScore  = applyC250(gptData.component_scores)
     const ageForFactor = actualAge ?? gptData.estimated_skin_age
     const af        = ageFactor(ageForFactor)
-    const eaScore   = clamp(rawScore * af)
+    const c250Score = clamp(rawScore * af)
 
     const result: AnalizResult = {
-      overall:   eaScore,
+      overall:   c250Score,
       moisture:  gptData.component_scores.hydration,
       wrinkles:  gptData.component_scores.wrinkles,
       spots:     gptData.component_scores.pigmentation,
       pores:     clamp(100 - gptData.component_scores.tone_uniformity),
       skinAge:   gptData.estimated_skin_age,
       confidence: gptData.confidence,
-      eaDetails: {
+      c250Details: {
         rawScore,
         ageFactor: af,
-        eaResult:  eaScore,
+        c250Result: c250Score,
         explanation: gptData.brief_explanation,
       },
-      colorZone: colorZone(eaScore),
-      recommendations: buildRecommendations(gptData.component_scores, eaScore),
+      colorZone: colorZone(c250Score),
+      recommendations: buildRecommendations(gptData.component_scores, c250Score),
       isAI: true,
     }
 
@@ -296,10 +256,10 @@ export async function POST(req: NextRequest) {
         .from('analyses')
         .insert({
           user_id:     user.id,
-          web_overall: Math.round(eaScore),
+          web_overall: Math.round(c250Score),
           status:      'completed',
           web_ai_raw: {
-            eaDetails:     result.eaDetails,
+            c250Details:   result.c250Details,
             confidence:    gptData.confidence,
             usedFallback,
             actual_age:    actualAge,
@@ -321,10 +281,10 @@ export async function POST(req: NextRequest) {
         await supabase.from('scores').insert({
           user_id:     user.id,
           score_type:  'web',
-          c250_base:   eaScore,
-          total_score: eaScore,
-          overall_score: Math.round(eaScore),
-          color_zone:  colorZone(eaScore),
+          c250_base:   c250Score,
+          total_score: c250Score,
+          overall_score: Math.round(c250Score),
+          color_zone:  colorZone(c250Score),
           analysis_id: analysisRow.id,
         }).select()
       }

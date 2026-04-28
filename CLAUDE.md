@@ -3,21 +3,23 @@
 ## Proje Özeti
 
 **Estelongy** — Estetik sağlık alanında AI destekli klinik yönetim ve hasta takip platformu.  
-**Stack:** Next.js 14 (App Router) · Tailwind · Supabase PostgreSQL (RLS) · OpenAI GPT-4o · Stripe · Resend · Sentry · Vercel
+**Stack:** Next.js 14 (App Router) · Tailwind · Supabase PostgreSQL (RLS) · OpenAI gpt-5.4-mini · Stripe · Resend · Sentry · Vercel
 
-### Git & Deploy Akışı
+### Git & Deploy Akışı (ÖNEMLİ)
 
 ```
-Production branch:  claude/priceless-ellis  →  estelongy-clean.vercel.app
+Feature branch:  claude/priceless-ellis  →  preview URL (faz1-git-claude-priceless-ellis-*.vercel.app)
+Production:      main                     →  estelongy-clean.vercel.app  (Vercel production alias)
 ```
 
-Vercel production branch ayarı `claude/priceless-ellis` yapıldı. Branch'e her push direkt production'a gider — merge/main adımı **yok**.
+**Canlıya çıkarmak için adımlar:**
+1. Değişiklikleri `claude/priceless-ellis` branch'ine commit + push et
+2. Main worktree'ye geç: `cd C:/Users/Orjin/estelongy-faz1`
+3. Merge et: `git merge claude/priceless-ellis --no-ff -m "Merge branch 'claude/priceless-ellis'"`
+4. Push et: `git push origin main` → Vercel production build tetiklenir
+5. Build durumu: Vercel MCP `list_deployments` (projectId: `prj_qQ0N5SSfH8kqaY61qyiAFIOy9pVS`, team: `team_6KIGU5JvMoWBV5To6nncBNnc`)
 
-**Canlıya çıkarmak:**
-1. `claude/priceless-ellis` worktree'sinde commit + `git push origin claude/priceless-ellis`
-2. Build durumu: Vercel MCP `list_deployments` (projectId: `prj_qQ0N5SSfH8kqaY61qyiAFIOy9pVS` — `faz-1`, team: `team_6KIGU5JvMoWBV5To6nncBNnc`)
-
-Main branch kullanılmıyor, unutulabilir.
+Sadece feature branch'e push deploy'u canlıya yansıtmaz — preview kalır.
 
 ---
 
@@ -38,20 +40,17 @@ Main branch kullanılmıyor, unutulabilir.
 
 ```
 /                        → Landing page
-/giris  /kayit           → Auth (kayıt artık Phone OTP zorunlu)
-/panel                   → Hasta paneli (Güncel Analiz + Önceki Analizler + üst sabit skor rozeti)
+/giris  /kayit           → Auth
+/panel                   → Hasta paneli (rozetler, analizler, siparişler)
 /panel/referral          → Referral + komisyon
 /panel/leaderboard       → Anonim skor sıralaması
-/skor                    → Skor Merkezi (sticky gauge + anket wizard + hızlı randevu + ürün vitrini)
-/skor?analysisId=X       → Belirli bir analiz için skor merkezi
-/analiz                  → GPT-4 Vision + C250 analiz (biter bitmez /skor'a yönlendirir)
-/anket                   → Longevity anketi (eski, /skor'da wizard olarak gömülü)
-/randevu                 → Klinik filtre + takvim + onay (RandevuFlow bileşeni)
+/analiz                  → gpt-5.4-mini Vision + C250 analiz
+/anket                   → Longevity anketi
+/randevu                 → Klinik seç + müsaitlik + randevu
 /magaza  /magaza/[slug]  → Ürün listesi + detay
 /sepet  /siparis/[no]    → Sepet + sipariş detay/iade
-/klinik/basvur           → Klinik başvuru (SMS OTP yok — admin onay yeterli)
+/klinik/basvur           → Klinik başvuru
 /klinik/panel            → Klinik yönetim (randevular, takvim, müsaitlik, rapor)
-/satici/basvur           → Satıcı başvuru
 /admin                   → Admin dashboard (kullanıcılar, klinikler, satıcılar, ürünler, kuponlar, iadeler)
 /rehber                  → SEO hub + alt sayfalar
 /hakkinda/*              → SSS, İletişim, Sözleşme, Aydınlatma, Çerez
@@ -75,40 +74,25 @@ appointments.procedure_notes, recommendations → text (klinik yazar, hasta okur
 analyses.web_ai_raw        → JSONB  |  analyses.web_scores → JSONB
 analyses.appointment_id    → uuid (ziyarete bağlı analiz; null ise bağımsız)
 analyses.doctor_approved_scores → JSONB { tetkik, ileri_analiz_c250, hekim_skoru }
-profiles.phone_verified    → boolean DEFAULT false  (OTP doğrulama sonrası true)
-profiles.birth_year        → smallint (analiz için zorunlu, kayıtta alınır)
 ```
 
-**RPC:** `consume_jeton(p_clinic_id, p_appointment_id)` · `generate_referral_code(p_user_id)` · `decrement_product_stock` · `set_user_role(target_user_id, new_role)`
-
-**Trigger:** `trg_add_default_availability` — yeni klinik eklendiğinde `clinic_availability`'ye Pzt-Cmt 09:00-18:30, 30dk slot default ekler.
+**RPC:** `consume_jeton(p_clinic_id, p_appointment_id)` · `generate_referral_code(p_user_id)` · `decrement_product_stock`
 
 ---
 
 ## Env Variables
 
 ```
-# Supabase
 NEXT_PUBLIC_SUPABASE_URL · NEXT_PUBLIC_SUPABASE_ANON_KEY · SUPABASE_SERVICE_ROLE_KEY
-
-# AI & Payment
 OPENAI_API_KEY · STRIPE_SECRET_KEY · STRIPE_WEBHOOK_SECRET · NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-
-# Email & Cron & Monitoring
-RESEND_API_KEY · FROM_EMAIL · CRON_SECRET · NEXT_PUBLIC_SENTRY_DSN · SENTRY_ORG · SENTRY_PROJECT
-
-# Netgsm OTP SMS (Vercel Production'da ayarlı)
-NETGSM_USERCODE · NETGSM_PASSWORD · NETGSM_MSGHEADER  (DRIGOK)
-
-# Upstash Redis (OTP rate limit + kod saklama)
-UPSTASH_REDIS_REST_URL · UPSTASH_REDIS_REST_TOKEN
+RESEND_API_KEY · CRON_SECRET · NEXT_PUBLIC_SENTRY_DSN · SENTRY_ORG · SENTRY_PROJECT
 ```
 
 ---
 
-## AI — GPT-4 Vision + C250
+## AI — gpt-5.4-mini Vision + C250
 
-`POST /api/analiz` (rate limit: IP başına 5/saat) → Base64 → GPT-4o → 5 bileşen → C250 → skor
+`POST /api/analiz` (rate limit: IP başına 5/saat) → Base64 → gpt-5.4-mini → 5 bileşen → C250 → skor
 
 **C250 Ağırlıkları:**
 
@@ -175,69 +159,6 @@ Hem klinik (`/klinik/panel/hasta/[userId]`) hem hasta (`/panel`) tarafında ziya
 
 ---
 
-## Phone OTP (Netgsm) — Kayıt Doğrulama
-
-Kayıt sırasında telefon doğrulaması zorunlu. Giriş'te SMS yok (normal email+password).
-
-- **Endpoints:**
-  - `POST /api/otp/send` — body `{ phone }` → SMS gönderir, Redis'e 5 dk TTL kod yazar
-  - `POST /api/otp/verify` — body `{ phone, code }` → kodu kontrol eder, login'liyse `profiles.phone_verified=true`
-- **Client bileşen:** `src/components/PhoneOtpStep.tsx` — autoSend, resend cooldown (3 dk, `mm:ss` format), 5 yanlış deneme limit
-- **Netgsm helper:** `src/lib/netgsm.ts` — `sendOtpSms`, `normalizePhone`, `generateOtpCode`, `mapNetgsmError`
-  - Endpoint: `https://api.netgsm.com.tr/sms/rest/v2/otp` (Basic auth)
-  - Telefon: `5XXXXXXXXX` (10 hane, 0/+90 sıyrılır)
-  - Mesaj: **Türkçe karaktersiz** — `"ESTELONGY ile Genclik yolculuguna hos geldiniz! Dogrulama kodunuz: XXXXXX"`
-  - Önkoşul (Netgsm): API Kullanıcısı alt hesabı + OTP SMS paketi aktif + `DRIGOK` başlığı onaylı
-- **Redis (Upstash):**
-  - `otp:code:{phone}` — kod, TTL 300s
-  - `otp:attempts:{phone}` — yanlış deneme sayacı
-  - `ratelimit:otp:min` — 1 istek / 3 dk (aynı telefon)
-  - `ratelimit:otp:hour` — 5 istek / saat
-
-Kayıt akışında doğrulama sonrası `/api/kayit` çağrılır — `phone_verified=true` profile'a yazılır. Klinik ve satıcı başvurularında OTP yok, admin onayı yeterli (sahte başvuruyu admin filtreliyor).
-
----
-
-## Skor Merkezi (/skor)
-
-Tek sayfada birleşik kullanıcı deneyimi — analiz bitince buraya yönlendirilir.
-
-- **Yapı (lg breakpoint):**
-  - **Sol (3fr, sticky):** skor gauge + biyolojik yaş (tek satır inline) + 4 cilt metriği (yatay)
-  - **Sağ (2fr):** 3 dikey aksiyon kartı (Anket / Hızlı Randevu / Hızlı Ürün)
-  - Kart tıklanınca `inset-x-0` ile tüm container'ı kaplar, backdrop ile kapanır
-- **Kartlar:**
-  - **Longevity Anketi** — AnketWizard (tek soru, emoji + 2xl başlık + 4xl değer, ileri/geri, noktalı ilerleme). Slider hareket ettikçe sol gauge canlı günceller (`previousScore` + "Skorunuz güncelleniyor" chip).
-  - **Hızlı Randevu** — 8 klinik vitrini; tıklayınca `RandevuFlow embedded` başlar (gün/saat/onay). Alt CTA: "Başka bir klinik arıyorum" → `/randevu`
-  - **Hızlı Ürün** — 8 ürün vitrini (görsel + isim + fiyat + EGP). Alt CTA: "Mağazaya göz atmak istiyorum" → `/magaza`
-- **URL param:** `/skor?analysisId=<uuid>` belirli bir analizi gösterir (önceki analizler panel'den buradan açılır).
-- **Biyolojik yaş formülü (PLACEHOLDER):** `scoreToApparentAge(score) = round(18 + (100 - score) × 0.74)` — gerçek algoritma Faz 2.
-
----
-
-## Öneri Sistemi (src/lib/recommendations.ts) — İki Aşamalı
-
-**Aşama 1 (TASLAK):** Skor zonu → işlem ve ürün anahtarları (statik mapping). `ZONE_RECOMMENDATIONS` objesinde 5 zon için kontrol edilmiş vocabulary:
-- `cok_dusuk` (<55) — **tüm menü açık dahil cerrahi** (agresif yoğunluk). Doldu.
-- `dusuk` (56-65) — orta-yoğun klinik + medikal ürün (aktif yoğunluk). Doldu.
-- `normal` / `iyi` / `cok_iyi` — **TODO** (çift amaçlı işlemler her zone'da olabilir: preventif_botox, profhilo, prp, mesoterapi, hidrafacial, led_terapi — frekans farkı).
-
-**İşlem vokabüleri (`IslemKey`):** 40+ anahtar — lazer, enjeksiyon, sıkılaştırma, cerrahi (yüz germe, blefaroplasti, rinoplasti, lipoenjeksiyon...), peeling, bakım. `ISLEM_LABELS` map ile UI etiketi.
-
-**Ürün kategorileri (`UrunKategori`):** 19 kategori — retinol (3 doz), C vit, niasinamid, hyaluronik, peptit, SPF, takviyeler. `URUN_LABELS`.
-
-**Aşama 2 (TODO — eşleştirme):** `clinic.specialties` içinde zone'un önerdiği işlemler → klinik filtreleme. Ayrıca metrik bazlı top 3 işlem seçimi (en zayıf metriğe göre) — "Sana özel önerimiz" vitrini.
-
-**UX kararı:** Skor 50 gibi düşük bir kişiye 30+ öneri çıkarmak yerine "100+ öneri bulduk, en uygun 3'ü bunlar, bu uzmanlarla görüşün" pattern'i.
-
----
-
-## Klinik Default Müsaitlik
-
-Yeni klinik oluştuğunda trigger otomatik doldurur: Pazartesi-Cumartesi, 09:00-18:30, 30 dk slot. Admin panelde klinik istediği zaman değiştirebilir.
-
----
-
 ## Geliştirme Kuralları
 
 - `'use client'` bileşenlerinde `export const dynamic = 'force-dynamic'` **KULLANMA**
@@ -250,47 +171,35 @@ Yeni klinik oluştuğunda trigger otomatik doldurur: Pazartesi-Cumartesi, 09:00-
 
 ## Bekleyen Görevler
 
-### Öneri Sistemi (Yapılacak — recommendations.ts)
-- [ ] `normal` / `iyi` / `cok_iyi` zonları için işlem + ürün listesi doldurulacak
-- [ ] Çift amaçlı işlemlerin her zone'da frekans önerisi (yıllık/aylık)
-- [ ] Klinik eşleştirme: `clinic.specialties` ↔ önerilen işlem anahtarları
-- [ ] Metrik bazlı top-3 seçim: en zayıf 2-3 cilt metriğine göre öncelikli işlem önerisi
-- [ ] UI: Skor Merkezi'nde "Sana özel 3 öneri + bu uzmanlarla görüş" vitrini
-
-### Biyolojik Yaş (Yapılacak)
-- [ ] `scoreToApparentAge()` gerçek algoritma (şu an placeholder) — C250 zaten skor→yaş dönüştürücü olarak tasarlanmış, mapping tablosu belirlenecek
-
-### Rename (Yapılacak — düşük öncelik, mevcut bileşenler çalışıyor)
+### Rename (Yapılacak)
 - [ ] Tüm "EGS" → "Skor" / "Estelongy Gençlik Skoru ®"
-- [ ] `EGSScoreBar` → `ScoreBar` · `EGSScoreChart` → `ScoreChart` (zaten rename edildi, kontrol et)
+- [ ] `EGSScoreBar` → `ScoreBar` · `EGSScoreChart` → `ScoreChart` · `EGSFixedBadge` → `ScoreFixedBadge`
 - [ ] `EGSPhase` type → `ScorePhase`
+- [ ] `ZONE_DEFS` / `getZone()` / `colorZone()` / `zoneLabel()` → 5 yeni bölge
 - [ ] SEO meta, OG image, PaylasModal, landing page metinleri
 
 ### Manuel (Kod Gerektirmeyen)
 - [ ] Supabase → Auth → Google OAuth etkinleştir
-- [ ] Vercel Env: `RESEND_API_KEY` + `FROM_EMAIL` → welcome email ve kuyruk mailleri aktif olur
+- [ ] Vercel Env: `OPENAI_API_KEY` · `CRON_SECRET` · `RESEND_API_KEY`
 - [ ] Sentry proje → DSN'leri Vercel'e ekle
 - [ ] Stripe live mode → KYC tamamla
-- [ ] Netgsm panel: OTP SMS paket kontörünü izle (biter → SMS gitmez)
 
 ### Ziyaret Akışı İyileştirmeleri (Yapılacak)
 - [ ] Klinik akışı tamamlanınca `analyses.appointment_id` otomatik dolsun (şu an manuel backfill gerekti)
-- [ ] "İşlem sonrası takip" — hasta 10 gün sonra yeni ön analiz yaptığında, sonraki randevuya otomatik ilişkilendir
+- [ ] "İşlem sonrası takip" — hasta 10 gün sonra yeni ön analiz yaptığında, sonraki randevuya otomatik ilişkilendir ve öncekinin kartında "takip sonucu" olarak göster
 - [ ] Hekim önerileri değişince hastaya bildirim (notification_queue)
-- [ ] Kart içinde "öncekine göre" grafik mini-sparkline
+- [ ] Kart içinde "öncekine göre" grafik mini-sparkline (nem, kırışıklık trend)
 
 ### Bildirim Sistemi (Yapılacak)
-- [ ] Randevu alınınca hastaya e-posta (şu an kuyruğa yazılıyor, cron tetiklenmiyor)
-- [ ] Randevu onaylanınca hastaya e-posta — `/api/notifications/process` cron bağlantısı
-- [ ] Randevu SMS bildirimi — Netgsm'in normal SMS endpoint'iyle (`/sms/rest/v2/send`, Türkçe destekli, OTP farklı)
-- [ ] Welcome email test edilmeli (Resend key girilince)
-
-### Phone OTP Genişletme (Opsiyonel)
-- [ ] Girişsiz randevu alan kullanıcı için: `RandevuOnayModal` email OTP yerine (ya da yanına) phone OTP sekmesi eklenebilir
+- [ ] Randevu alınınca hastaya e-posta gönder (şu an sadece kuyruğa yazılıyor, cron tetiklenmiyor)
+- [ ] Randevu onaylanınca hastaya e-posta gönder — `/api/notifications/process` cron bağlantısı kurulacak
+- [ ] `RESEND_API_KEY` Vercel'e eklenmeli (Manuel)
+- [ ] SMS bildirimi — Netgsm veya benzeri provider (Faz 3)
 
 ### Faz 3
 - [ ] Mobil App (React Native / Expo)
-- [ ] Push provider (FCM)
+- [ ] Redis (Upstash) — rate limiting prod
+- [ ] Push/SMS provider (FCM / Netgsm)
 - [ ] AI fine-tuning
 - [ ] API Platformu · Çoklu dil (EN)
 - [ ] EGP UI: mağaza rozeti + sıralama + "nasıl hesaplandı" şeffaflık
