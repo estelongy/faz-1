@@ -36,22 +36,37 @@ Build durumu: Vercel MCP `list_deployments` (projectId: `prj_qQ0N5SSfH8kqaY61qyi
 ## Sayfa Haritası
 
 ```
-/                        → Landing page
-/giris  /kayit           → Auth
-/panel                   → Hasta paneli (rozetler, analizler, siparişler)
+/                        → Landing page (3 kapı: Analiz / Randevu / Mağaza)
+/giris  /kayit           → Auth (girişli kullanıcı next param'a yönlenir)
+/kurumsal/giris          → Klinik & Satıcı girişi (tek sayfa, tip seçimi)
+
+/panel                   → Hasta paneli (3 bölge: Skor / Sıradaki Adım / Yönetim Grid)
+/panel/hesabim           → Profil + telefon (SMS OTP) + şifre + hesabı sil
+/panel/analizlerim       → Skor geçmiş grafiği + ziyaret zaman çizelgesi
+/panel/randevularim      → Tüm randevular (iptal/QR)
+/panel/siparislerim      → Sipariş listesi
+/panel/iadelerim         → İade talepleri
+/panel/adreslerim        → Adres yönetimi
 /panel/referral          → Referral + komisyon
 /panel/leaderboard       → Anonim skor sıralaması
-/analiz                  → gpt-5.4-mini Vision + C250 analiz
-/anket                   → Longevity anketi
+
+/analiz                  → gpt-5.4-mini Vision + Estelongy Algoritması
+/skor?analysisId=xxx     → Skor merkezi (3 kart: Anket / Randevu / Ürün) + ?open=anket|randevu|urun
 /randevu                 → Klinik seç + müsaitlik + randevu
 /magaza  /magaza/[slug]  → Ürün listesi + detay
 /sepet  /siparis/[no]    → Sepet + sipariş detay/iade
+
 /klinik/basvur           → Klinik başvuru
 /klinik/panel            → Klinik yönetim (randevular, takvim, müsaitlik, rapor)
+/satici/basvur           → Satıcı başvuru
+/satici/panel            → Satıcı yönetim (ürünler, sipariş, kazanç, ödeme hesabı, iade)
+
 /admin                   → Admin dashboard (kullanıcılar, klinikler, satıcılar, ürünler, kuponlar, iadeler)
 /rehber                  → SEO hub + alt sayfalar
 /hakkinda/*              → SSS, İletişim, Sözleşme, Aydınlatma, Çerez
 ```
+
+> **Not:** `/anket` standalone sayfa **silindi**. Longevity anketi artık tek yerde: `/skor?analysisId=xxx&open=anket`. Tek soru kaynağı: `src/lib/anket-sorular.ts`.
 
 ---
 
@@ -87,11 +102,12 @@ RESEND_API_KEY · CRON_SECRET · NEXT_PUBLIC_SENTRY_DSN · SENTRY_ORG · SENTRY_
 
 ---
 
-## AI — gpt-5.4-mini Vision + C250
+## AI — gpt-5.4-mini Vision + Estelongy Algoritması
 
-`POST /api/analiz` (rate limit: IP başına 5/saat) → Base64 → gpt-5.4-mini → 5 bileşen → C250 → skor
+`POST /api/analiz` (rate limit: IP başına 5/saat) → Base64 → gpt-5.4-mini → 5 bileşen → EA → skor
+Response: `{ ok, result, usedFallback, analysisId }` — analysisId frontend'de `/skor?analysisId=...` yönlendirmesi için kullanılır.
 
-**C250 Ağırlıkları:**
+**Ağırlıklar:**
 
 | Bileşen | Ağırlık | Yön |
 |---------|---------|-----|
@@ -102,6 +118,53 @@ RESEND_API_KEY · CRON_SECRET · NEXT_PUBLIC_SENTRY_DSN · SENTRY_ORG · SENTRY_
 | under_eye | 0.10 | yüksek = iyi |
 
 **Yaş faktörü:** ≤25→1.02 · ≤35→1.00 · ≤45→0.97 · ≤55→0.93 · 56+→0.88
+
+---
+
+## Longevity Anketi (Tek Kaynak)
+
+**Yer:** `/skor?analysisId=xxx&open=anket` — tam ekran modal wizard
+**DB:** `longevity_surveys` (answers JSONB) + `scores` (hasta_anket_puani)
+**Soru kaynağı:** `src/lib/anket-sorular.ts`
+
+**Hasta Anketi (5 soru, sıra: beslenme → cilt → uyku → stres → aktivite):**
+- Slider 0-100 ölçek
+- Tüm sorular "20 yaşınızdan bu yana ... 0-100 arasında puanlayın" formatında
+- Skor katkısı: max +10 puan (`hastaAnketPuani` fonksiyonu — `/lib/anket-sorular.ts`)
+- Wizard adımları: -1 (intro) → 0..4 (sorular) → submit
+
+**Klinik Ek Anketi (5 soru, klinik akışında):**
+- sigara · alkol · aile_gecmisi · kronik_hastalik · gunes_maruziyeti
+- Aynı 0-100 ölçek
+- Klinik anketi toplamı (10 soru): max +20 puan (`klinikAnketPuani`)
+
+**Skor mantığı:**
+- Hasta anketi dolmuşsa ve klinik anketinde aynı 5 soru yeniden cevaplanırsa hasta anket puanı düşülür, klinik toplamı eklenir
+- Hasta anketi boşsa klinik anketi direkt eklenir
+- Ek 5 klinik sorusu her zaman ek olarak eklenir
+
+> **Soru başına ağırlık:** Şu an eşit. Soru bazlı ağırlık ayarı **TODO** — bkz. "Skor Algoritması İnce Ayar".
+
+---
+
+## Hasta Paneli Mimari (3 Bölge)
+
+`/panel` sade ve net — 5 saniyede anlaşılır:
+
+```
+[1] SKOR DURUMU       Büyük skor barı + faz rozeti + "Skor Detayı →" link
+[2] SIRADAKİ ADIM     Faza göre tek dinamik CTA (gradient kart)
+[3] YÖNETİM GRID      8 ikonik kart (Hesabım/Analizler/Randevular/...)
+```
+
+**Sıradaki Adım CTA mantığı (`src/app/panel/page.tsx`):**
+1. Hiç analiz yok → "İlk analizinizi yapın" → `/analiz`
+2. Klinik onaylı → "Skorun hazır, paylaş veya yeniden ölç"
+3. Aktif randevu var → "Randevunuz var: [tarih]" → `/panel/randevularim`
+4. Anket dolu, randevu yok → "Klinik randevusu alın" → `/randevu`
+5. Ön analiz var, anket yok → "Anketinizi doldurun, +10 puan" → `/skor?...&open=anket`
+
+**Geçmiş analizler ve ziyaret zaman çizelgesi** panelden çıktı, `/panel/analizlerim`'e taşındı.
 
 ---
 
@@ -168,6 +231,13 @@ Hem klinik (`/klinik/panel/hasta/[userId]`) hem hasta (`/panel`) tarafında ziya
 
 ## Bekleyen Görevler
 
+### Skor Algoritması İnce Ayar (Sıradaki) ⏳
+- [ ] Hasta anketi 5 sorusunun **soru başına ağırlığı** belirlenecek (şu an eşit, max +10 puan)
+- [ ] Klinik ek anketi 5 sorusunun ağırlığı (şu an eşit, max +20 puan)
+- [ ] Soru bazlı katkı kuralları `src/lib/anket-sorular.ts` içinde fonksiyonlara dökülecek
+- [ ] Tetkik puanlarının skora yansıması (parametre bazlı)
+- [ ] Hekim onayı %15 ağırlık (mevcut kural — değişmeyecek)
+
 ### Rename (Yapılacak)
 - [ ] Tüm "EGS" → "Skor" / "Estelongy Gençlik Skoru ®"
 - [ ] `EGSScoreBar` → `ScoreBar` · `EGSScoreChart` → `ScoreChart` · `EGSFixedBadge` → `ScoreFixedBadge`
@@ -193,6 +263,10 @@ Hem klinik (`/klinik/panel/hasta/[userId]`) hem hasta (`/panel`) tarafında ziya
 - [ ] `RESEND_API_KEY` Vercel'e eklenmeli (Manuel)
 - [ ] SMS bildirimi — Netgsm veya benzeri provider (Faz 3)
 
+### Hesabım Tamamlama
+- [ ] **Hesabı sil** şu an `is_active=false` set ediyor — gerçek silme için service role admin endpoint (Faz 2)
+- [ ] **E-posta değişikliği** şu an "destek ekibiyle iletişime geç" placeholder — Supabase auth.updateUser({ email }) ile flow eklenecek
+
 ### Faz 3
 - [ ] Mobil App (React Native / Expo)
 - [ ] Redis (Upstash) — rate limiting prod
@@ -200,3 +274,18 @@ Hem klinik (`/klinik/panel/hasta/[userId]`) hem hasta (`/panel`) tarafında ziya
 - [ ] AI fine-tuning
 - [ ] API Platformu · Çoklu dil (EN)
 - [ ] EGP UI: mağaza rozeti + sıralama + "nasıl hesaplandı" şeffaflık
+- [ ] Misafir checkout (geçici şifreyle hesap oluşturma) — şu an üyelik zorunlu
+
+---
+
+## ✅ Tamamlanan Yapısal İşler (referans)
+
+- **Anket sistemi:** İki ayrı flow (`/anket` + `/skor`) tek sistemde birleştirildi → `/anket` silindi
+- **Soru sıralaması:** beslenme → cilt → uyku → stres → aktivite (kullanıcı kararı)
+- **Soru metinleri:** "20 yaşınızdan bu yana ..." formatında, 0-100 ölçek
+- **Skor merkezi (`/skor`):** Tam ekran modal kart sistemi (Anket / Randevu / Ürün), `?open=` query param desteği
+- **Panel mimari:** 3 bölge (Skor Durumu / Sıradaki Adım / Yönetim Grid), 565 → 270 satır
+- **Yeni alt sayfalar:** `/panel/hesabim`, `/panel/analizlerim`, `/panel/randevularim`
+- **Hesabım:** Profil düzenle + telefon SMS OTP + şifre değiştir + hesap pasifleştir
+- **Landing kapıları:** Kapı 1 ve 2 → `/giris?next=...` (girişli kullanıcı next'e yönlenir)
+- **Production branch:** `claude/priceless-ellis` (main silindi, GitHub default değiştirildi)
