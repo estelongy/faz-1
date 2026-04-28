@@ -74,6 +74,7 @@ export default function AnketPage() {
   const [saving,  setSaving]      = useState(false)
   const [analysis, setAnalysis]   = useState<Analysis | null>(null)
   const [alreadyDone, setAlreadyDone] = useState(false)
+  const [introShown, setIntroShown] = useState(false)
 
   const [answers, setAnswers] = useState<Record<string, number>>(
     Object.fromEntries(SORULAR.map(q => [q.key, 10]))
@@ -130,6 +131,99 @@ export default function AnketPage() {
       <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
       </div>
+    )
+  }
+
+  // ── Intro Ekranı ──────────────────────────────────────────────────────────
+  if (!introShown) {
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
+        {/* Header */}
+        <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/5">
+          <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              <span className="text-white font-bold text-sm">Longevity Anketi</span>
+            </div>
+            <button onClick={() => router.push('/panel')}
+              className="text-slate-400 hover:text-white text-sm transition-colors">
+              Panele Dön
+            </button>
+          </div>
+        </header>
+
+        <div className="max-w-2xl mx-auto px-4 pt-28 pb-16 flex flex-col items-center justify-center min-h-screen">
+          <div className="w-full rounded-3xl border border-slate-700 bg-slate-800/60 backdrop-blur-sm p-8 space-y-6">
+
+            {/* Başlık */}
+            <div className="text-center space-y-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-violet-400 mb-3">Longevity Başarı Analizi</p>
+              <p className="text-slate-400 text-sm">(Sağlıklı Yaşam Analizi)</p>
+              <h1 className="text-2xl font-black text-white mt-2 leading-snug">
+                Biyolojik Sermayenizi<br />Ne Kadar Korudunuz?
+              </h1>
+            </div>
+
+            {/* Ana açıklama */}
+            <p className="text-slate-300 text-sm leading-relaxed text-center">
+              Bu analiz şu anki sağlığınızı değil; <span className="text-white font-semibold">20 yaşınızdan bugüne kadar</span> yaşam tarzınızın biyolojik yaşlanma hızınızı nasıl şekillendirdiğini ölçer.
+            </p>
+
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-700 text-sm text-slate-400 leading-relaxed text-center">
+              Takvim yaşınız değiştirilemez.<br />
+              <span className="text-white font-medium">Biyolojik yaşınız ise büyük ölçüde sizin elinizde olmuştur.</span>
+            </div>
+
+            {/* Nasıl değerlendirmelisiniz */}
+            <div className="space-y-3">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">📊 Nasıl değerlendirmelisiniz?</p>
+              <p className="text-slate-400 text-xs leading-relaxed">
+                Geçici dönemleri değil, <span className="text-slate-300">20&apos;li yaşlarınızdan bugüne uzanan genel ortalamanızı</span> esas alın.
+              </p>
+              <div className="space-y-2">
+                {[
+                  { pct: '%100', label: 'O alanda yaşam boyu tutarlı ve özenliydiniz', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+                  { pct: '%50',  label: 'İyi dönemler ve ihmal edilen dönemler dengelendi', color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20'   },
+                  { pct: '%0',   label: 'O alan büyük ölçüde ihmal edildi',                color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20'       },
+                ].map(row => (
+                  <div key={row.pct} className={`flex items-start gap-3 p-3 rounded-xl border ${row.bg}`}>
+                    <span className={`font-black text-sm shrink-0 w-10 ${row.color}`}>{row.pct}</span>
+                    <span className="text-slate-300 text-xs leading-relaxed">{row.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Hatırlatma */}
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-violet-500/10 border border-violet-500/20">
+              <span className="text-lg shrink-0">💡</span>
+              <p className="text-slate-300 text-xs leading-relaxed">
+                Burada kendinizi yargılamıyorsunuz — <span className="text-white font-medium">nerede olduğunuzu görüyorsunuz.</span>
+              </p>
+            </div>
+
+            {/* Meta */}
+            <div className="flex items-center justify-center gap-6 text-xs text-slate-500">
+              <span>⏱ 3–5 dakika</span>
+              <span className="w-px h-4 bg-slate-700" />
+              <span>📋 5 soru</span>
+              <span className="w-px h-4 bg-slate-700" />
+              <span className="text-amber-400 font-semibold">+10 puan</span>
+            </div>
+
+            {/* CTA */}
+            <button
+              onClick={() => setIntroShown(true)}
+              className="w-full py-4 rounded-2xl font-black text-white text-base transition-all hover:opacity-90 hover:scale-[1.01] bg-gradient-to-r from-violet-600 to-purple-600">
+              Analize Başla →
+            </button>
+          </div>
+        </div>
+      </main>
     )
   }
 
