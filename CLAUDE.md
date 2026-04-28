@@ -246,42 +246,51 @@ Hem klinik (`/klinik/panel/hasta/[userId]`) hem hasta (`/panel`) tarafında ziya
 
 ---
 
-## Bekleyen Görevler
+## Bekleyen Görevler — Sıralı Öncelik
 
-### Skor Algoritması İnce Ayar (Sıradaki) ⏳
-- [x] Hasta anketi 5 sorusunun ağırlığı (max +3.6 puan, soru bazında: 0.9/1.0/0.7/0.5/0.5)
-- [x] Klinik ek anketi 5 sorusunun ağırlığı (max +3.6 puan, geçici: 1.1/0.5/0.4/0.6/1.0)
-- [x] Soru bazlı katkı `maxKatki` alanı olarak `AnketSoru` interface'inde
-- [ ] **Klinik ek soruları ağırlığı bilimsel araştırma ile finalize edilecek** (kullanıcı düzeltecek)
-- [ ] Tetkik puanlarının skora yansıması (parametre bazlı)
-- [ ] Hekim onayı %15 ağırlık (mevcut kural — değişmeyecek)
+### 🥇 1. Tetkik Puanı Algoritması (Sıradaki — Aktif İş)
+Skor algoritmasının kalan parçası. Anket bitti, şimdi tetkik.
+- [ ] `src/lib/tetkik-params.ts` parametre listesi gözden geçirilecek
+- [ ] Her parametre için skor katkısı kuralı belirlenecek (referans aralığı içi/dışı, yakınlık etkisi)
+- [ ] Tetkik max toplam katkısı belirlenecek (anket gibi 3.6 mı, daha fazla mı?)
+- [ ] `scores.tetkik_puani` kolonuna otomatik yazılacak
+- [ ] Hekim onayı %15 ağırlık formülü netleştirilecek (mevcut: `final = ara_toplam × 0.85 + hekim × 0.15`)
 
-### Rename (Yapılacak)
-- [ ] Tüm "EGS" → "Skor" / "Estelongy Gençlik Skoru ®"
-- [ ] `EGSScoreBar` → `ScoreBar` · `EGSScoreChart` → `ScoreChart` · `EGSFixedBadge` → `ScoreFixedBadge`
-- [ ] `EGSPhase` type → `ScorePhase`
-- [ ] `ZONE_DEFS` / `getZone()` / `colorZone()` / `zoneLabel()` → 5 yeni bölge
-- [ ] SEO meta, OG image, PaylasModal, landing page metinleri
-
-### Manuel (Kod Gerektirmeyen)
-- [ ] Supabase → Auth → Google OAuth etkinleştir
-- [ ] Vercel Env: `OPENAI_API_KEY` · `CRON_SECRET` · `RESEND_API_KEY`
-- [ ] Sentry proje → DSN'leri Vercel'e ekle
-- [ ] Stripe live mode → KYC tamamla
-
-### Ziyaret Akışı İyileştirmeleri (Yapılacak)
-- [ ] Klinik akışı tamamlanınca `analyses.appointment_id` otomatik dolsun (şu an manuel backfill gerekti)
-- [ ] "İşlem sonrası takip" — hasta 10 gün sonra yeni ön analiz yaptığında, sonraki randevuya otomatik ilişkilendir ve öncekinin kartında "takip sonucu" olarak göster
-- [ ] Hekim önerileri değişince hastaya bildirim (notification_queue)
-- [ ] Kart içinde "öncekine göre" grafik mini-sparkline (nem, kırışıklık trend)
-
-### Bildirim Sistemi (Yapılacak)
+### 🥈 2. Bildirim Sistemi (Kullanıcı için kritik)
+Randevu/işlem bildirimleri şu an çalışmıyor.
 - [ ] Randevu alınınca hastaya e-posta gönder (şu an sadece kuyruğa yazılıyor, cron tetiklenmiyor)
 - [ ] Randevu onaylanınca hastaya e-posta gönder — `/api/notifications/process` cron bağlantısı kurulacak
+- [ ] Hekim önerileri değişince hastaya bildirim (notification_queue)
 - [ ] `RESEND_API_KEY` Vercel'e eklenmeli (Manuel)
 - [ ] SMS bildirimi — Netgsm veya benzeri provider (Faz 3)
 
-### Hesabım Tamamlama
+### 🥉 3. Sentry Kurulumu (Manuel — kod yok, 10 dk)
+Production hata yakalama. Şu an `@sentry/nextjs` paketi yüklü ve `sentry.*.config.ts` dosyaları hazır, AMA env var yok → hatalar uçuyor.
+- [ ] sentry.io'da "estelongy" projesi yarat → DSN al
+- [ ] Vercel env'e ekle: `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`
+- [ ] Bir test hatası fırlat, dashboard'da görünüyor mu kontrol et
+
+### 4. EGS → Skor Rename (Kozmetik temizlik)
+Component/type rename'leri yapılmış. Sadece yorumlar ve dosya adı kalmış (kullanıcı UI'da hiç "EGS" görmüyor).
+- [x] `EGSScoreBar` → `ScoreBar`, `EGSScoreChart` → `ScoreChart`, `EGSFixedBadge` → `ScoreFixedBadge`
+- [x] `EGSPhase` → `ScorePhase`
+- [ ] `src/lib/egs.ts` dosya adı → `src/lib/skor.ts` rename + tüm import'ların güncellenmesi
+- [ ] 8 yerde kalan EGS yorumları temizlenecek
+- [ ] Tetkik params'ta "EGS toplam skora katkı" yorumu güncellensin
+- [ ] SEO meta, OG image, PaylasModal'da kalan EGS metinleri (varsa) kontrol edilecek
+
+### 5. Diğer Manuel (Kod Gerektirmeyen)
+- [ ] Supabase → Auth → Google OAuth etkinleştir
+- [ ] Vercel Env: `OPENAI_API_KEY` · `CRON_SECRET` · `RESEND_API_KEY`
+- [ ] Stripe live mode → KYC tamamla
+- [ ] **Klinik ek anketi ağırlıkları** bilimsel araştırma ile finalize edilecek (şu an geçici: 1.1/0.5/0.4/0.6/1.0)
+
+### 6. Ziyaret Akışı İyileştirmeleri
+- [ ] Klinik akışı tamamlanınca `analyses.appointment_id` otomatik dolsun (şu an manuel backfill gerekti)
+- [ ] "İşlem sonrası takip" — hasta 10 gün sonra yeni ön analiz yaptığında, sonraki randevuya otomatik ilişkilendir ve öncekinin kartında "takip sonucu" olarak göster
+- [ ] Kart içinde "öncekine göre" grafik mini-sparkline (nem, kırışıklık trend)
+
+### 7. Hesabım Tamamlama
 - [ ] **Hesabı sil** şu an `is_active=false` set ediyor — gerçek silme için service role admin endpoint (Faz 2)
 - [ ] **E-posta değişikliği** şu an "destek ekibiyle iletişime geç" placeholder — Supabase auth.updateUser({ email }) ile flow eklenecek
 
