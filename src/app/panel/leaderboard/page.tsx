@@ -197,7 +197,7 @@ export default async function LeaderboardPage() {
           <ul className="space-y-2 text-slate-400 text-xs">
             <li className="flex gap-2">
               <span className="text-violet-400">1.</span>
-              <span>AI ön analiz yap (fotoğraf → GPT-4 Vision)</span>
+              <span>AI ön analiz yap (fotoğraf → Estelongy AI)</span>
             </li>
             <li className="flex gap-2">
               <span className="text-violet-400">2.</span>

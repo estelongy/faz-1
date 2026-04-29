@@ -98,7 +98,7 @@ export default async function GenclikSkoruNasilHesaplanirPage() {
             <h2 className="text-white font-black text-2xl mb-4">Genel Hesaplama Akışı</h2>
             <div className="space-y-3">
               {[
-                { step: '01', label: 'GPT-4 Vision Analizi', color: '#a78bfa', desc: 'Yüklenen selfie; GPT-4o Vision modeline gönderilir. Model 5 cilt bileşenini 0–100 arasında skorlar.' },
+                { step: '01', label: 'Görsel AI Analizi', color: '#a78bfa', desc: 'Yüklenen selfie; Estelongy görsel AI motoruna gönderilir. 5 cilt bileşeni (nem, kırışıklık, pigmentasyon, ton homojenliği, göz altı) 0–100 arasında skorlanır.' },
                 { step: '02', label: 'Estelongy Algoritması', color: '#60a5fa', desc: 'Bileşen skorları ağırlıklı olarak birleştirilerek ham skor hesaplanır.' },
                 { step: '03', label: 'Yaş Faktörü Düzeltmesi', color: '#34d399', desc: 'Takvim yaşına göre beklenti düzeltmesi yapılır. 25 yaş altı hafif avantaj, 55 yaş üstü hafif dezavantaj.' },
                 { step: '04', label: 'Longevity Anketi Katkısı (opsiyonel)', color: '#fbbf24', desc: 'Yaşam tarzı soruları tamamlanmışsa 0–10 puana kadar katkı eklenir.' },
@@ -210,7 +210,7 @@ export default async function GenclikSkoruNasilHesaplanirPage() {
 
             <div className="p-5 rounded-2xl bg-slate-800/40 border border-slate-700 font-mono text-xs space-y-2">
               <p className="text-slate-500">{'// Örnek hesaplama'}</p>
-              <p><span className="text-blue-400">ea_on</span>       = <span className="text-white">75</span>  <span className="text-slate-600">{'// GPT-4 Vision sonucu'}</span></p>
+              <p><span className="text-blue-400">ea_on</span>       = <span className="text-white">75</span>  <span className="text-slate-600">{'// Görsel AI sonucu'}</span></p>
               <p><span className="text-violet-400">ea_ileri</span>   = <span className="text-white">82</span>  <span className="text-slate-600">{'// Klinikteki yeniden analiz (75\'in yerini alır)'}</span></p>
               <p><span className="text-amber-400">hasta_anket</span>   = <span className="text-white">+1</span></p>
               <p><span className="text-orange-400">klinik_anket</span> = <span className="text-white">+5</span>  <span className="text-slate-600">{'// hasta anketini replace eder'}</span></p>
