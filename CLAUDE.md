@@ -270,7 +270,17 @@ Production hata yakalama. Şu an `@sentry/nextjs` paketi yüklü ve `sentry.*.co
 - [ ] Vercel env'e ekle: `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`
 - [ ] Bir test hatası fırlat, dashboard'da görünüyor mu kontrol et
 
-### 4. EGS → Skor Rename (Kozmetik temizlik)
+### 4. SEO — Manuel İşler (kod tamam, 5 dk)
+Profesyonel SEO altyapısı kuruldu (JSON-LD, dynamic sitemap, manifest, robots, breadcrumbs). Geriye sadece dış servis kayıtları kaldı.
+- [ ] **Google Search Console** → property ekle (`estelongy.com`) → verification kodu al → Vercel env'e `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` ekle
+- [ ] Search Console'a `https://estelongy.com/sitemap.xml` submit et
+- [ ] **Bing Webmaster Tools** kayıt (Türkiye'de %10 pazar payı)
+- [ ] `src/app/layout.tsx` içindeki `sameAs` URL'lerini gerçek sosyal medya hesaplarıyla güncelle (şu an placeholder: instagram/twitter/linkedin)
+- [ ] Ürün listesi (`/magaza`) ve detay (`/magaza/[slug]`) sayfalarındaki `<img>` etiketleri `next/image` ile değiştirilecek (build warning + LCP iyileştirme)
+- [ ] `/rehber/*` makaleleri için `opengraph-image.tsx` template (her makale için özel OG görseli)
+- [ ] Klinik sayfası açılırsa (`/klinik/[slug]`) → sitemap'e ekle + LocalBusiness JSON-LD
+
+### 5. EGS → Skor Rename (Kozmetik temizlik)
 Component/type rename'leri yapılmış. Sadece yorumlar ve dosya adı kalmış (kullanıcı UI'da hiç "EGS" görmüyor).
 - [x] `EGSScoreBar` → `ScoreBar`, `EGSScoreChart` → `ScoreChart`, `EGSFixedBadge` → `ScoreFixedBadge`
 - [x] `EGSPhase` → `ScorePhase`
@@ -279,18 +289,18 @@ Component/type rename'leri yapılmış. Sadece yorumlar ve dosya adı kalmış (
 - [ ] Tetkik params'ta "EGS toplam skora katkı" yorumu güncellensin
 - [ ] SEO meta, OG image, PaylasModal'da kalan EGS metinleri (varsa) kontrol edilecek
 
-### 5. Diğer Manuel (Kod Gerektirmeyen)
+### 6. Diğer Manuel (Kod Gerektirmeyen)
 - [ ] Supabase → Auth → Google OAuth etkinleştir
 - [ ] Vercel Env: `OPENAI_API_KEY` · `CRON_SECRET` · `RESEND_API_KEY`
 - [ ] Stripe live mode → KYC tamamla
 - [ ] **Klinik ek anketi ağırlıkları** bilimsel araştırma ile finalize edilecek (şu an geçici: 1.1/0.5/0.4/0.6/1.0)
 
-### 6. Ziyaret Akışı İyileştirmeleri
+### 7. Ziyaret Akışı İyileştirmeleri
 - [ ] Klinik akışı tamamlanınca `analyses.appointment_id` otomatik dolsun (şu an manuel backfill gerekti)
 - [ ] "İşlem sonrası takip" — hasta 10 gün sonra yeni ön analiz yaptığında, sonraki randevuya otomatik ilişkilendir ve öncekinin kartında "takip sonucu" olarak göster
 - [ ] Kart içinde "öncekine göre" grafik mini-sparkline (nem, kırışıklık trend)
 
-### 7. Hesabım Tamamlama
+### 8. Hesabım Tamamlama
 - [ ] **Hesabı sil** şu an `is_active=false` set ediyor — gerçek silme için service role admin endpoint (Faz 2)
 - [ ] **E-posta değişikliği** şu an "destek ekibiyle iletişime geç" placeholder — Supabase auth.updateUser({ email }) ile flow eklenecek
 
