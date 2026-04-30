@@ -304,6 +304,114 @@ Component/type rename'leri yapılmış. Sadece yorumlar ve dosya adı kalmış (
 - [ ] **Hesabı sil** şu an `is_active=false` set ediyor — gerçek silme için service role admin endpoint (Faz 2)
 - [ ] **E-posta değişikliği** şu an "destek ekibiyle iletişime geç" placeholder — Supabase auth.updateUser({ email }) ile flow eklenecek
 
+### 9. Klinik Deneyim Sistemi — "Hekim Dostu Model"
+
+**Felsefe:** Estelongy yorum platformu değil, ölçüm platformudur. Hekim sanatı **puanlanmaz**, sonucu sistem ölçer. Yıldızlı yorumdan kaçınıp **tacir kliniği veriden ayrıştıran** sinyaller kullanılır. Hedef yol: **akreditasyon** ama 3 fazlı.
+
+#### Yorum formu (randevu completed sonrası)
+
+**Puanlanan boyutlar (sadece objektif, 1-5 ★):**
+- 🧹 Klinik hijyeni & ortam
+- 👥 Karşılama & personel
+- ⏱️ Randevu uyumu
+- 💬 Bilgilendirme & iletişim
+
+**Puanlanmayan ama sorulan:**
+- 💚 NPS — "Tavsiye eder misin?" (0-4 ölçek)
+- 🛡️ Tacir filtresi — "Sana ihtiyacın olmayan işlem önerildi mi?" (yes/no)
+- 🔁 Sadakat — "Aynı işlem için tekrar gelir miydin?" (evet/belki/hayır)
+
+**Serbest metin (opsiyonel):**
+- ✅ İyi olan tarafı?
+- ⚠️ İyileştirilmesi gereken?
+- ☐ Anonim paylaşım toggle
+
+**Hekim sanatı / sonuç memnuniyeti ASLA puanlanmaz.** Sonuç sistem tarafından otomatik ölçülür: `klinik_onayli_skor − on_analiz_skor` farkı.
+
+#### Klinik EGP formülü (REVİZE)
+
+```
+Klinik EGP = Sonuç Etkinliği    × 0.35   ← skor Δ (objektif, hasta beyanı değil)
+           + NPS Score          × 0.25   ← bipolar memnuniyet
+           + Operasyonel Puan   × 0.20   ← 4 yıldız ortalaması
+           + Estelongy Onayı    × 0.15   ← editöryel/sertifika
+           + Profesyonellik     × 0.05   ← hekim deneyimi, lisans
+
+× confidence_factor  (yorum sayısı 5'ten azsa Bayesian smoothing)
+× son 6 ay zaman ağırlığı
+```
+
+**Tercih sıklığı EGP'ye GİRMEZ** — ayrı `popularity_score` kolonu, listede tiebreaker + rozet ("🔥 Bu ay 87 randevu").
+
+**Bölge** — EGP global hesaplanır, listeleme şehir/ilçe öncelikli, iki rozet ("Kadıköy'ün en iyisi" + "Türkiye Top 20").
+
+#### Akreditasyona Giden Yol — 3 Faz
+
+**🥇 Faz 1: Ölçüm Dönemi (6-12 ay)**
+- Veri toplama, sertifika YOK
+- Yorum formu canlıya alınır
+- Otomatik veri rozetleri: 📈 Yüksek sonuç etkinliği · 💚 Yüksek tavsiye · 🛡️ Doğru endikasyon (>%90)
+- Hedef: 50-100 aktif klinik, 1000+ değerlendirilmiş randevu
+
+**🥈 Faz 2: Algoritmik Rozet (12-18 ay sonra)**
+- Veri olgunlaşınca otomatik kademeleme
+- 🥉 Estelongy Onaylı / 🥈 Önerilen / 🥇 Premium
+- Henüz "akreditasyon" değil, başvuru süreci yok — algoritma rozet üretir
+- İhlalde otomatik geri alınır
+
+**💎 Faz 3: ELS — Estelongy Longevity Standartları (2-3 yıl sonra)**
+- Kurumsal sertifika kuruluşu — SKS modelinde
+- 4 seviye: 🥉 Bronze → 🥈 Silver → 🥇 Gold → 💎 Platinum
+- Başvuru, denetim, yıllık yenileme
+- Tıbbi danışma kurulu + hukuki altyapı
+- **Estelongy'nin asıl moat'ı bu** — başkası kopyalayamaz çünkü standartı sen koyuyorsun
+
+**Felsefi pozisyon:**
+> "Yemeksepeti restoran sıralıyor. Estelongy klinik akrediteliyor. SKS'in longevity versiyonuyuz."
+
+#### DB Şeması (Faz 1'de oluşturulacak)
+
+```sql
+CREATE TABLE clinic_reviews (
+  id, appointment_id (UNIQUE), clinic_id, user_id,
+  -- Operasyonel (1-5)
+  hygiene_rating, staff_rating, punctuality_rating, communication_rating,
+  -- Tacir filtresi
+  nps_score          smallint CHECK (BETWEEN 0 AND 4),
+  unnecessary_offered boolean,                    -- "ihtiyacım olmayan iş önerildi mi"
+  would_return       text CHECK (IN ('yes','maybe','no')),
+  -- Metin
+  positive_text, improvement_text, is_anonymous,
+  -- Klinik cevabı
+  clinic_response, clinic_responded_at, clinic_responded_by,
+  -- Moderasyon
+  is_hidden, reported_count,
+  created_at, updated_at
+);
+
+ALTER TABLE clinics ADD COLUMN
+  egp                  numeric(3,1),
+  popularity_score     int,
+  result_effectiveness numeric(4,2),  -- ortalama skor Δ
+  nps_score            int,
+  operational_avg      numeric(3,1),
+  els_level            text,           -- bronze|silver|gold|platinum (Faz 3)
+  els_certified_until  date;
+```
+
+#### Faz 1 İş Listesi
+- [ ] `clinic_reviews` tablosu + RLS politikaları + indexler
+- [ ] `/panel/randevularim/[id]/degerlendir` sayfası (yorum formu)
+- [ ] Yorum kaydetme server action (7 gün düzenleme penceresi)
+- [ ] `clinics` tablosuna agregate kolonları + cron (günlük EGP hesaplama)
+- [ ] Klinik public sayfası `/klinik/[slug]` (yorum listesi + EGP rozeti + alt boyutlar)
+- [ ] Randevu listesinde klinik kartında EGP gösterimi
+- [ ] Klinik panelinde yorum listesi + tek-seferlik cevap hakkı
+- [ ] Otomatik veri rozeti sistemi (📈/💚/🛡️)
+- [ ] Bildirim entegrasyonu — randevu completed + 6 saat sonra "deneyimini paylaş" e-postası (bildirim sistemi tamamlandıktan sonra)
+
+> **Sıralama:** Bu iş **bildirim sisteminden sonra** başlar (çünkü yorum tetikleyici e-posta gerekir). Tetkik algoritması → bildirim → klinik deneyim sistemi.
+
 ### Faz 3
 - [ ] Mobil App (React Native / Expo)
 - [ ] Redis (Upstash) — rate limiting prod
@@ -312,6 +420,7 @@ Component/type rename'leri yapılmış. Sadece yorumlar ve dosya adı kalmış (
 - [ ] API Platformu · Çoklu dil (EN)
 - [ ] EGP UI: mağaza rozeti + sıralama + "nasıl hesaplandı" şeffaflık
 - [ ] Misafir checkout (geçici şifreyle hesap oluşturma) — şu an üyelik zorunlu
+- [ ] **ELS — Estelongy Longevity Standartları** (akreditasyon kuruluşu) — bkz. Madde 9 Faz 3
 
 ---
 
