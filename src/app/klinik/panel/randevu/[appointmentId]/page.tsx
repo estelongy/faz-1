@@ -321,7 +321,7 @@ export default async function RandevuAkisPage({
   if (!user) redirect('/giris')
 
   const { data: clinic } = await supabase
-    .from('clinics').select('id, name, jeton_balance').eq('user_id', user.id).single()
+    .from('clinics').select('id, name, jeton_balance, free_appointments_remaining').eq('user_id', user.id).single()
   if (!clinic) redirect('/klinik/panel')
 
   // Randevu — ownership kontrolü ile
@@ -413,6 +413,7 @@ export default async function RandevuAkisPage({
           appointment={appointment as Parameters<typeof KlinikAkisWizard>[0]['appointment']}
           analysis={analysis as Parameters<typeof KlinikAkisWizard>[0]['analysis']}
           jetonBalance={(clinic as { jeton_balance?: number }).jeton_balance ?? 0}
+          freeBalance={(clinic as { free_appointments_remaining?: number }).free_appointments_remaining ?? 0}
           hastaAnketCevaplari={hastaAnketCevaplari}
           onKabul={kabulEt}
           onSaveAnket={saveAnket}

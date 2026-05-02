@@ -57,6 +57,8 @@ interface Props {
   appointment: AppointmentData
   analysis: AnalysisData | null
   jetonBalance: number
+  /** Estelongy hediyesi olarak verilen ücretsiz hasta hakkı */
+  freeBalance?: number
   /** Hasta anketi cevapları (varsa klinik anketinde önceden doldurulur) */
   hastaAnketCevaplari: Record<string, number> | null
   onKabul:            (apptId: string) => Promise<{ ok: boolean; error?: string }>
@@ -69,9 +71,11 @@ interface Props {
 
 // ── Bileşen ───────────────────────────────────────────────────────
 export default function KlinikAkisWizard({
-  appointment, analysis, jetonBalance, hastaAnketCevaplari,
+  appointment, analysis, jetonBalance, freeBalance = 0, hastaAnketCevaplari,
   onKabul, onSaveAnket, onSaveTetkik, onSaveIleriAnaliz, onSaveHekim, onFinalOnay,
 }: Props) {
+  const totalCredit = jetonBalance + freeBalance
+  const willUsePaid = freeBalance === 0 && jetonBalance > 0
   const [isPending, startTransition] = useTransition()
   const [kabulError, setKabulError]   = useState<string | null>(null)
 
@@ -210,22 +214,36 @@ export default function KlinikAkisWizard({
           </div>
         </div>
 
-        {/* Jeton bakiyesi */}
+        {/* Kredi bakiyesi (ücretsiz + ücretli) */}
         {!alreadyIn && (
-          <div className={`p-4 rounded-xl border text-sm flex items-center justify-between ${
-            jetonBalance > 0
-              ? 'border-slate-700 bg-slate-800/40'
-              : 'border-red-500/30 bg-red-500/10'
+          <div className={`p-4 rounded-xl border text-sm ${
+            totalCredit === 0 ? 'border-red-500/30 bg-red-500/10' :
+            totalCredit <= 10 ? 'border-amber-500/30 bg-amber-500/10' :
+            'border-slate-700 bg-slate-800/40'
           }`}>
-            <div>
-              <span className={jetonBalance > 0 ? 'text-slate-400' : 'text-red-400'}>Jeton Bakiyesi</span>
-              {jetonBalance === 0 && (
-                <p className="text-red-400 text-xs mt-0.5">Hasta kabul etmek için jeton gerekli. Yöneticinizle iletişime geçin.</p>
-              )}
+            <div className="flex items-center justify-between mb-2">
+              <span className={
+                totalCredit === 0 ? 'text-red-400' :
+                totalCredit <= 10 ? 'text-amber-300' : 'text-slate-400'
+              }>Kredi Durumu</span>
+              <span className={`text-2xl font-black ${
+                totalCredit === 0 ? 'text-red-400' :
+                totalCredit <= 10 ? 'text-amber-400' : 'text-white'
+              }`}>{totalCredit}</span>
             </div>
-            <span className={`text-2xl font-black ${jetonBalance > 0 ? 'text-white' : 'text-red-400'}`}>
-              {jetonBalance}
-            </span>
+            <div className="flex gap-4 text-xs text-slate-500">
+              <span>🎁 Ücretsiz: <strong className="text-emerald-400">{freeBalance}</strong></span>
+              <span>💳 Ücretli: <strong className="text-violet-400">{jetonBalance}</strong></span>
+            </div>
+            {totalCredit === 0 && (
+              <p className="text-red-400 text-xs mt-2">Krediniz tükendi. Hasta kabulü için kredi yükleyin.</p>
+            )}
+            {totalCredit > 0 && totalCredit <= 10 && (
+              <p className="text-amber-300 text-xs mt-2">⚠ Son {totalCredit} kredi. Bittiğinde randevu kabulü kapanır.</p>
+            )}
+            {willUsePaid && totalCredit > 10 && (
+              <p className="text-violet-300 text-xs mt-2">ℹ Ücretsiz haklarınız bitti. Bu kabul ücretli bakiyenizden düşecek.</p>
+            )}
           </div>
         )}
 
@@ -237,9 +255,10 @@ export default function KlinikAkisWizard({
 
         {!alreadyIn ? (
           <button
-            disabled={isPending || jetonBalance < 1}
+            disabled={isPending || totalCredit < 1}
             onClick={() => startTransition(async () => {
               setKabulError(null)
+              if (willUsePaid && !confirm('Ücretsiz haklarınız bitti. Bu kabul ücretli kredinizden düşülecek. Onaylıyor musunuz?')) return
               const result = await onKabul(appointment.id)
               if (result.ok) {
                 setStep(2)
@@ -248,7 +267,10 @@ export default function KlinikAkisWizard({
               }
             })}
             className="w-full py-3.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
-            {isPending ? 'İşleniyor...' : jetonBalance < 1 ? '✕ Yetersiz Jeton' : '✓ Hastayı Kabul Et — 1 Jeton Düşülecek'}
+            {isPending ? 'İşleniyor...' :
+             totalCredit < 1 ? '✕ Yetersiz Kredi' :
+             freeBalance > 0 ? '✓ Hastayı Kabul Et — 1 Ücretsiz Hak Düşecek' :
+             '✓ Hastayı Kabul Et — 1 Kredi Düşecek'}
           </button>
         ) : (
           <button onClick={() => setStep(2)}

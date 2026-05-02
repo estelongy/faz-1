@@ -141,7 +141,7 @@ export default async function KlinikPanelPage() {
 
   const { data: clinic } = await supabase
     .from('clinics')
-    .select('id, name, approval_status, is_active, jeton_balance')
+    .select('id, name, approval_status, is_active, jeton_balance, free_appointments_remaining')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -231,22 +231,24 @@ export default async function KlinikPanelPage() {
               </div>
             </Link>
             <div className="flex items-center gap-4">
-              {/* Jeton bakiyesi */}
-              {clinic && (
-                <Link href="/klinik/panel/jeton" className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-opacity hover:opacity-80 ${
-                  (clinic.jeton_balance ?? 0) === 0
-                    ? 'bg-red-500/10 border-red-500/30 text-red-400'
-                    : (clinic.jeton_balance ?? 0) <= 3
-                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
-                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                }`}>
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clipRule="evenodd" />
-                  </svg>
-                  {clinic.jeton_balance ?? 0} Jeton
-                </Link>
-              )}
+              {/* Kredi bakiyesi (ücretsiz + ücretli) */}
+              {clinic && (() => {
+                const freeBal = (clinic as { free_appointments_remaining?: number }).free_appointments_remaining ?? 0
+                const totalBal = (clinic.jeton_balance ?? 0) + freeBal
+                return (
+                  <Link href="/klinik/panel/jeton" className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-opacity hover:opacity-80 ${
+                    totalBal === 0 ? 'bg-red-500/10 border-red-500/30 text-red-400' :
+                    totalBal <= 10 ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' :
+                    'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  }`}>
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clipRule="evenodd" />
+                    </svg>
+                    {totalBal} Kredi{freeBal > 0 && <span className="opacity-70 ml-1">({freeBal} hediye)</span>}
+                  </Link>
+                )
+              })()}
               <Link href="/klinik/panel/takvim" className="text-sm text-slate-400 hover:text-white transition-colors">📅 Takvim</Link>
               <Link href="/klinik/panel/rapor" className="text-sm text-slate-400 hover:text-white transition-colors">📊 Rapor</Link>
               <Link href="/panel" className="text-sm text-slate-400 hover:text-white transition-colors">Kullanıcı Paneli</Link>
@@ -292,39 +294,49 @@ export default async function KlinikPanelPage() {
           </div>
         )}
 
-        {clinic && (clinic.jeton_balance ?? 0) === 0 && (
-          <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <svg className="w-5 h-5 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-red-400 text-sm">
-                <strong>Jeton bakiyeniz sıfır.</strong> Hasta kabul edebilmek için jeton satın alın.
-              </p>
+        {clinic && (() => {
+          const freeBal = (clinic as { free_appointments_remaining?: number }).free_appointments_remaining ?? 0
+          const totalBal = (clinic.jeton_balance ?? 0) + freeBal
+          if (totalBal !== 0) return null
+          return (
+            <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-red-400 text-sm">
+                  <strong>Krediniz tükendi.</strong> Hasta kabulü kapalı ve klinik randevu sisteminde gizlendiniz. Kredi yükleyin veya Estelongy ile iletişime geçin.
+                </p>
+              </div>
+              <Link href="/klinik/panel/jeton"
+                className="shrink-0 px-3 py-1.5 bg-red-500 hover:bg-red-400 text-white text-xs font-bold rounded-lg transition-colors">
+                Kredi Al →
+              </Link>
             </div>
-            <Link href="/klinik/panel/jeton"
-              className="shrink-0 px-3 py-1.5 bg-red-500 hover:bg-red-400 text-white text-xs font-bold rounded-lg transition-colors">
-              Jeton Al →
-            </Link>
-          </div>
-        )}
+          )
+        })()}
 
-        {clinic && (clinic.jeton_balance ?? 0) > 0 && (clinic.jeton_balance ?? 0) <= 3 && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <svg className="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <p className="text-amber-400 text-sm">
-                Yalnızca <strong>{clinic.jeton_balance}</strong> jetonunuz kaldı.
-              </p>
+        {clinic && (() => {
+          const freeBal = (clinic as { free_appointments_remaining?: number }).free_appointments_remaining ?? 0
+          const totalBal = (clinic.jeton_balance ?? 0) + freeBal
+          if (totalBal === 0 || totalBal > 10) return null
+          return (
+            <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p className="text-amber-400 text-sm">
+                  Yalnızca <strong>{totalBal}</strong> krediniz kaldı. Tükendiğinde randevu kabulü kapanır.
+                </p>
+              </div>
+              <Link href="/klinik/panel/jeton"
+                className="shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold rounded-lg transition-colors">
+                Kredi Al →
+              </Link>
             </div>
-            <Link href="/klinik/panel/jeton"
-              className="shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold rounded-lg transition-colors">
-              Jeton Al →
-            </Link>
-          </div>
-        )}
+          )
+        })()}
 
         {/* İstatistik kartları */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">

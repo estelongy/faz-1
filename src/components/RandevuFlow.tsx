@@ -123,10 +123,11 @@ export default function RandevuFlow({ embedded = false, preselectedClinicId, pre
   useEffect(() => {
     const supabase = createClient()
     supabase
-      .from('clinics')
+      .from('clinics_with_credit_status')
       .select('id, name, location, bio, specialties, clinic_type')
       .eq('approval_status', 'approved')
       .eq('is_active', true)
+      .gt('total_credit_balance', 0)
       .then(({ data }) => {
         const list = (data ?? []) as Clinic[]
         setClinics(list)

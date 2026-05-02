@@ -35,10 +35,12 @@ export default async function JetonPage({
 
   const { data: clinic } = await supabase
     .from('clinics')
-    .select('id, name, jeton_balance')
+    .select('id, name, jeton_balance, free_appointments_remaining, paid_appointments_this_month, appointment_credit_price')
     .eq('user_id', user.id)
     .single()
   if (!clinic) redirect('/klinik/panel')
+
+  const totalCredits = (clinic.jeton_balance ?? 0) + (clinic.free_appointments_remaining ?? 0)
 
   const { data: transactions } = await supabase
     .from('jeton_transactions')
@@ -79,31 +81,44 @@ export default async function JetonPage({
 
         <div className="mb-8">
           <h1 className="text-2xl font-black text-white">Jeton Yönetimi</h1>
-          <p className="text-slate-400 mt-0.5 text-sm">Her hasta kabulünde 1 jeton düşülür.</p>
+          <p className="text-slate-400 mt-0.5 text-sm">Her hasta kabulünde 1 kredi düşer. Önce ücretsiz haklarınız tüketilir, ardından satın alınmış bakiye.</p>
         </div>
 
         {/* Özet kartları */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+          <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+            <p className="text-emerald-300 text-xs mb-1">🎁 Ücretsiz Hak</p>
+            <p className={`text-4xl font-black ${
+              clinic.free_appointments_remaining === 0 ? 'text-slate-500' : 'text-emerald-400'
+            }`}>{clinic.free_appointments_remaining ?? 0}</p>
+            <p className="text-emerald-300/60 text-[10px] mt-1">Estelongy hediyesi</p>
+          </div>
           <div className="p-5 rounded-2xl bg-slate-800/50 border border-slate-700 text-center">
-            <p className="text-slate-400 text-xs mb-1">Mevcut Bakiye</p>
+            <p className="text-slate-400 text-xs mb-1">💳 Ücretli Bakiye</p>
             <p className={`text-4xl font-black ${
               clinic.jeton_balance === 0 ? 'text-red-400' :
-              clinic.jeton_balance <= 3  ? 'text-amber-400' : 'text-emerald-400'
+              clinic.jeton_balance <= 10 ? 'text-amber-400' : 'text-violet-400'
             }`}>{clinic.jeton_balance}</p>
+            <p className="text-slate-500 text-[10px] mt-1">Satın alınmış</p>
           </div>
           <div className="p-5 rounded-2xl bg-slate-800/50 border border-slate-700 text-center">
             <p className="text-slate-400 text-xs mb-1">Toplam Yüklenen</p>
-            <p className="text-4xl font-black text-violet-400">{totalYukleme}</p>
+            <p className="text-2xl font-black text-violet-400">{totalYukleme}</p>
           </div>
           <div className="p-5 rounded-2xl bg-slate-800/50 border border-slate-700 text-center">
             <p className="text-slate-400 text-xs mb-1">Toplam Kullanılan</p>
-            <p className="text-4xl font-black text-slate-300">{totalKullanim}</p>
+            <p className="text-2xl font-black text-slate-300">{totalKullanim}</p>
           </div>
         </div>
 
-        {clinic.jeton_balance === 0 && (
+        {totalCredits === 0 && (
           <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-            ⚠ Jeton bakiyeniz sıfır. Hasta kabulü yapabilmek için jeton satın alın.
+            ⛔ <strong>Krediniz tükendi.</strong> Hasta kabulü yapamazsınız ve klinik randevu sisteminde gizlendiniz. Lütfen kredi yükleyin veya Estelongy ile iletişime geçin.
+          </div>
+        )}
+        {totalCredits > 0 && totalCredits <= 10 && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-sm">
+            ⚠ <strong>Son {totalCredits} krediniz kaldı.</strong> Tükendiğinde randevu kabulü kapanır. Şimdiden yeni kredi yüklemenizi öneririz.
           </div>
         )}
 
