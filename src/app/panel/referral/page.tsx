@@ -14,19 +14,28 @@ export default async function ReferralPage() {
   const { data: codeData } = await supabase.rpc('generate_referral_code', { p_user_id: user.id })
   const code = codeData as string
 
-  // Kullanım istatistikleri
-  const { data: refCode } = await supabase
-    .from('referral_codes')
-    .select('id, code, total_uses, total_earnings, created_at')
-    .eq('user_id', user.id)
+  // Profil → puan bakiyesi
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('points_balance')
+    .eq('id', user.id)
     .single()
 
-  const { data: uses } = await supabase
-    .from('referral_uses')
-    .select('id, commission_amount, status, created_at')
-    .eq('referral_code_id', refCode?.id ?? '')
+  const pointsBalance = profile?.points_balance ?? 0
+
+  // Davet edilen kullanıcı sayısı (bu kullanıcının referans verdiği kişiler)
+  const { count: referredCount } = await supabase
+    .from('profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('referred_by', user.id)
+
+  // Puan hareketleri (ledger)
+  const { data: transactions } = await supabase
+    .from('point_transactions')
+    .select('id, amount, type, description, created_at')
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
-    .limit(20)
+    .limit(30)
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
@@ -35,28 +44,29 @@ export default async function ReferralPage() {
           <div className="flex items-center gap-3">
             <Link href="/panel" className="text-slate-400 hover:text-white transition-colors text-sm">← Panelim</Link>
             <span className="text-slate-700">|</span>
-            <span className="text-white font-bold text-sm">Davet & Kazanç</span>
+            <span className="text-white font-bold text-sm">Davet & Puan</span>
           </div>
         </div>
       </header>
 
       <div className="max-w-3xl mx-auto px-4 pt-24 pb-16">
         <div className="mb-8">
-          <h1 className="text-2xl font-black text-white">Arkadaşını Davet Et</h1>
+          <h1 className="text-2xl font-black text-white">Arkadaşını Davet Et, Puan Kazan</h1>
           <p className="text-slate-400 mt-1 text-sm">
-            Referans kodunu paylaş. Arkadaşın sipariş verince sen kazanırsın.
+            Referans kodunla davet et — arkadaşın kayıt olunca, randevu yapınca ve alışveriş yapınca puan kazan.
           </p>
         </div>
 
         <ReferralClient
           code={code ?? ''}
-          totalUses={refCode?.total_uses ?? 0}
-          totalEarnings={Number(refCode?.total_earnings ?? 0)}
-          uses={(uses ?? []).map(u => ({
-            id: u.id,
-            commissionAmount: Number(u.commission_amount ?? 0),
-            status: u.status,
-            createdAt: u.created_at,
+          pointsBalance={pointsBalance}
+          referredCount={referredCount ?? 0}
+          transactions={(transactions ?? []).map(t => ({
+            id: t.id,
+            amount: t.amount,
+            type: t.type,
+            description: t.description,
+            createdAt: t.created_at,
           }))}
         />
       </div>

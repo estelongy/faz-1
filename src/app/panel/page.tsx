@@ -27,7 +27,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, birth_year')
+    .select('full_name, birth_year, points_balance')
     .eq('id', user.id)
     .single()
 
@@ -303,7 +303,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
             <YonetimKarti href="/panel/siparislerim" icon="📦" label="Siparişlerim" />
             <YonetimKarti href="/panel/iadelerim"    icon="↩" label="İadelerim" />
             <YonetimKarti href="/panel/adreslerim"   icon="📍" label="Adreslerim" />
-            <YonetimKarti href="/panel/referral"     icon="🎁" label="Davet & Kazan" />
+            <YonetimKarti href="/panel/referral"     icon="🎁" label={profile?.points_balance ? `Puanım: ${profile.points_balance}` : 'Davet & Puan'} />
             <YonetimKarti href="/panel/leaderboard"  icon="🏆" label="Sıralama" />
           </div>
         </section>

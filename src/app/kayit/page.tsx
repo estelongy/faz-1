@@ -1,15 +1,16 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import PhoneOtpStep from '@/components/PhoneOtpStep'
 
 type Step = 'form' | 'otp' | 'verify'
 
-export default function KayitPage() {
+function KayitInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName]   = useState('')
@@ -18,6 +19,18 @@ export default function KayitPage() {
   const [password, setPassword]   = useState('')
   const [birthYear, setBirthYear] = useState('')
   const [agreed, setAgreed]       = useState(false)
+  const [refCode, setRefCode]     = useState('')
+
+  // URL ?ref=XXX veya cookie 'estelongy_ref' otomatik doldur
+  useEffect(() => {
+    const fromUrl = searchParams.get('ref')
+    if (fromUrl) {
+      setRefCode(fromUrl.toUpperCase())
+      return
+    }
+    const m = document.cookie.match(/(?:^|;\s*)estelongy_ref=([^;]+)/)
+    if (m) setRefCode(decodeURIComponent(m[1]).toUpperCase())
+  }, [searchParams])
 
   const [step, setStep]       = useState<Step>('form')
   const [loading, setLoading] = useState(false)
@@ -87,6 +100,7 @@ export default function KayitPage() {
         last_name: lastName.trim(),
         birth_year: birthYearNum,
         phone_verified: true,
+        referral_code: refCode.trim() || undefined,
       }),
     })
     const result = await res.json()
@@ -269,6 +283,20 @@ export default function KayitPage() {
               )}
             </div>
 
+            {/* Referans kodu (opsiyonel) */}
+            <div>
+              <label className="block text-sm text-slate-400 mb-2">
+                Referans Kodu <span className="text-slate-600 text-xs">(opsiyonel)</span>
+              </label>
+              <input type="text" value={refCode}
+                onChange={e => setRefCode(e.target.value.toUpperCase().replace(/\s/g, '').slice(0, 12))}
+                placeholder="Bir arkadaşın kodu varsa girin"
+                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors uppercase tracking-wider" />
+              {refCode && (
+                <p className="text-emerald-400/80 text-xs mt-1.5">✨ Referans kodun arkadaşına +10 puan kazandıracak</p>
+              )}
+            </div>
+
             {/* Sözleşme */}
             <div className="space-y-3 pt-1">
               <label className="flex items-start gap-3 cursor-pointer group">
@@ -309,5 +337,13 @@ export default function KayitPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function KayitPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-slate-900" />}>
+      <KayitInner />
+    </Suspense>
   )
 }

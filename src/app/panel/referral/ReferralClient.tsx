@@ -2,26 +2,38 @@
 
 import { useState } from 'react'
 
-interface Use {
+interface Transaction {
   id: string
-  commissionAmount: number
-  status: string
+  amount: number
+  type: string
+  description: string | null
   createdAt: string
 }
 
 interface Props {
   code: string
-  totalUses: number
-  totalEarnings: number
-  uses: Use[]
+  pointsBalance: number
+  referredCount: number
+  transactions: Transaction[]
 }
 
 const BASE_URL = 'https://estelongy-clean.vercel.app'
-const COMMISSION_RATE = 0.05 // %5
 
-export default function ReferralClient({ code, totalUses, totalEarnings, uses }: Props) {
+const TYPE_LABEL: Record<string, string> = {
+  signup_bonus:         '🎁 Hoşgeldin bonusu',
+  referral_signup:      '👥 Davet kayıt',
+  referral_appointment: '🏥 Davet randevu',
+  referral_order:       '🛍️ Davet alışveriş',
+  gamification:         '⭐ Başarı bonusu',
+  redeem_shop:          '🛒 Mağaza harcama',
+  redeem_clinic:        '💉 Klinik harcama',
+  admin_adjust:         '⚙️ Manuel düzeltme',
+  refund_revert:        '↩️ İade',
+}
+
+export default function ReferralClient({ code, pointsBalance, referredCount, transactions }: Props) {
   const [copied, setCopied] = useState<'code' | 'link' | null>(null)
-  const referralLink = `${BASE_URL}/kayit?ref=${code}`
+  const referralLink = `${BASE_URL}/r/${code}`
 
   function copyCode() {
     navigator.clipboard.writeText(code).then(() => {
@@ -37,25 +49,23 @@ export default function ReferralClient({ code, totalUses, totalEarnings, uses }:
     })
   }
 
-  const shareText = `Estelongy'ye katıl ve yapay zeka destekli gençlik skorunu öğren! Referans kodum: ${code} → ${referralLink}`
+  const shareText = `Estelongy'de gençlik skorunu öğren — referans kodum: ${code}\n${referralLink}`
   const waUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`
   const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(`Estelongy — Referans kodum: ${code}`)}`
 
   return (
     <div className="space-y-5">
-      {/* İstatistikler */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 text-center">
-          <p className="text-3xl font-black text-violet-400">{totalUses}</p>
-          <p className="text-slate-500 text-xs mt-1">Davet Edilen</p>
+      {/* Bakiye + İstatistikler */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-gradient-to-br from-emerald-500/15 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-5">
+          <p className="text-emerald-300 text-xs mb-1">Puan Bakiyem</p>
+          <p className="text-4xl font-black text-emerald-400">{pointsBalance.toLocaleString('tr-TR')}</p>
+          <p className="text-emerald-300/60 text-[10px] mt-1">≈ ₺{pointsBalance.toLocaleString('tr-TR')} değerinde</p>
         </div>
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 text-center">
-          <p className="text-3xl font-black text-emerald-400">₺{totalEarnings.toLocaleString('tr-TR')}</p>
-          <p className="text-slate-500 text-xs mt-1">Toplam Kazanç</p>
-        </div>
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 text-center">
-          <p className="text-3xl font-black text-amber-400">%{(COMMISSION_RATE * 100).toFixed(0)}</p>
-          <p className="text-slate-500 text-xs mt-1">Komisyon Oranı</p>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
+          <p className="text-slate-400 text-xs mb-1">Davet Ettiğin</p>
+          <p className="text-4xl font-black text-violet-400">{referredCount}</p>
+          <p className="text-slate-500 text-[10px] mt-1">üye</p>
         </div>
       </div>
 
@@ -105,41 +115,64 @@ export default function ReferralClient({ code, totalUses, totalEarnings, uses }:
 
       {/* Nasıl çalışır */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
-        <h3 className="text-white font-bold mb-4">Nasıl Çalışır?</h3>
-        <div className="space-y-3">
-          {[
-            { num: '1', text: 'Referans kodunu arkadaşlarınla paylaş' },
-            { num: '2', text: `Arkadaşın ${BASE_URL}/kayit?ref=${code} linkinden kayıt olur` },
-            { num: '3', text: 'Arkadaşın ilk alışverişini yapınca sen %5 komisyon kazanırsın' },
-            { num: '4', text: 'Kazançların hesabına aktarılır (yakında)' },
-          ].map(s => (
-            <div key={s.num} className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-violet-500/20 text-violet-400 text-xs font-black flex items-center justify-center shrink-0 mt-0.5">
-                {s.num}
-              </div>
-              <p className="text-slate-400 text-sm">{s.text}</p>
+        <h3 className="text-white font-bold mb-4">Nasıl Puan Kazanırsın?</h3>
+        <div className="space-y-3 text-sm">
+          <div className="flex items-center justify-between border-b border-slate-700/50 pb-2.5">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center text-base">🎁</div>
+              <span className="text-slate-300">Hoşgeldin bonusu (yeni üye)</span>
             </div>
-          ))}
+            <span className="text-emerald-400 font-bold">+20</span>
+          </div>
+          <div className="flex items-center justify-between border-b border-slate-700/50 pb-2.5">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-violet-500/15 flex items-center justify-center text-base">👥</div>
+              <span className="text-slate-300">Arkadaşın kayıt olunca</span>
+            </div>
+            <span className="text-violet-400 font-bold">+10</span>
+          </div>
+          <div className="flex items-center justify-between border-b border-slate-700/50 pb-2.5">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center text-base">🏥</div>
+              <span className="text-slate-300">Arkadaşın ilk randevusunu tamamlayınca</span>
+            </div>
+            <span className="text-blue-400 font-bold">+50</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center text-base">🛍️</div>
+              <span className="text-slate-300">Arkadaşın ilk siparişinden</span>
+            </div>
+            <span className="text-amber-400 font-bold">%5</span>
+          </div>
         </div>
+        <p className="text-slate-500 text-xs mt-4">
+          Puanlarını mağazada veya klinikte indirim olarak kullanabilirsin (yakında).
+        </p>
       </div>
 
-      {/* Kullanım geçmişi */}
-      {uses.length > 0 && (
+      {/* Puan hareketleri */}
+      {transactions.length > 0 && (
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
           <div className="px-5 py-3 border-b border-slate-700">
-            <h3 className="text-white font-bold text-sm">Kullanım Geçmişi</h3>
+            <h3 className="text-white font-bold text-sm">Son Puan Hareketleri</h3>
           </div>
           <div className="divide-y divide-slate-800">
-            {uses.map(u => (
-              <div key={u.id} className="flex items-center justify-between px-5 py-3">
-                <div>
-                  <p className="text-white text-sm font-medium">
-                    {new Date(u.createdAt).toLocaleDateString('tr-TR')}
+            {transactions.map(t => (
+              <div key={t.id} className="flex items-center justify-between px-5 py-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium truncate">
+                    {t.description ?? TYPE_LABEL[t.type] ?? t.type}
                   </p>
-                  <p className="text-slate-500 text-xs capitalize">{u.status === 'paid' ? '✓ Ödendi' : u.status === 'pending' ? 'Beklemede' : 'İptal'}</p>
+                  <p className="text-slate-500 text-xs">
+                    {new Date(t.createdAt).toLocaleDateString('tr-TR', {
+                      day: 'numeric', month: 'long', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit',
+                    })}
+                  </p>
                 </div>
-                <span className={`font-black text-sm ${u.status === 'paid' ? 'text-emerald-400' : 'text-slate-500'}`}>
-                  +₺{u.commissionAmount.toLocaleString('tr-TR')}
+                <span className={`font-black text-base shrink-0 ml-3 ${t.amount > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {t.amount > 0 ? `+${t.amount}` : t.amount}
                 </span>
               </div>
             ))}
