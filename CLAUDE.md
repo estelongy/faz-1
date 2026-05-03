@@ -270,12 +270,13 @@ Skor algoritmasının kalan parçası. Anket bitti, şimdi tetkik.
 - [ ] Hekim onayı %15 ağırlık formülü netleştirilecek (mevcut: `final = ara_toplam × 0.85 + hekim × 0.15`)
 
 ### 🥈 2. Bildirim Sistemi (Aktif)
-- [x] `/api/notifications/process` cron saatlik (`0 * * * *`) — pending kuyruğu işliyor
-- [x] Randevu alınınca → anında `appointment_confirmed` (e-posta + SMS) enqueue
-- [x] 24h ve 1h önce → `appointment_reminder_24h` / `_1h` (e-posta + SMS) scheduled
+- [x] `/api/notifications/process` cron **günlük 09:00** (`0 9 * * *`) — Vercel Hobby plan kısıtı (Pro: saatlik)
+- [x] Randevu klinik tarafından onaylanınca → anında `appointment_confirmed` (e-posta + SMS) enqueue
+- [x] 24h önce → `appointment_reminder_24h` (e-posta + SMS) scheduled
 - [x] Score update bildirimi (e-posta + SMS) — KlinikAkışWizard hekim onay step'inden enqueue
 - [x] SMS altyapısı — Netgsm `sendInfoSms` (`/sms/rest/v2/send`) + Upstash Redis (OTP)
 - [ ] `RESEND_API_KEY` Vercel'e eklenmeli (Manuel) — yoksa e-posta sessiz başarısız
+- [ ] **1h hatırlatma** — Vercel Pro'ya geçince saatlik cron eklenecek (şimdilik atlandı)
 - [ ] Hekim önerileri değişince ayrı bildirim (procedure_notes/recommendations diff trigger)
 - [ ] Push notification (FCM) — Faz 3
 

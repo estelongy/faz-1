@@ -93,20 +93,14 @@ async function updateAppointmentStatus(formData: FormData) {
           await enqueueNotification({ userId: appt.user_id, type: 'appointment_confirmed', channel: 'sms', payload })
         }
 
-        // 2) Hatırlatmalar (24h ve 1h öncesi) — geçmişteki zamanlar atlanır
+        // 2) Hatırlatma — 24 saat öncesi (Hobby plan günde 1 cron, 1h hatırlatma yok)
         if (appt.appointment_date) {
           const apptTime = new Date(appt.appointment_date).getTime()
-          const now = Date.now()
-          const reminders: { offset: number; type: 'appointment_reminder_24h' | 'appointment_reminder_1h' }[] = [
-            { offset: 24 * 60 * 60 * 1000, type: 'appointment_reminder_24h' },
-            { offset: 1  * 60 * 60 * 1000, type: 'appointment_reminder_1h'  },
-          ]
-          for (const { offset, type } of reminders) {
-            const scheduledAt = new Date(apptTime - offset)
-            if (scheduledAt.getTime() <= now) continue
-            await enqueueNotification({ userId: appt.user_id, type, channel: 'email', payload, scheduledAt })
+          const reminderAt = new Date(apptTime - 24 * 60 * 60 * 1000)
+          if (reminderAt.getTime() > Date.now()) {
+            await enqueueNotification({ userId: appt.user_id, type: 'appointment_reminder_24h', channel: 'email', payload, scheduledAt: reminderAt })
             if (phoneVerified) {
-              await enqueueNotification({ userId: appt.user_id, type, channel: 'sms', payload, scheduledAt })
+              await enqueueNotification({ userId: appt.user_id, type: 'appointment_reminder_24h', channel: 'sms', payload, scheduledAt: reminderAt })
             }
           }
         }
