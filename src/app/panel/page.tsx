@@ -216,7 +216,86 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
           <p className="text-slate-400 text-sm">Cilt sağlığınızı takip edin</p>
         </div>
 
-        {/* ─── BÖLGE 1: SKOR DURUMU ─────────────────────────────── */}
+        {/* ─── BÖLGE 1: 3 KAPI — Hızlı Aksiyonlar (skorun üstünde) ── */}
+        <section>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Kapı 1 — Analiz */}
+            <Link href="/analiz"
+              className="group relative overflow-hidden rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-600/15 via-purple-600/8 to-pink-500/5 p-5 transition-all hover:border-violet-400 hover:scale-[1.02]">
+              <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-violet-500/10 blur-3xl group-hover:bg-violet-500/20 transition-all" />
+              <div className="relative">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white mb-3 shadow-lg shadow-violet-500/30">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-white font-bold text-base leading-tight mb-1">
+                  {latestAnalysis ? 'Skoru Güncelle' : 'Skorunu Öğren'}
+                </h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  {latestAnalysis ? 'Yeni selfie ile skorunu yenile' : 'Selfie ile saniyeler içinde'}
+                </p>
+                <div className="mt-3 flex items-center gap-1 text-violet-300 text-xs font-semibold">
+                  <span>{latestAnalysis ? 'Yeni Analiz' : 'Analizi Başlat'}</span>
+                  <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+
+            {/* Kapı 2 — Randevu */}
+            <Link href={activeAppt ? '/panel/randevularim' : '/randevu'}
+              className="group relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-600/15 via-cyan-600/8 to-teal-500/5 p-5 transition-all hover:border-blue-400 hover:scale-[1.02]">
+              <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-blue-500/10 blur-3xl group-hover:bg-blue-500/20 transition-all" />
+              <div className="relative">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white mb-3 shadow-lg shadow-blue-500/30">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-white font-bold text-base leading-tight mb-1">
+                  {activeAppt ? 'Aktif Randevun' : 'Klinikten Randevu Al'}
+                </h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  {activeAppt ? 'Detayı görüntüle' : 'Onaylı estetik kliniklerinden'}
+                </p>
+                <div className="mt-3 flex items-center gap-1 text-blue-300 text-xs font-semibold">
+                  <span>{activeAppt ? 'Randevuya Git' : 'Klinik Seç'}</span>
+                  <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+
+            {/* Kapı 3 — Mağaza */}
+            <Link href="/magaza"
+              className="group relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-600/15 via-orange-600/8 to-rose-500/5 p-5 transition-all hover:border-amber-400 hover:scale-[1.02]">
+              <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-amber-500/10 blur-3xl group-hover:bg-amber-500/20 transition-all" />
+              <div className="relative">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white mb-3 shadow-lg shadow-amber-500/30">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                </div>
+                <h3 className="text-white font-bold text-base leading-tight mb-1">Mağaza</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Estelongy puanlı bakım ürünleri
+                </p>
+                <div className="mt-3 flex items-center gap-1 text-amber-300 text-xs font-semibold">
+                  <span>Ürünleri Gör</span>
+                  <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </section>
+
+        {/* ─── BÖLGE 2: SKOR DURUMU ─────────────────────────────── */}
         <section className="p-6 rounded-2xl border border-slate-700 bg-slate-800/50 backdrop-blur-sm">
           {latestScore !== null && latestAnalysis ? (
             <>
@@ -275,23 +354,20 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
           )}
         </section>
 
-        {/* ─── BÖLGE 2: SIRADAKİ ADIM ───────────────────────────── */}
-        <section>
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 px-1">Sıradaki Adım</p>
-          <Link
-            href={nextAction.href}
-            className={`block p-6 rounded-2xl bg-gradient-to-r ${nextAction.gradient} hover:opacity-95 hover:scale-[1.005] transition-all shadow-lg`}
-          >
-            <div className="flex items-center gap-4">
-              <span className="text-4xl shrink-0">{nextAction.emoji}</span>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-white font-bold text-lg leading-tight mb-1">{nextAction.title}</h3>
-                <p className="text-white/80 text-sm">{nextAction.desc}</p>
-              </div>
-              <span className="text-white font-semibold text-sm hidden sm:block shrink-0">{nextAction.cta}</span>
+        {/* ─── BÖLGE 3: SIRADAKİ AKILLI ÖNERİ (kompakt) ───────────── */}
+        <Link
+          href={nextAction.href}
+          className={`block p-4 rounded-xl bg-gradient-to-r ${nextAction.gradient} hover:opacity-95 transition-all shadow-md`}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl shrink-0">{nextAction.emoji}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-white/70 text-[10px] uppercase tracking-widest font-bold">Sıradaki adım</p>
+              <h3 className="text-white font-bold text-sm leading-tight">{nextAction.title}</h3>
             </div>
-          </Link>
-        </section>
+            <span className="text-white font-semibold text-xs shrink-0">{nextAction.cta}</span>
+          </div>
+        </Link>
 
         {/* ─── BÖLGE 3: YÖNETİM GRID ───────────────────────────── */}
         <section>

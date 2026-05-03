@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import ScoreBar from '@/components/ScoreBar'
+import { createClient } from '@/lib/supabase/server'
+
+export const dynamic = 'force-dynamic'
 
 const SCORE_ZONES = [
   { label: 'Çok Düşük', range: '0 – 55',  color: '#ef4444', bg: 'bg-red-500/10',     border: 'border-red-500/20',    text: 'text-red-400',    desc: 'Gençlik Skoru çok düşük' },
@@ -85,7 +88,16 @@ const CLINIC_FEATURES = [
   },
 ]
 
-export default function Home() {
+export default async function Home() {
+  // Login durumu — server-side
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const isLoggedIn = !!user
+  // 3 kapı linkleri — login varsa direkt, yoksa /giris?next=
+  const dest1 = isLoggedIn ? '/analiz' : '/giris?next=/analiz'
+  const dest2 = isLoggedIn ? '/randevu' : '/giris?next=/randevu'
+  // (kapı 3 zaten /magaza, login gerektirmez)
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 overflow-x-hidden">
       {/* Nav */}
@@ -111,13 +123,24 @@ export default function Home() {
                 className="hidden md:block text-slate-400 hover:text-white text-sm transition-colors">
                 Klinik Başvurusu
               </Link>
-              <Link href="/giris" className="text-slate-400 hover:text-white text-sm transition-colors">
-                Giriş Yap
-              </Link>
-              <Link href="/kayit"
-                className="px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-violet-500/20">
-                Ücretsiz Başla
-              </Link>
+              {isLoggedIn ? (
+                <>
+                  <Link href="/panel"
+                    className="px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-violet-500/20">
+                    Hesabım
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/giris" className="text-slate-400 hover:text-white text-sm transition-colors">
+                    Giriş Yap
+                  </Link>
+                  <Link href="/kayit"
+                    className="px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-violet-500/20">
+                    Ücretsiz Başla
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -150,7 +173,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
 
             {/* Kapı 1 — Ücretsiz Analiz */}
-            <Link href="/giris?next=/analiz" className="group relative overflow-hidden rounded-3xl border border-violet-500/30 bg-gradient-to-br from-violet-600/20 via-purple-600/10 to-pink-500/5 p-8 text-left transition-all hover:border-violet-400 hover:scale-[1.02] hover:shadow-2xl hover:shadow-violet-500/20">
+            <Link href={dest1} className="group relative overflow-hidden rounded-3xl border border-violet-500/30 bg-gradient-to-br from-violet-600/20 via-purple-600/10 to-pink-500/5 p-8 text-left transition-all hover:border-violet-400 hover:scale-[1.02] hover:shadow-2xl hover:shadow-violet-500/20">
               <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-violet-500/10 blur-3xl group-hover:bg-violet-500/20 transition-all" />
               <div className="relative">
                 <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-white mb-5 shadow-lg shadow-violet-500/30">
@@ -178,7 +201,7 @@ export default function Home() {
             </Link>
 
             {/* Kapı 2 — Randevu Al */}
-            <Link href="/giris?next=/randevu" className="group relative overflow-hidden rounded-3xl border border-blue-500/30 bg-gradient-to-br from-blue-600/20 via-cyan-600/10 to-teal-500/5 p-8 text-left transition-all hover:border-blue-400 hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/20">
+            <Link href={dest2} className="group relative overflow-hidden rounded-3xl border border-blue-500/30 bg-gradient-to-br from-blue-600/20 via-cyan-600/10 to-teal-500/5 p-8 text-left transition-all hover:border-blue-400 hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/20">
               <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-blue-500/10 blur-3xl group-hover:bg-blue-500/20 transition-all" />
               <div className="relative">
                 <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white mb-5 shadow-lg shadow-blue-500/30">
@@ -476,20 +499,30 @@ export default function Home() {
         <div className="max-w-2xl mx-auto text-center">
           <div className="p-10 rounded-3xl bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-pink-500/10 border border-violet-500/20">
             <div className="text-5xl mb-4">✦</div>
-            <h2 className="text-3xl font-black text-white mb-4">Skorunuzu öğrenin</h2>
+            <h2 className="text-3xl font-black text-white mb-4">{isLoggedIn ? 'Skoruna Geri Dön' : 'Skorunuzu öğrenin'}</h2>
             <p className="text-slate-400 mb-8 leading-relaxed">
-              Gerçek yaşınız ile cilt yaşınız arasında ne kadar fark var?
-              Ücretsiz hesap oluşturun, ilk analizinizi yapın.
+              {isLoggedIn
+                ? 'Panelinde gençlik skorunu, randevularını ve siparişlerini bir arada görebilirsin.'
+                : 'Gerçek yaşınız ile cilt yaşınız arasında ne kadar fark var? Ücretsiz hesap oluşturun, ilk analizinizi yapın.'}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/kayit"
-                className="px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg">
-                Ücretsiz Kaydol
-              </Link>
-              <Link href="/giris"
-                className="px-8 py-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-semibold rounded-xl transition-all text-lg">
-                Giriş Yap
-              </Link>
+              {isLoggedIn ? (
+                <Link href="/panel"
+                  className="px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg">
+                  Panele Git →
+                </Link>
+              ) : (
+                <>
+                  <Link href="/kayit"
+                    className="px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg">
+                    Ücretsiz Kaydol
+                  </Link>
+                  <Link href="/giris"
+                    className="px-8 py-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-semibold rounded-xl transition-all text-lg">
+                    Giriş Yap
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
