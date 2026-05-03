@@ -71,23 +71,9 @@ async function updateClinic(formData: FormData) {
     }
   }
 
-  // Starter jeton: ilk kez onaylanıyorsa 10 jeton ver
-  if (status === 'approved' && current?.approval_status === 'pending' && (current?.jeton_balance ?? 0) === 0) {
-    await supabase.from('clinics').update({ approval_status: status, is_active: isActive, jeton_balance: 10 }).eq('id', clinicId)
-    await supabase.from('jeton_transactions').insert({
-      clinic_id: clinicId,
-      amount: 10,
-      type: 'manual',
-      description: 'Hoş geldiniz! Başlangıç jetonu (10 adet)',
-    })
-    // app_metadata.role güncelle
-    if (current?.user_id) {
-      await supabase.rpc('set_user_role', { target_user_id: current.user_id, new_role: 'clinic' })
-    }
-    await triggerWelcomeIfApproved()
-    redirect('/admin/klinikler')
-  }
-
+  // Onay/red güncelle. Yeni kliniğe ücretsiz hak DEFAULT 20 olarak otomatik
+  // veriliyor (free_appointments_remaining migration default'u). Ek 'starter
+  // jeton' artık gerekmiyor — eskiden 10 jeton verilirdi, şimdi 20 ücretsiz hak.
   await supabase.from('clinics').update({ approval_status: status, is_active: isActive }).eq('id', clinicId)
 
   // app_metadata.role güncelle: onaylandıysa 'clinic', reddedildiyse 'user'
@@ -118,7 +104,7 @@ async function addJeton(formData: FormData) {
     clinic_id: clinicId,
     amount,
     type: 'manual',
-    description: `Admin tarafından ${amount} jeton yüklendi`,
+    description: `Admin tarafından ${amount} kredi yüklendi`,
   })
 
   redirect('/admin/klinikler')
@@ -186,7 +172,7 @@ export default async function KliniklerPage() {
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">Klinik</th>
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">Konum</th>
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">Kayıt</th>
-                <th className="text-left px-4 py-3 text-slate-400 font-medium">Jeton</th>
+                <th className="text-left px-4 py-3 text-slate-400 font-medium">Kredi</th>
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">Durum</th>
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">İşlem</th>
               </tr>
@@ -204,13 +190,14 @@ export default async function KliniklerPage() {
                     <div className="flex items-center gap-2">
                       <span className={`text-sm font-bold ${
                         (c.jeton_balance ?? 0) === 0 ? 'text-red-400' :
-                        (c.jeton_balance ?? 0) <= 3 ? 'text-amber-400' : 'text-emerald-400'
+                        (c.jeton_balance ?? 0) <= 10 ? 'text-amber-400' : 'text-emerald-400'
                       }`}>{c.jeton_balance ?? 0}</span>
                       <form action={addJeton} className="flex gap-1 items-center">
                         <input type="hidden" name="clinicId" value={c.id} />
                         <input type="number" name="amount" defaultValue={10} min={1} max={1000}
-                          className="w-14 bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded px-1.5 py-0.5 focus:outline-none focus:border-violet-500" />
-                        <button type="submit" className="px-1.5 py-0.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs rounded transition-colors">+</button>
+                          className="w-14 bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded px-1.5 py-0.5 focus:outline-none focus:border-violet-500"
+                          aria-label="Eklenecek kredi miktarı" />
+                        <button type="submit" className="px-1.5 py-0.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs rounded transition-colors" title="Klinike kredi ekle">+</button>
                       </form>
                     </div>
                   </td>

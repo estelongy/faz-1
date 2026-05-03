@@ -7,12 +7,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-03-25.dahlia',
 })
 
-// Jeton paketleri
+// Kredi paketleri (legacy id'ler 'jeton_*' — DB metadata uyumu için aynı)
 const JETON_PACKAGES = [
-  { id: 'jeton_10',  label: '10 Jeton',  jetons: 10,  price: 4900,  currency: 'eur', popular: false },
-  { id: 'jeton_25',  label: '25 Jeton',  jetons: 25,  price: 9900,  currency: 'eur', popular: true  },
-  { id: 'jeton_50',  label: '50 Jeton',  jetons: 50,  price: 17900, currency: 'eur', popular: false },
-  { id: 'jeton_100', label: '100 Jeton', jetons: 100, price: 29900, currency: 'eur', popular: false },
+  { id: 'jeton_10',  label: '10 Kredi',  jetons: 10,  price: 4900,  currency: 'eur', popular: false },
+  { id: 'jeton_25',  label: '25 Kredi',  jetons: 25,  price: 9900,  currency: 'eur', popular: true  },
+  { id: 'jeton_50',  label: '50 Kredi',  jetons: 50,  price: 17900, currency: 'eur', popular: false },
+  { id: 'jeton_100', label: '100 Kredi', jetons: 100, price: 29900, currency: 'eur', popular: false },
 ]
 
 export async function POST(req: NextRequest) {
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
             currency: pkg.currency,
             product_data: {
               name: `Estelongy ${pkg.label}`,
-              description: `${clinic.name} için ${pkg.jetons} jeton yüklemesi`,
+              description: `${clinic.name} için ${pkg.jetons} kredi yüklemesi`,
             },
             unit_amount: pkg.price,
           },

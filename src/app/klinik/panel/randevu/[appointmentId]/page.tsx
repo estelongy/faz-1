@@ -24,15 +24,16 @@ async function kabulEt(apptId: string): Promise<{ ok: boolean; error?: string }>
     .single()
   if (!clinic) return { ok: false, error: 'Klinik bulunamadı' }
 
-  // Atomik jeton düşme + transaction log (SECURITY DEFINER RPC)
-  const { data: result, error: jetonErr } = await supabase.rpc('consume_jeton', {
+  // Atomik kredi düşme + transaction log (SECURITY DEFINER RPC)
+  // RPC adı 'consume_jeton' geriye uyumluluk için; davranış: önce ücretsiz hak, sonra ücretli bakiye
+  const { data: result, error: creditErr } = await supabase.rpc('consume_jeton', {
     p_clinic_id: clinic.id,
     p_appointment_id: apptId,
     p_description: 'Hasta kabulü',
   }).single()
-  if (jetonErr) return { ok: false, error: 'Jeton işlemi başarısız' }
+  if (creditErr) return { ok: false, error: 'Kredi işlemi başarısız' }
   const r = result as { ok: boolean; new_balance: number; err: string | null } | null
-  if (!r?.ok) return { ok: false, error: r?.err ?? 'Yetersiz jeton bakiyesi. Lütfen jeton yükleyin.' }
+  if (!r?.ok) return { ok: false, error: r?.err ?? 'Yetersiz kredi. Lütfen kredi yükleyin.' }
 
   // Randevu güncelle
   await supabase.from('appointments')
@@ -278,24 +279,26 @@ async function finalOnay(apptId: string, analysisId: string, aralikSkor: number,
     }).eq('id', s.id)
   }
 
-  // Skor güncelleme bildirimi kuyruğa ekle
+  // Skor güncelleme bildirimi kuyruğa ekle (e-posta + SMS — telefon doğrulanmışsa)
   try {
     const { data: appt } = await supabase
       .from('appointments')
-      .select('user_id, profiles(full_name)')
+      .select('user_id, profiles(full_name, phone_verified)')
       .eq('id', apptId)
       .single()
     if (appt) {
-      const patientName = (appt.profiles as { full_name?: string | null } | null)?.full_name ?? 'Hasta'
-      await enqueueNotification({
-        userId: appt.user_id,
-        type: 'score_update',
-        payload: {
-          patient_name: patientName,
-          score: Math.round(finalScore),
-          score_type: 'klinik_onayli',
-        },
-      })
+      const profileObj = appt.profiles as { full_name?: string | null; phone_verified?: boolean } | null
+      const patientName = profileObj?.full_name ?? 'Hasta'
+      const phoneVerified = !!profileObj?.phone_verified
+      const payload = {
+        patient_name: patientName,
+        score: Math.round(finalScore),
+        score_type: 'klinik_onayli' as const,
+      }
+      await enqueueNotification({ userId: appt.user_id, type: 'score_update', channel: 'email', payload })
+      if (phoneVerified) {
+        await enqueueNotification({ userId: appt.user_id, type: 'score_update', channel: 'sms', payload })
+      }
     }
   } catch (e) {
     console.error('Score notification error:', e)

@@ -69,50 +69,45 @@ async function updateAppointmentStatus(formData: FormData) {
     .eq('id', appointmentId)
     .eq('clinic_id', clinic.id)
 
-  // Onaylandıysa bildirim kuyruğuna ekle
+  // Onaylandıysa bildirim kuyruğuna ekle (e-posta + SMS — telefon doğrulanmışsa)
   if (status === 'confirmed') {
     try {
       const { data: appt } = await supabase
         .from('appointments')
-        .select('user_id, appointment_date, clinics(name), profiles(full_name)')
+        .select('user_id, appointment_date, clinics(name), profiles(full_name, phone, phone_verified)')
         .eq('id', appointmentId)
         .single()
       if (appt) {
         const clinicName = (appt.clinics as { name?: string } | null)?.name ?? 'Klinik'
-        const patientName = (appt.profiles as { full_name?: string | null } | null)?.full_name ?? 'Hasta'
+        const profileObj = appt.profiles as { full_name?: string | null; phone?: string | null; phone_verified?: boolean } | null
+        const patientName = profileObj?.full_name ?? 'Hasta'
+        const phoneVerified = !!profileObj?.phone_verified
         const dateStr = appt.appointment_date
           ? new Date(appt.appointment_date).toLocaleString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
           : ''
+        const payload = { patient_name: patientName, clinic_name: clinicName, date: dateStr }
 
-        // Onay bildirimi (anında)
-        await enqueueNotification({
-          userId: appt.user_id,
-          type: 'appointment_confirmed',
-          payload: { patient_name: patientName, clinic_name: clinicName, date: dateStr },
-        })
+        // 1) Anında onay bildirimi (e-posta + SMS)
+        await enqueueNotification({ userId: appt.user_id, type: 'appointment_confirmed', channel: 'email', payload })
+        if (phoneVerified) {
+          await enqueueNotification({ userId: appt.user_id, type: 'appointment_confirmed', channel: 'sms', payload })
+        }
 
-        // 24 saat öncesi hatırlatma
+        // 2) Hatırlatmalar (24h ve 1h öncesi) — geçmişteki zamanlar atlanır
         if (appt.appointment_date) {
-          const reminderTime = new Date(appt.appointment_date)
-          reminderTime.setHours(reminderTime.getHours() - 24)
-          if (reminderTime > new Date()) {
-            await enqueueNotification({
-              userId: appt.user_id,
-              type: 'appointment_reminder_24h',
-              payload: { patient_name: patientName, clinic_name: clinicName, date: dateStr },
-              scheduledAt: reminderTime,
-            })
-          }
-          // 1 saat öncesi hatırlatma
-          const reminder1h = new Date(appt.appointment_date)
-          reminder1h.setHours(reminder1h.getHours() - 1)
-          if (reminder1h > new Date()) {
-            await enqueueNotification({
-              userId: appt.user_id,
-              type: 'appointment_reminder_1h',
-              payload: { patient_name: patientName, clinic_name: clinicName, date: dateStr },
-              scheduledAt: reminder1h,
-            })
+          const apptTime = new Date(appt.appointment_date).getTime()
+          const now = Date.now()
+          const reminders: { offset: number; type: 'appointment_reminder_24h' | 'appointment_reminder_1h' }[] = [
+            { offset: 24 * 60 * 60 * 1000, type: 'appointment_reminder_24h' },
+            { offset: 1  * 60 * 60 * 1000, type: 'appointment_reminder_1h'  },
+          ]
+          for (const { offset, type } of reminders) {
+            const scheduledAt = new Date(apptTime - offset)
+            if (scheduledAt.getTime() <= now) continue
+            await enqueueNotification({ userId: appt.user_id, type, channel: 'email', payload, scheduledAt })
+            if (phoneVerified) {
+              await enqueueNotification({ userId: appt.user_id, type, channel: 'sms', payload, scheduledAt })
+            }
           }
         }
       }
@@ -268,6 +263,7 @@ export default async function KlinikPanelPage() {
             clinicName={clinic.name}
             clinicId={clinic.id}
             jetonBalance={clinic.jeton_balance ?? 0}
+            freeBalance={(clinic as { free_appointments_remaining?: number }).free_appointments_remaining ?? 0}
           />
         ) : (
         <>

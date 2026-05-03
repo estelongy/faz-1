@@ -58,7 +58,7 @@ function aggregate(
     if (gains.length > 0) avgGain = gains.reduce((a, b) => a + b, 0) / gains.length
   }
 
-  // Jeton kullanımı (usage tipi, bu aya ait)
+  // Kredi kullanımı (usage tipi, bu aya ait)
   const jetonUsed = jetonRows
     .filter(j => {
       const t = new Date(j.created_at).getTime()
@@ -87,7 +87,7 @@ export default async function KlinikRaporPage() {
 
   const { data: clinic } = await supabase
     .from('clinics')
-    .select('id, name, jeton_balance')
+    .select('id, name, jeton_balance, free_appointments_remaining')
     .eq('user_id', user.id)
     .single()
   if (!clinic) redirect('/klinik/panel')
@@ -198,12 +198,12 @@ export default async function KlinikRaporPage() {
             </p>
           </div>
 
-          {/* Jeton Kullanımı */}
+          {/* Kredi Kullanımı */}
           <div className="p-5 rounded-2xl bg-amber-500/5 border border-amber-500/20">
-            <p className="text-amber-400/70 text-xs mb-1">Jeton Kullanımı</p>
+            <p className="text-amber-400/70 text-xs mb-1">Kredi Kullanımı</p>
             <p className="text-3xl font-black text-amber-400">{current.jetonUsed}</p>
             <p className="text-xs text-slate-500 mt-2">
-              Bakiye: {(clinic as { jeton_balance?: number }).jeton_balance ?? 0}
+              Bakiye: {((clinic as { jeton_balance?: number }).jeton_balance ?? 0) + ((clinic as { free_appointments_remaining?: number }).free_appointments_remaining ?? 0)}
             </p>
           </div>
         </div>
@@ -246,7 +246,7 @@ export default async function KlinikRaporPage() {
                   <th className="px-4 py-3 text-center">○ Gelmedi</th>
                   <th className="px-4 py-3 text-center">⏳ Aktif</th>
                   <th className="px-4 py-3 text-right">Ort. Gençlik Skoru</th>
-                  <th className="px-4 py-3 text-right">Jeton</th>
+                  <th className="px-4 py-3 text-right">Kredi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-700/50">

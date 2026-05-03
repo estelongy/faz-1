@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Sık Sorulan Sorular',
-  description: 'Estelongy Gençlik Skoru, klinik akışı, jeton sistemi ve satıcı süreçleri hakkında sık sorulan sorular.',
+  description: 'Estelongy Gençlik Skoru, klinik akışı, kredi sistemi ve satıcı süreçleri hakkında sık sorulan sorular.',
 }
 
 interface FAQ {
@@ -72,15 +72,15 @@ const GROUPS: FAQGroup[] = [
     items: [
       {
         q: 'Klinik başvurusu nasıl çalışır?',
-        a: 'Kliniğinizi kaydedin, admin onayından sonra 10 başlangıç jetonu hediyeyle sisteme dahil olursunuz. Platform aboneliği yoktur; sadece gerçekleşen hasta kabulünde 1 jeton harcanır.',
+        a: 'Kliniğinizi kaydedin, admin onayından sonra 20 ücretsiz hasta kabul hakkıyla sisteme dahil olursunuz. Platform aboneliği yoktur; sadece gerçekleşen hasta kabulünde 1 kredi harcanır.',
       },
       {
-        q: 'Jeton nedir? Nasıl satın alınır?',
-        a: 'Jeton, kliniğinizin hasta kabul hakkıdır. Her "Hastayı Kabul Et" işleminde 1 jeton düşer. No-show durumlarda jeton yanmaz. Klinik panelinizdeki "Jeton Yönetimi" ekranından Stripe ile güvenli ödemeyle paket satın alabilirsiniz: 10 Jeton €49 / 25 Jeton €99 (en popüler) / 50 Jeton €179 / 100 Jeton €299.',
+        q: 'Kredi nedir? Nasıl satın alınır?',
+        a: 'Kredi, kliniğinizin hasta kabul hakkıdır. Her "Hastayı Kabul Et" işleminde 1 kredi düşer — önce ücretsiz haklarınız tüketilir, sonra ücretli bakiyeden. No-show durumunda kredi yanmaz. Klinik panelinizdeki "Kredi Yönetimi" ekranından Stripe ile güvenli ödemeyle paket satın alabilirsiniz: 10 Kredi €49 / 25 Kredi €99 (en popüler) / 50 Kredi €179 / 100 Kredi €299.',
       },
       {
-        q: 'Neden abonelik yerine jeton?',
-        a: 'Sadece gerçekleşen müşteri için ödeme prensibi. Başlangıç engeli sıfır — platforma bedava katılırsınız. Reklama %30-40 komisyon ödemek yerine, yalnızca gelen hasta başına cüzi bir maliyet ödersiniz.',
+        q: 'Neden abonelik yerine kredi?',
+        a: 'Sadece gerçekleşen müşteri için ödeme prensibi. Başlangıç engeli sıfır — platforma bedava katılır, 20 ücretsiz hak alırsınız. Reklama %30-40 komisyon ödemek yerine, yalnızca gelen hasta başına cüzi bir maliyet ödersiniz.',
       },
       {
         q: 'Hekim olarak karar verme yetkim tam mı?',
@@ -136,7 +136,7 @@ export default function SSSPage() {
 
         <div className="mb-10">
           <h1 className="text-4xl font-black text-white mb-3">Sık Sorulan Sorular</h1>
-          <p className="text-slate-400">Gençlik Skoru, klinik akışı, jeton sistemi ve daha fazlası hakkında hızlı yanıtlar.</p>
+          <p className="text-slate-400">Gençlik Skoru, klinik akışı, kredi sistemi ve daha fazlası hakkında hızlı yanıtlar.</p>
         </div>
 
         <div className="space-y-10">

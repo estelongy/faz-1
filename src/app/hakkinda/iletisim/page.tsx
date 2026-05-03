@@ -18,7 +18,7 @@ const CHANNELS = [
   {
     icon: '🏥',
     title: 'Klinik Başvuruları',
-    desc: 'Kliniğinizi Estelongy\'e dahil etmek, jeton paketleri veya ticari iş birlikleri için.',
+    desc: 'Kliniğinizi Estelongy\'e dahil etmek, kredi paketleri veya ticari iş birlikleri için.',
     email: 'klinik@estelongy.com',
     response: '2 iş günü içinde geri dönüş',
     color: 'from-emerald-500 to-teal-600',

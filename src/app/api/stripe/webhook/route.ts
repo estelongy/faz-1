@@ -178,25 +178,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  // ─── Jeton Ödemesi (Checkout Session) ────────────────────────────
+  // ─── Klinik Kredi Ödemesi (Checkout Session) ─────────────────────
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
 
     const clinicId  = session.metadata?.clinic_id
-    const jetons    = parseInt(session.metadata?.jetons ?? '0', 10)
+    const credits   = parseInt(session.metadata?.jetons ?? '0', 10)
     const packageId = session.metadata?.package_id
 
-    if (clinicId && jetons) {
+    if (clinicId && credits) {
       const supabase = createServiceClient()
       const { error } = await supabase.rpc('add_jeton', {
         p_clinic_id:      clinicId,
-        p_amount:         jetons,
+        p_amount:         credits,
         p_description:    `Stripe ödeme: ${packageId} (${session.id})`,
         p_stripe_session: session.id,
       })
       if (error) {
         console.error('add_jeton RPC error:', error)
-        return NextResponse.json({ error: 'Jeton güncellenemedi' }, { status: 500 })
+        return NextResponse.json({ error: 'Kredi güncellenemedi' }, { status: 500 })
       }
     }
   }

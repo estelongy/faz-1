@@ -7,9 +7,11 @@ interface Props {
   clinicName: string
   clinicId: string
   jetonBalance: number
+  freeBalance?: number
 }
 
-export default function KlinikWelcome({ clinicName, clinicId, jetonBalance }: Props) {
+export default function KlinikWelcome({ clinicName, clinicId, jetonBalance, freeBalance = 0 }: Props) {
+  const totalCredit = jetonBalance + freeBalance
   const [copied, setCopied] = useState(false)
 
   const baseUrl = typeof window !== 'undefined'
@@ -40,7 +42,8 @@ export default function KlinikWelcome({ clinicName, clinicId, jetonBalance }: Pr
           </h2>
           <p className="text-slate-300 text-base max-w-xl">
             Kliniğiniz onaylandı. İlk hastanızı kabul etmek için hazırsınız — hesabınıza
-            <strong className="text-emerald-400"> {jetonBalance} hediye jeton</strong> yüklendi.
+            <strong className="text-emerald-400"> {totalCredit} kredi</strong> yüklendi
+            {freeBalance > 0 && <span className="text-emerald-300/80"> ({freeBalance} ücretsiz hediye)</span>}.
           </p>
         </div>
       </div>
@@ -60,8 +63,8 @@ export default function KlinikWelcome({ clinicName, clinicId, jetonBalance }: Pr
           </div>
           <h3 className="text-white font-bold mb-1">Klinik Onaylandı</h3>
           <p className="text-slate-400 text-xs leading-relaxed">
-            Hesabınız aktif. {jetonBalance} başlangıç jetonu hediye olarak yüklendi.
-            Her hasta kabulünde 1 jeton düşer — no-show durumunda jeton yanmaz.
+            Hesabınız aktif. {freeBalance > 0 ? `${freeBalance} ücretsiz hediye krediniz var` : `${totalCredit} krediniz var`}.
+            Her hasta kabulünde 1 kredi düşer — önce ücretsiz haklar tüketilir, sonra ücretli bakiye.
           </p>
         </div>
 
@@ -119,7 +122,7 @@ export default function KlinikWelcome({ clinicName, clinicId, jetonBalance }: Pr
             </svg>
           </div>
           <div className="min-w-0">
-            <div className="text-white text-sm font-bold">Jeton Yönetimi</div>
+            <div className="text-white text-sm font-bold">Kredi Yönetimi</div>
             <div className="text-slate-500 text-xs truncate">Paket satın al, işlem geçmişi</div>
           </div>
           <svg className="w-4 h-4 text-slate-500 group-hover:text-white ml-auto shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">

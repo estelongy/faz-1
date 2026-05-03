@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import JetonSatinAl from './JetonSatinAl'
 
 export const metadata: Metadata = {
-  title: 'Jeton Yönetimi',
+  title: 'Kredi Yönetimi',
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -59,7 +59,7 @@ export default async function JetonPage({
           <div className="flex items-center gap-3">
             <Link href="/klinik/panel" className="text-slate-400 hover:text-white transition-colors text-sm">← Panel</Link>
             <span className="text-slate-700">|</span>
-            <span className="text-white font-bold text-sm">Jeton Yönetimi</span>
+            <span className="text-white font-bold text-sm">Kredi Yönetimi</span>
           </div>
           <span className="text-slate-500 text-xs hidden sm:block">{clinic.name}</span>
         </div>
@@ -70,7 +70,7 @@ export default async function JetonPage({
         {/* Başarı / İptal banner */}
         {params.success === '1' && (
           <div className="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium">
-            ✅ Ödeme başarılı! Jetonlarınız hesabınıza yüklendi.
+            ✅ Ödeme başarılı! Krediniz hesabınıza yüklendi.
           </div>
         )}
         {params.cancelled === '1' && (
@@ -80,7 +80,7 @@ export default async function JetonPage({
         )}
 
         <div className="mb-8">
-          <h1 className="text-2xl font-black text-white">Jeton Yönetimi</h1>
+          <h1 className="text-2xl font-black text-white">Kredi Yönetimi</h1>
           <p className="text-slate-400 mt-0.5 text-sm">Her hasta kabulünde 1 kredi düşer. Önce ücretsiz haklarınız tüketilir, ardından satın alınmış bakiye.</p>
         </div>
 
@@ -122,9 +122,9 @@ export default async function JetonPage({
           </div>
         )}
 
-        {/* Jeton Satın Al */}
+        {/* Kredi Satın Al */}
         <div className="mb-8">
-          <h2 className="text-white font-bold text-lg mb-4">Jeton Satın Al</h2>
+          <h2 className="text-white font-bold text-lg mb-4">Kredi Satın Al</h2>
           <JetonSatinAl />
         </div>
 
@@ -178,7 +178,7 @@ export default async function JetonPage({
             </div>
           ) : (
             <div className="text-center py-12 text-slate-600">
-              Henüz jeton işlemi yok
+              Henüz kredi işlemi yok
             </div>
           )}
         </div>
