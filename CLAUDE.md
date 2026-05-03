@@ -57,7 +57,20 @@ Build durumu: Vercel MCP `list_deployments` (projectId: `prj_qQ0N5SSfH8kqaY61qyi
 /sepet  /siparis/[no]    → Sepet + sipariş detay/iade
 
 /klinik/basvur           → Klinik başvuru
-/klinik/panel            → Klinik yönetim (randevular, takvim, müsaitlik, rapor)
+/klinik/panel            → Klinik portal (sticky sidebar layout, Discord-vari topluluk hissi)
+  ├─ /                   → Bekleyen randevu, bugün, istatistik (ana feed)
+  ├─ /randevular         → /takvim'e redirect
+  ├─ /takvim · /musaitlik → Takvim görünümü + müsaitlik ayarları
+  ├─ /hastalarim         → Klinik CRM (kliniğe randevu almış tüm hastalar)
+  ├─ /hasta/[userId]     → Hasta detay (skor geçmişi, ziyaret zaman çizelgesi)
+  ├─ /randevu/[id]       → KlinikAkışWizard (6 adım kabul→onay)
+  ├─ /jeton              → Kredi yönetimi (Stripe ile satın alma)
+  ├─ /rapor              → Aylık rapor (skor Δ, kredi kullanımı, no-show)
+  ├─ /profil             → Klinik profili + EGP rozet placeholder
+  ├─ /akademi            → 🟡 Yakında: Bilim/Kongre/Vaka teaser
+  ├─ /pazarlama          → 🟡 Yakında: WhatsApp/sosyal medya/AI yazar teaser
+  ├─ /topluluk           → 🟡 Yakında: kanal tabanlı klinik topluluğu teaser
+  └─ /destek             → E-posta + WhatsApp + SSS hızlı linkler
 /satici/basvur           → Satıcı başvuru
 /satici/panel            → Satıcı yönetim (ürünler, sipariş, kazanç, ödeme hesabı, iade)
 
@@ -429,6 +442,32 @@ ALTER TABLE clinics ADD COLUMN
 
 > **Sıralama:** Bu iş **bildirim sisteminden sonra** başlar (çünkü yorum tetikleyici e-posta gerekir). Tetkik algoritması → bildirim → klinik deneyim sistemi.
 
+### 10. Klinik Portal Faz B (lansman sonrası 2-4 hafta)
+
+Faz A iskeleti canlıda. Yer tutucular dolması gereken modüller:
+
+**📰 Akademi:**
+- [ ] Bilim makaleleri yönetimi (admin tarafı CMS basit)
+- [ ] Kongre takvimi (manuel CRUD + tarih bazlı sıralama)
+- [ ] Klinik vakaları — anonim paylaşım (klinik akış sonrası "topluluk ile paylaş" toggle)
+- [ ] Protokol kütüphanesi (skor bandına göre)
+
+**📱 Pazarlama:**
+- [ ] WhatsApp şablon kütüphanesi (randevu hatırlatma, sonuç paylaşım, tekrar randevu)
+- [ ] Klinik onaylı skor paylaşım kartı görsel jeneratörü (Instagram/Twitter/WhatsApp boyutları)
+- [ ] AI gönderi yazarı (klinik için Estelongy AI — ayrı OpenAI maliyet bütçesi)
+- [ ] Performans raporu (link tıklama, mesaj dönüşümü)
+
+**💬 Topluluk:**
+- [ ] Branş kanalları (dermatoloji/plastik/longevity/estelongy duyuruları)
+- [ ] Anonim vaka paylaşımı (ikinci görüş)
+- [ ] Klinik rehberi (şehir + EGP filtreli liste)
+- [ ] Aylık webinar kayıt + arşiv
+
+**🛟 Destek:**
+- [x] E-posta + WhatsApp + SSS aktif
+- [ ] Canlı destek (Crisp/Intercom embed)
+
 ### Faz 3
 - [ ] Mobil App (React Native / Expo)
 - [ ] Redis (Upstash) — rate limiting prod
@@ -455,3 +494,7 @@ ALTER TABLE clinics ADD COLUMN
 - **SMS/OTP altyapısı:** Netgsm + Upstash Redis Production, `/api/otp/send` + `/verify` canlı
 - **Stripe Connect:** test mode aktif (live KYC Vestoriq Estonya belgelerine bağlı)
 - **AI:** `gpt-5.4-mini` Vision Production'a entegre, fallback Math.random + `usedFallback: true`
+- **Klinik Portal Faz A:** Sticky sol sidebar (`KlinikSidebar`) + ortak `layout.tsx` (auth/clinic/approval kontrolü tek yerde) + 5 yeni modül (Hastalarım/Profil/Akademi/Pazarlama/Topluluk/Destek). Discord-vari kanal listesi hissi, "Estelongy Klinik Topluluğu" canlı rozet. Akademi/Pazarlama/Topluluk **teaser** durumunda (Faz B/C ile dolacak).
+- **Bildirim sistemi:** Cron `0 9 * * *` (Hobby plan), `appointment_confirmed` + 24h hatırlatma + `score_update` enqueue. SMS+e-posta (telefon doğrulanmışsa).
+- **Anasayfa auth-aware:** Login varsa "Hesabım" + 3 kapı linkleri direkt destination. Login yoksa "Giriş/Kayıt" + `/giris?next=...`.
+- **Panel 3 kapı:** Skor üstünde Skoru Güncelle / Klinik Randevu Al / Mağaza kartları (anasayfa görsel diliyle paralel).
