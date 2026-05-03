@@ -4,7 +4,6 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { pathForRole } from '@/lib/auth-redirect'
 import KlinikWelcome from '@/components/KlinikWelcome'
 import { enqueueNotification } from '@/lib/notifications'
 
@@ -113,67 +112,29 @@ async function updateAppointmentStatus(formData: FormData) {
   redirect('/klinik/panel')
 }
 
-async function handleSignOut() {
-  'use server'
-  const supabase = await createClient()
-  await supabase.auth.signOut()
-  redirect('/giris')
-}
-
 export default async function KlinikPanelPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/giris')
 
-  const role = (user.app_metadata as Record<string, string>)?.role
-  if (role === 'admin' || role === 'vendor') redirect(pathForRole(role))
-
+  // Layout zaten role kontrolü + clinic kaydı + approval_status kontrolünü yapıyor.
+  // Burada yine clinic'i çekiyoruz çünkü sayfa içeriği için id/jeton bilgisi lazım.
   const { data: clinic } = await supabase
     .from('clinics')
-    .select('id, name, approval_status, is_active, jeton_balance, free_appointments_remaining')
+    .select('id, name, jeton_balance, free_appointments_remaining')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  // Klinik bulunamadı → başvuru sayfasına yönlendir
   if (!clinic) redirect('/klinik/basvur')
 
-  // Onay bekliyor veya reddedildi → bilgilendirme ekranı
-  if (clinic.approval_status !== 'approved') {
-    const isPending = clinic.approval_status === 'pending'
-    return (
-      <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center p-4">
-        <div className="w-full max-w-md text-center">
-          <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 ${isPending ? 'bg-amber-500/20' : 'bg-red-500/20'}`}>
-            <svg className={`w-8 h-8 ${isPending ? 'text-amber-400' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">
-            {isPending ? 'Başvurunuz İnceleniyor' : 'Başvurunuz Reddedildi'}
-          </h2>
-          <p className="text-slate-400 text-sm mb-6">
-            {isPending
-              ? 'Klinik başvurunuz admin onayı bekliyor. En kısa sürede değerlendirilecek.'
-              : 'Başvurunuz onaylanmadı. Destek ekibiyle iletişime geçin.'}
-          </p>
-          <a href="/panel" className="inline-flex items-center justify-center w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold rounded-xl">
-            Kullanıcı Paneline Dön
-          </a>
-        </div>
-      </main>
-    )
-  }
-
-  const { data: appointments } = clinic
-    ? await supabase
-        .from('appointments')
-        .select('id, user_id, appointment_date, status, notes, profiles(full_name)')
-        .eq('clinic_id', clinic.id)
-        .order('appointment_date', { ascending: true })
-        .limit(100)
-    : { data: [] }
+  const { data: appointments } = await supabase
+    .from('appointments')
+    .select('id, user_id, appointment_date, status, notes, profiles(full_name)')
+    .eq('clinic_id', clinic.id)
+    .order('appointment_date', { ascending: true })
+    .limit(100)
 
   const appts = (appointments ?? []) as unknown as Appointment[]
 
@@ -204,52 +165,7 @@ export default async function KlinikPanelPage() {
   const todayAppts = appts.filter(a => a.appointment_date?.startsWith(today))
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
-              <div>
-                <span className="text-white font-bold text-sm">{clinic?.name ?? 'Klinik Paneli'}</span>
-                <p className="text-slate-500 text-xs">Estelongy</p>
-              </div>
-            </Link>
-            <div className="flex items-center gap-4">
-              {/* Kredi bakiyesi (ücretsiz + ücretli) */}
-              {clinic && (() => {
-                const freeBal = (clinic as { free_appointments_remaining?: number }).free_appointments_remaining ?? 0
-                const totalBal = (clinic.jeton_balance ?? 0) + freeBal
-                return (
-                  <Link href="/klinik/panel/jeton" className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-opacity hover:opacity-80 ${
-                    totalBal === 0 ? 'bg-red-500/10 border-red-500/30 text-red-400' :
-                    totalBal <= 10 ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' :
-                    'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                  }`}>
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clipRule="evenodd" />
-                    </svg>
-                    {totalBal} Kredi{freeBal > 0 && <span className="opacity-70 ml-1">({freeBal} hediye)</span>}
-                  </Link>
-                )
-              })()}
-              <Link href="/klinik/panel/takvim" className="text-sm text-slate-400 hover:text-white transition-colors">📅 Takvim</Link>
-              <Link href="/klinik/panel/rapor" className="text-sm text-slate-400 hover:text-white transition-colors">📊 Rapor</Link>
-              <Link href="/panel" className="text-sm text-slate-400 hover:text-white transition-colors">Kullanıcı Paneli</Link>
-              <form action={handleSignOut}>
-                <button type="submit" className="text-sm text-slate-400 hover:text-white transition-colors">Çıkış</button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
+    <div className="max-w-7xl mx-auto">
 
         {/* ── İlk kullanım: hiç randevu yok → Welcome State ── */}
         {clinic && appts.length === 0 ? (
@@ -466,8 +382,7 @@ export default async function KlinikPanelPage() {
         </>
         )}
 
-      </div>
-    </main>
+    </div>
   )
 }
 

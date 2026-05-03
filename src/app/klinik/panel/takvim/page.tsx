@@ -46,30 +46,21 @@ export default async function KlinikTakvimPage() {
   const appts = (appointments ?? []) as unknown as RawAppt[]
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/klinik/panel" className="text-slate-400 hover:text-white transition-colors text-sm">← Panel</Link>
-            <span className="text-slate-700">|</span>
-            <span className="text-white font-bold text-sm">Takvim</span>
-          </div>
-          <Link href="/klinik/panel/musaitlik" className="text-xs px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors">
-            ⚙ Müsaitlik Ayarları
-          </Link>
-        </div>
-      </header>
-
-      <div className="max-w-6xl mx-auto px-4 pt-24 pb-16">
-        <KlinikTakvimClient appointments={appts.map(a => ({
-          id: a.id,
-          userId: a.user_id,
-          date: a.appointment_date ?? '',
-          status: a.status,
-          durationMinutes: a.duration_minutes ?? 30,
-          patientName: (a.profiles as { full_name?: string | null } | null)?.full_name ?? 'Hasta',
-        }))} />
+    <div className="max-w-6xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-white">Takvim</h1>
+        <Link href="/klinik/panel/musaitlik" className="text-xs px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors">
+          ⚙ Müsaitlik Ayarları
+        </Link>
       </div>
-    </main>
+      <KlinikTakvimClient appointments={appts.map(a => ({
+        id: a.id,
+        userId: a.user_id,
+        date: a.appointment_date ?? '',
+        status: a.status,
+        durationMinutes: a.duration_minutes ?? 30,
+        patientName: (a.profiles as { full_name?: string | null } | null)?.full_name ?? 'Hasta',
+      }))} />
+    </div>
   )
 }

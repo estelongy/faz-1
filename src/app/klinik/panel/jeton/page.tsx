@@ -53,19 +53,7 @@ export default async function JetonPage({
   const totalYukleme  = (transactions ?? []).filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0)
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/klinik/panel" className="text-slate-400 hover:text-white transition-colors text-sm">← Panel</Link>
-            <span className="text-slate-700">|</span>
-            <span className="text-white font-bold text-sm">Kredi Yönetimi</span>
-          </div>
-          <span className="text-slate-500 text-xs hidden sm:block">{clinic.name}</span>
-        </div>
-      </header>
-
-      <div className="max-w-4xl mx-auto px-4 pt-24 pb-16">
+    <div className="max-w-4xl mx-auto">
 
         {/* Başarı / İptal banner */}
         {params.success === '1' && (
@@ -182,7 +170,6 @@ export default async function JetonPage({
             </div>
           )}
         </div>
-      </div>
-    </main>
+    </div>
   )
 }

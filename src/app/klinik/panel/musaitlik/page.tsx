@@ -24,38 +24,29 @@ export default async function MusaitlikPage() {
     .order('day_of_week')
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/klinik/panel/takvim" className="text-slate-400 hover:text-white transition-colors text-sm">← Takvim</Link>
-            <span className="text-slate-700">|</span>
-            <span className="text-white font-bold text-sm">Müsaitlik Ayarları</span>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-3xl mx-auto px-4 pt-24 pb-16">
-        <div className="mb-6">
-          <h1 className="text-2xl font-black text-white">Müsaitlik Takvimi</h1>
-          <p className="text-slate-400 mt-0.5 text-sm">
-            {clinic.name} — Hangi günler ve saatler randevu kabul ettiğinizi belirleyin.
-            Bu bilgiler hastalar randevu alırken görünür.
-          </p>
-        </div>
-
-        <MusaitlikForm
-          clinicId={clinic.id}
-          availability={(availability ?? []) as {
-            id: string
-            day_of_week: number
-            start_time: string
-            end_time: string
-            slot_duration_minutes: number
-            is_active: boolean
-          }[]}
-        />
+    <div className="max-w-3xl mx-auto">
+      <div className="mb-6 flex items-center gap-3">
+        <Link href="/klinik/panel/takvim" className="text-slate-400 hover:text-white transition-colors text-sm">← Takvim</Link>
       </div>
-    </main>
+      <div className="mb-6">
+        <h1 className="text-2xl font-black text-white">Müsaitlik Takvimi</h1>
+        <p className="text-slate-400 mt-0.5 text-sm">
+          {clinic.name} — Hangi günler ve saatler randevu kabul ettiğinizi belirleyin.
+          Bu bilgiler hastalar randevu alırken görünür.
+        </p>
+      </div>
+
+      <MusaitlikForm
+        clinicId={clinic.id}
+        availability={(availability ?? []) as {
+          id: string
+          day_of_week: number
+          start_time: string
+          end_time: string
+          slot_duration_minutes: number
+          is_active: boolean
+        }[]}
+      />
+    </div>
   )
 }

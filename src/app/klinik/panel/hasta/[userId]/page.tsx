@@ -172,27 +172,19 @@ export default async function HastaDetayPage({
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/klinik/panel" className="text-slate-400 hover:text-white transition-colors text-sm">
-              ← Panel
-            </Link>
-            <span className="text-slate-700">|</span>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-violet-500/20 flex items-center justify-center text-violet-400 text-xs font-bold">
-                {(profile?.full_name ?? '?')[0].toUpperCase()}
-              </div>
-              <span className="text-white font-bold text-sm">{profile?.full_name ?? 'Hasta'}</span>
-            </div>
+    <div className="max-w-7xl mx-auto">
+      <div className="mb-6 flex items-center gap-3">
+        <Link href="/klinik/panel/hastalarim" className="text-slate-400 hover:text-white transition-colors text-sm">
+          ← Hastalarım
+        </Link>
+        <span className="text-slate-700">|</span>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-violet-500/20 flex items-center justify-center text-violet-400 text-xs font-bold">
+            {(profile?.full_name ?? '?')[0].toUpperCase()}
           </div>
-          <span className="text-slate-500 text-xs hidden sm:block">{clinic.name}</span>
+          <span className="text-white font-bold text-sm">{profile?.full_name ?? 'Hasta'}</span>
         </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
+      </div>
 
         {/* ── Başlık ── */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
@@ -280,7 +272,6 @@ export default async function HastaDetayPage({
           )}
         </div>
 
-      </div>
-    </main>
+    </div>
   )
 }
