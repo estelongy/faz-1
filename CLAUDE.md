@@ -269,14 +269,15 @@ Skor algoritmasının kalan parçası. Anket bitti, şimdi tetkik.
 - [ ] `scores.tetkik_puani` kolonuna otomatik yazılacak
 - [ ] Hekim onayı %15 ağırlık formülü netleştirilecek (mevcut: `final = ara_toplam × 0.85 + hekim × 0.15`)
 
-### 🥈 2. Bildirim Sistemi (Kullanıcı için kritik)
-Randevu/işlem bildirimleri şu an çalışmıyor.
-- [ ] Randevu alınınca hastaya e-posta gönder (şu an sadece kuyruğa yazılıyor, cron tetiklenmiyor)
-- [ ] Randevu onaylanınca hastaya e-posta gönder — `/api/notifications/process` cron bağlantısı kurulacak
-- [ ] Hekim önerileri değişince hastaya bildirim (notification_queue)
-- [ ] `RESEND_API_KEY` Vercel'e eklenmeli (Manuel)
-- [x] SMS altyapısı — Netgsm + Upstash Redis canlıda (OTP)
-- [ ] SMS bildirimi — randevu hatırlatma cron (`sendSMS` helper'ı yazılacak, normal SMS endpoint: `/sms/rest/v2/send`)
+### 🥈 2. Bildirim Sistemi (Aktif)
+- [x] `/api/notifications/process` cron saatlik (`0 * * * *`) — pending kuyruğu işliyor
+- [x] Randevu alınınca → anında `appointment_confirmed` (e-posta + SMS) enqueue
+- [x] 24h ve 1h önce → `appointment_reminder_24h` / `_1h` (e-posta + SMS) scheduled
+- [x] Score update bildirimi (e-posta + SMS) — KlinikAkışWizard hekim onay step'inden enqueue
+- [x] SMS altyapısı — Netgsm `sendInfoSms` (`/sms/rest/v2/send`) + Upstash Redis (OTP)
+- [ ] `RESEND_API_KEY` Vercel'e eklenmeli (Manuel) — yoksa e-posta sessiz başarısız
+- [ ] Hekim önerileri değişince ayrı bildirim (procedure_notes/recommendations diff trigger)
+- [ ] Push notification (FCM) — Faz 3
 
 ### 🥉 3. Sentry Kurulumu (Manuel — kod yok, 10 dk)
 Production hata yakalama. Şu an `@sentry/nextjs` paketi yüklü ve `sentry.*.config.ts` dosyaları hazır, AMA env var yok → hatalar uçuyor.

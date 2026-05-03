@@ -10,7 +10,11 @@ import {
   tmplAppointmentConfirmed,
   tmplAppointmentReminder,
   tmplScoreUpdate,
+  smsAppointmentConfirmed,
+  smsAppointmentReminder,
+  smsScoreUpdate,
 } from '@/lib/notifications'
+import { sendInfoSms } from '@/lib/netgsm'
 
 const CRON_SECRET = process.env.CRON_SECRET
 
@@ -43,13 +47,25 @@ export async function GET(req: NextRequest) {
     try {
       const payload = notif.payload as Record<string, unknown>
 
-      // Kullanıcı e-postasını al
+      // Kullanıcı e-postası + telefonu
       let to: string | null = null
+      let toPhone: string | null = null
       if (notif.user_id) {
         const { data: ud } = await admin.auth.admin.getUserById(notif.user_id)
         to = ud?.user?.email ?? null
+        toPhone = ud?.user?.phone ?? null
+        // profiles.phone yedeği
+        if (!toPhone) {
+          const { data: prof } = await admin
+            .from('profiles')
+            .select('phone, phone_verified')
+            .eq('id', notif.user_id)
+            .maybeSingle()
+          if (prof?.phone_verified) toPhone = prof.phone
+        }
       }
       if (!to && payload.to_email) to = String(payload.to_email)
+      if (!toPhone && payload.to_phone) toPhone = String(payload.to_phone)
 
       let ok = false
 
@@ -93,10 +109,39 @@ export async function GET(req: NextRequest) {
         }
 
         ok = await sendEmail(to, subject, html)
+      } else if (notif.channel === 'sms' && toPhone) {
+        // SMS: Netgsm bilgilendirme endpoint
+        let msg = ''
+        switch (notif.type) {
+          case 'appointment_confirmed':
+            msg = smsAppointmentConfirmed({
+              clinicName: String(payload.clinic_name ?? 'Klinik'),
+              date:       String(payload.date ?? ''),
+            }); break
+          case 'appointment_reminder_24h':
+          case 'appointment_reminder_1h':
+            msg = smsAppointmentReminder({
+              clinicName: String(payload.clinic_name ?? 'Klinik'),
+              date:       String(payload.date ?? ''),
+              hoursLeft:  notif.type === 'appointment_reminder_1h' ? 1 : 24,
+            }); break
+          case 'score_update':
+            msg = smsScoreUpdate({
+              score:     Number(payload.score ?? 0),
+              scoreType: (payload.score_type as 'on_analiz' | 'klinik_onayli') ?? 'on_analiz',
+            }); break
+          default:
+            await admin.from('notification_queue')
+              .update({ status: 'skipped', sent_at: new Date().toISOString() })
+              .eq('id', notif.id)
+            continue
+        }
+        const smsResult = await sendInfoSms(toPhone, msg)
+        ok = smsResult.success
       } else if (notif.channel === 'sms') {
-        // SMS: Netgsm entegrasyonu gelecekte — şimdilik skipped
+        // Telefon yok → atla (e-posta tarafı zaten ayrı kayıtla işlenir)
         await admin.from('notification_queue')
-          .update({ status: 'skipped', sent_at: new Date().toISOString() })
+          .update({ status: 'skipped', sent_at: new Date().toISOString(), error_msg: 'Telefon bulunamadı' })
           .eq('id', notif.id)
         continue
       }

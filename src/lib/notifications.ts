@@ -137,3 +137,18 @@ export function tmplScoreUpdate(payload: {
     `,
   }
 }
+
+// ── SMS şablonları (Netgsm — Türkçe karaktersiz, max 155 char) ─────────
+export function smsAppointmentConfirmed(p: { clinicName: string; date: string }) {
+  return `Estelongy: Randevunuz onaylandi. ${p.clinicName} - ${p.date}. Detay: estelongy.com/panel`
+}
+
+export function smsAppointmentReminder(p: { clinicName: string; date: string; hoursLeft: number }) {
+  const t = p.hoursLeft <= 1 ? '1 saat' : '24 saat'
+  return `Estelongy hatirlatma: ${t} sonra ${p.clinicName} randevunuz var (${p.date}). Detay: estelongy.com/panel`
+}
+
+export function smsScoreUpdate(p: { score: number; scoreType: 'on_analiz' | 'klinik_onayli' }) {
+  const label = p.scoreType === 'klinik_onayli' ? 'Klinik Onayli' : 'On Analiz'
+  return `Estelongy: ${label} Genclik Skorunuz ${p.score}. Detay: estelongy.com/panel`
+}

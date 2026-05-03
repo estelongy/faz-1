@@ -9,6 +9,7 @@
  */
 
 const NETGSM_URL = 'https://api.netgsm.com.tr/sms/rest/v2/otp'
+const NETGSM_BULK_URL = 'https://api.netgsm.com.tr/sms/rest/v2/send'
 
 export interface NetgsmResult {
   success: boolean
@@ -131,6 +132,72 @@ export async function sendOtpSms(phone: string, code: string): Promise<NetgsmRes
   } catch (err) {
     // Password'ü loglama: sadece generic mesaj
     console.error('[Netgsm] Network hatasi:', err instanceof Error ? err.message : err)
+    return { success: false, error: 'Netgsm baglanti hatasi' }
+  }
+}
+
+/**
+ * Normal (bilgilendirme) SMS gönder.
+ * Türkçe karakter OLMAMALI — OTP endpoint gibi GSM-7 bandı.
+ * Randevu hatırlatma, bildirim vb. için.
+ * @returns success bool — failed olsa da çağıran kuyrukta retry yönetir.
+ */
+export async function sendInfoSms(phone: string, message: string): Promise<NetgsmResult> {
+  const normalized = normalizePhone(phone)
+  if (!normalized) {
+    return { success: false, error: 'Gecersiz telefon numarasi' }
+  }
+
+  const usercode = process.env.NETGSM_USERCODE
+  const password = process.env.NETGSM_PASSWORD
+  const msgheader = process.env.NETGSM_MSGHEADER
+
+  if (!usercode || !password || !msgheader) {
+    return { success: false, error: 'Netgsm env degiskenleri tanimli degil' }
+  }
+
+  // Türkçe karakterleri ASCII'ye düşür (güvenli mesaj)
+  const cleaned = message
+    .replace(/ı/g, 'i').replace(/İ/g, 'I')
+    .replace(/ş/g, 's').replace(/Ş/g, 'S')
+    .replace(/ğ/g, 'g').replace(/Ğ/g, 'G')
+    .replace(/ü/g, 'u').replace(/Ü/g, 'U')
+    .replace(/ö/g, 'o').replace(/Ö/g, 'O')
+    .replace(/ç/g, 'c').replace(/Ç/g, 'C')
+    .slice(0, 155)
+
+  const auth = Buffer.from(`${usercode}:${password}`).toString('base64')
+
+  try {
+    const res = await fetch(NETGSM_BULK_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        msgheader,
+        encoding: 'TR',
+        messages: [{ msg: cleaned, no: normalized }],
+      }),
+    })
+
+    const text = await res.text()
+    let json: { code?: string; jobid?: string; description?: string } = {}
+    try { json = JSON.parse(text) } catch {
+      return { success: false, error: `Netgsm parse hatasi: ${text.slice(0, 100)}` }
+    }
+
+    if (json.code === '00') {
+      return { success: true, jobid: json.jobid, code: json.code }
+    }
+    return {
+      success: false,
+      code: json.code,
+      error: json.code ? mapNetgsmError(json.code) : (json.description ?? 'Netgsm bilinmeyen yanit'),
+    }
+  } catch (err) {
+    console.error('[Netgsm/info] Network hatasi:', err instanceof Error ? err.message : err)
     return { success: false, error: 'Netgsm baglanti hatasi' }
   }
 }
