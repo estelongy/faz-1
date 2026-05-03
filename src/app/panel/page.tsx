@@ -245,8 +245,8 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
               </div>
             </Link>
 
-            {/* Kapı 2 — Randevu */}
-            <Link href={activeAppt ? '/panel/randevularim' : '/randevu'}
+            {/* Kapı 2 — Randevu Al */}
+            <Link href="/randevu"
               className="group relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-600/15 via-cyan-600/8 to-teal-500/5 p-5 transition-all hover:border-blue-400 hover:scale-[1.02]">
               <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-blue-500/10 blur-3xl group-hover:bg-blue-500/20 transition-all" />
               <div className="relative">
@@ -256,13 +256,13 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                   </svg>
                 </div>
                 <h3 className="text-white font-bold text-base leading-tight mb-1">
-                  {activeAppt ? 'Aktif Randevun' : 'Klinikten Randevu Al'}
+                  Klinikten Randevu Al
                 </h3>
                 <p className="text-slate-400 text-xs leading-relaxed">
-                  {activeAppt ? 'Detayı görüntüle' : 'Onaylı estetik kliniklerinden'}
+                  Onaylı estetik kliniklerinden
                 </p>
                 <div className="mt-3 flex items-center gap-1 text-blue-300 text-xs font-semibold">
-                  <span>{activeAppt ? 'Randevuya Git' : 'Klinik Seç'}</span>
+                  <span>Klinik Seç</span>
                   <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
